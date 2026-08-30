@@ -4,7 +4,9 @@ import { fontVariables } from "@/lib/fonts";
 import { SkipLink } from "@/components/site/skip-link";
 import { Header } from "@/components/site/header";
 import { Footer } from "@/components/site/footer";
-import { themeScript } from "@/components/site/theme-toggle";
+import { MobileCallBar } from "@/components/site/mobile-call-bar";
+import { AccessibilityToolbar } from "@/components/site/accessibility-toolbar";
+import { preferencesScript } from "@/lib/preferences";
 import { contact, identity, published, siteName, telHref } from "@/lib/content";
 
 const description =
@@ -30,15 +32,16 @@ export const viewport: Viewport = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  // Resolved server-side so the header never receives an unconfirmed value.
+  // Resolved server-side so no child ever receives an unconfirmed value.
   const phone = published(contact.phonePrimary);
   const phoneHref = telHref();
+  const sms = published(contact.sms);
 
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        {/* Applies a stored theme before first paint — avoids a flash of the wrong theme. */}
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        {/* Applies stored theme and reader preferences before first paint. */}
+        <script dangerouslySetInnerHTML={{ __html: preferencesScript }} />
       </head>
       <body className={`${fontVariables} flex min-h-dvh flex-col antialiased`}>
         <SkipLink />
@@ -47,6 +50,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {children}
         </main>
         <Footer />
+        <MobileCallBar phone={phone} phoneHref={phoneHref} sms={sms} />
+        <AccessibilityToolbar />
       </body>
     </html>
   );

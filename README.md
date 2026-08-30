@@ -25,35 +25,47 @@ pnpm install
 pnpm dev
 ```
 
-Then open [localhost:3000](http://localhost:3000). The design system lives at
-[/specimen](http://localhost:3000/specimen) — every token, mark and icon, with contrast ratios
-computed live against whichever theme is applied.
+Then open [localhost:3000](http://localhost:3000). Two internal pages document the system:
+
+| Route                                               | What it shows                                                               |
+| --------------------------------------------------- | --------------------------------------------------------------------------- |
+| [/specimen](http://localhost:3000/specimen)         | Tokens, type scale, brand marks, icons — with contrast ratios computed live |
+| [/kitchen-sink](http://localhost:3000/kitchen-sink) | Every component, including its empty state                                  |
+
+Both are `noindex` and excluded from the sitemap.
 
 ## Scripts
 
-| Command             | Description                  |
-| ------------------- | ---------------------------- |
-| `pnpm dev`          | Start the Next dev server    |
-| `pnpm build`        | Production build             |
-| `pnpm start`        | Serve the production build   |
-| `pnpm typecheck`    | `tsc --noEmit`               |
-| `pnpm lint`         | ESLint, including `jsx-a11y` |
-| `pnpm lint:fix`     | ESLint with auto-fix         |
-| `pnpm format`       | Format with Prettier         |
-| `pnpm format:check` | Check Prettier formatting    |
+| Command                   | Description                             |
+| ------------------------- | --------------------------------------- |
+| `pnpm dev`                | Start the Next dev server               |
+| `pnpm build`              | Production build                        |
+| `pnpm start`              | Serve the production build              |
+| `pnpm typecheck`          | `tsc --noEmit`                          |
+| `pnpm lint`               | ESLint, including `jsx-a11y`            |
+| `pnpm lint:fix`           | ESLint with auto-fix                    |
+| `pnpm format`             | Format with Prettier                    |
+| `pnpm format:check`       | Check Prettier formatting               |
+| `pnpm test:a11y`          | axe / WCAG 2.2 AA, desktop + mobile     |
+| `pnpm check:placeholders` | Report placeholder imagery still in use |
 
 ## Layout
 
 ```
 content/          source-of-truth.json — all approved copy, with provenance
 docs/             client questions, toolchain setup
-src/app/          routes: / · /specimen · error · not-found
+scripts/          check-placeholders.mjs (hard gate at launch)
+tests/            axe / WCAG 2.2 AA suite
+public/placeholder/  scaffolding imagery — replaced in Phase 8
+src/app/          routes: / · /specimen · /kitchen-sink · error · not-found
 src/components/
   brand/          hand-drawn marks: monogram, heart-shield, laurel, wave
-  site/           header, footer, skip link, theme toggle
+  site/           header, footer, hero, availability, gallery, timeline, CTA…
+  ui/             vendored shadcn primitives, restyled to the brand
+  motion/         Reveal — the one scroll animation, reduced-motion aware
   dev/            contrast auditing for /specimen (never shipped publicly)
   icons.tsx       the client's icon assignments, mapped to lucide glyphs
-src/lib/          content reader, fonts, nav, cn
+src/lib/          content reader, fonts, nav, preferences, utils
 ```
 
 ## Git hooks & CI

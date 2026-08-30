@@ -1,0 +1,49 @@
+{
+  "_note": "Development scaffolding ONLY. Every file here is replaced in Phase 8 by a real photograph of Columbia Care. Named by SLOT, not by content, so replacement is a straight file swap. See docs/client-questions.md questions 9 and 10, and the imagery rules in CLAUDE.md.",
+  "_rule": "No stock photograph containing a person may ever reach production. Generic senior-care stock is instantly recognisable and actively erodes trust. Run `pnpm check:placeholders` before launch.",
+  "source": "https://picsum.photos — generic imagery, deliberately not senior-care stock, so nothing here can be mistaken for a real photograph of the home.",
+  "images": [
+    {
+      "file": "living-room.jpg",
+      "slot": "Hero / gallery — living areas",
+      "replaceWith": "Client's existing living room + kitchen photo, full resolution",
+      "haveReal": false
+    },
+    {
+      "file": "table-setting.jpg",
+      "slot": "Meals page hero",
+      "replaceWith": "Client's existing blue table-setting photo, full resolution",
+      "haveReal": false
+    },
+    {
+      "file": "kitchen.jpg",
+      "slot": "Gallery — dining & kitchen",
+      "replaceWith": "Re-shoot at full resolution",
+      "haveReal": false
+    },
+    {
+      "file": "patio.jpg",
+      "slot": "Gallery — outdoors",
+      "replaceWith": "Client's existing patio photo, full resolution",
+      "haveReal": false
+    },
+    {
+      "file": "backyard.jpg",
+      "slot": "Gallery — outdoors",
+      "replaceWith": "Client's existing backyard/picket fence photo, full resolution",
+      "haveReal": false
+    },
+    {
+      "file": "flowers.jpg",
+      "slot": "About page detail shot",
+      "replaceWith": "Client's existing flowers-on-table photo, full resolution",
+      "haveReal": false
+    }
+  ],
+  "stillNeededFromShoot": [
+    "Exterior, front of house",
+    "A bedroom, made up",
+    "Bathroom with grab bars",
+    "Entryway and hallway"
+  ]
+}

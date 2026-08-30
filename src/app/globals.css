@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "tw-animate-css";
 
 /* ============================================================================
    Columbia Care design tokens
@@ -13,7 +14,25 @@
 
    Never declare a colour only inside a media or [data-theme] block. Style
    through the tokens so all three states resolve.
+
+   Reader preferences from the accessibility toolbar stamp further attributes on
+   <html>: data-text-size, data-contrast, data-reading-font. See the bottom of
+   this file.
    ========================================================================= */
+
+/* shadcn components ship `dark:` utilities. Bind that variant to OUR three
+   theme states rather than shadcn's default `.dark` class, so its components
+   and ours flip together. */
+@custom-variant dark {
+  &:where([data-theme="dark"], [data-theme="dark"] *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not([data-theme="light"]), :root:not([data-theme="light"]) *) {
+      @slot;
+    }
+  }
+}
 
 @theme inline {
   /* surfaces & text */
@@ -47,9 +66,52 @@
   --color-warn: var(--warn);
   --color-danger: var(--danger);
 
+  /* --- shadcn bridge -------------------------------------------------------
+     shadcn's generated components reference these semantic names. Mapping them
+     onto brand tokens means anything added with `shadcn add` is on-brand by
+     default, and needs no dark-mode block of its own — the brand tokens have
+     already flipped by the time these resolve. */
+  --color-background: var(--paper);
+  --color-foreground: var(--ink);
+  --color-card: var(--paper-raise);
+  --color-card-foreground: var(--ink);
+  --color-popover: var(--paper-raise);
+  --color-popover-foreground: var(--ink);
+  --color-primary: var(--ink);
+  --color-primary-foreground: var(--paper);
+  --color-secondary: var(--sage-wash);
+  --color-secondary-foreground: var(--sage-deep);
+  --color-muted: var(--paper-sunk);
+  --color-muted-foreground: var(--stone);
+  --color-accent: var(--sage-wash);
+  --color-accent-foreground: var(--sage-deep);
+  --color-destructive: var(--danger);
+  --color-destructive-foreground: var(--paper);
+  --color-border: var(--rule);
+  --color-input: var(--rule-strong);
+  --color-ring: var(--sage);
+
+  /* Admin sidebar (Phase 5) — the console sidebar is ink navy in every theme. */
+  --color-sidebar: var(--ink);
+  --color-sidebar-foreground: var(--paper);
+  --color-sidebar-primary: var(--sage);
+  --color-sidebar-primary-foreground: var(--paper);
+  --color-sidebar-accent: var(--sage-wash);
+  --color-sidebar-accent-foreground: var(--sage-deep);
+  --color-sidebar-border: var(--rule);
+  --color-sidebar-ring: var(--sage);
+
+  /* Radii stay small and squared — see CLAUDE.md. shadcn's 10px default is out. */
+  --radius: 0.25rem;
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) * 1.5);
+  --radius-xl: calc(var(--radius) * 2);
+
   /* type */
   --font-display: var(--font-fraunces), Georgia, "Times New Roman", serif;
-  --font-sans: var(--font-source-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-fraunces), Georgia, "Times New Roman", serif;
+  --font-sans: var(--reading-font, var(--font-source-sans)), ui-sans-serif, system-ui, sans-serif;
   --font-script: var(--font-parisienne), cursive;
   --font-mono: var(--font-plex-mono), ui-monospace, monospace;
 
@@ -80,7 +142,7 @@
   --paper: #f6f5ee;
   --paper-raise: #fcfbf6;
   --paper-sunk: #edece2;
-  --stone: #6b7266;
+  --stone: #626859;
   --rule: #d6d6c8;
   --rule-strong: #b9bca9;
 
@@ -165,6 +227,71 @@
 }
 
 /* ---------------------------------------------------------------------------
+   Reader preferences — set by the accessibility toolbar, persisted per visitor.
+
+   These are a usability feature for this audience, not a compliance checkbox,
+   so they are first-class tokens rather than an afterthought bolted on top.
+   ------------------------------------------------------------------------ */
+
+/* Larger type. The whole scale is in rem, so moving the root size moves
+   everything together and nothing overlaps. */
+:root[data-text-size="large"] {
+  font-size: 125%;
+}
+:root[data-text-size="largest"] {
+  font-size: 140%;
+}
+
+/* Higher contrast: push text to the extremes and firm up the hairlines. */
+:root[data-contrast="high"] {
+  --ink: #000000;
+  --ink-soft: #1a1a1a;
+  --paper: #ffffff;
+  --paper-raise: #ffffff;
+  --paper-sunk: #f0f0f0;
+  --stone: #333333;
+  --rule: #6b6b6b;
+  --rule-strong: #333333;
+  --sage-deep: #234012;
+  --sage-wash: #eef2e6;
+}
+:root[data-contrast="high"][data-theme="dark"],
+:root[data-contrast="high"]:not([data-theme="light"]) {
+  --ink: #ffffff;
+  --ink-soft: #f0f0f0;
+  --paper: #000000;
+  --paper-raise: #0a0a0a;
+  --paper-sunk: #000000;
+  --stone: #d4d4d4;
+  --rule: #8a8a8a;
+  --rule-strong: #c4c4c4;
+  --sage-deep: #cfe6a8;
+  --sage-wash: #12200a;
+}
+/* A forced light theme must beat the media-query rule above. */
+@media (prefers-color-scheme: dark) {
+  :root[data-contrast="high"][data-theme="light"] {
+    --ink: #000000;
+    --ink-soft: #1a1a1a;
+    --paper: #ffffff;
+    --paper-raise: #ffffff;
+    --paper-sunk: #f0f0f0;
+    --stone: #333333;
+    --rule: #6b6b6b;
+    --rule-strong: #333333;
+    --sage-deep: #234012;
+    --sage-wash: #eef2e6;
+  }
+}
+
+/* Atkinson Hyperlegible — designed by the Braille Institute for low vision.
+   Chosen over OpenDyslexic because it is better tested and reads as a normal
+   typeface rather than a novelty one. */
+:root[data-reading-font="hyperlegible"] {
+  --reading-font: var(--font-hyperlegible);
+}
+
+/* ---------------------------------------------------------------------------
    Base
    ------------------------------------------------------------------------ */
 
@@ -212,7 +339,8 @@
     border-radius: 2px;
   }
 
-  /* Reduced motion collapses transitions to an instant state change. */
+  /* Reduced motion collapses transitions to an instant state change.
+     Honoured both from the OS and from the accessibility toolbar. */
   @media (prefers-reduced-motion: reduce) {
     html {
       scroll-behavior: auto;
@@ -225,6 +353,18 @@
       transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
     }
+  }
+
+  :root[data-motion="reduce"] {
+    scroll-behavior: auto;
+  }
+  :root[data-motion="reduce"] *,
+  :root[data-motion="reduce"] *::before,
+  :root[data-motion="reduce"] *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 

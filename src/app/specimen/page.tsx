@@ -300,7 +300,12 @@ export default function SpecimenPage() {
           </code>
           , so it stays honest as answers come in.
         </p>
-        <div className="border-rule overflow-x-auto border">
+        <div
+          className="border-rule overflow-x-auto border"
+          tabIndex={0}
+          role="region"
+          aria-label="Open client questions"
+        >
           <table className="w-full min-w-[36rem] text-left text-[0.9375rem]">
             <thead>
               <tr className="bg-paper-sunk border-rule-strong label text-stone border-b">

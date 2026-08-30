@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { cn } from "@/lib/cn";
+import { cn } from "@/lib/utils";
 
 /**
  * Live contrast auditing for /specimen.
@@ -114,7 +114,14 @@ export function ContrastTable({ pairs }: { pairs: ContrastPair[] }) {
   const ready = Object.keys(tokens).length > 0;
 
   return (
-    <div className="border-rule overflow-x-auto border">
+    // tabIndex + role/label: a horizontally scrolling region must be reachable
+    // by keyboard, or the content past the fold is unreadable without a mouse.
+    <div
+      className="border-rule overflow-x-auto border"
+      tabIndex={0}
+      role="region"
+      aria-label="Contrast ratios"
+    >
       <table className="w-full min-w-[34rem] text-left text-[0.9375rem]">
         <thead>
           <tr className="bg-paper-sunk border-rule-strong label text-stone border-b">

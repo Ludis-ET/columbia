@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Monitor, Moon, Sun } from "lucide-react";
-import { cn } from "@/lib/cn";
+import { cn } from "@/lib/utils";
+import { readPreference, writePreference } from "@/lib/preferences";
 
 type Theme = "light" | "dark" | "system";
 
@@ -25,28 +26,13 @@ export function ThemeToggle({ className }: { className?: string }) {
 
   useEffect(() => {
     setMounted(true);
-    try {
-      const stored = localStorage.getItem("theme");
-      if (stored === "light" || stored === "dark") setTheme(stored);
-    } catch {
-      // Private browsing or blocked site data — system default is fine.
-    }
+    const stored = readPreference("theme");
+    if (stored === "light" || stored === "dark") setTheme(stored);
   }, []);
 
   function apply(next: Theme) {
     setTheme(next);
-    const root = document.documentElement;
-    if (next === "system") {
-      root.removeAttribute("data-theme");
-    } else {
-      root.setAttribute("data-theme", next);
-    }
-    try {
-      if (next === "system") localStorage.removeItem("theme");
-      else localStorage.setItem("theme", next);
-    } catch {
-      // Nothing to do — the choice still applies for this page view.
-    }
+    writePreference("theme", next === "system" ? null : next);
   }
 
   return (
@@ -76,9 +62,3 @@ export function ThemeToggle({ className }: { className?: string }) {
     </div>
   );
 }
-
-/**
- * Applies the stored theme before first paint so there is no flash of the wrong
- * theme. Rendered in <head>; deliberately tiny and dependency-free.
- */
-export const themeScript = `(function(){try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark"){document.documentElement.setAttribute("data-theme",t)}}catch(e){}})();`;

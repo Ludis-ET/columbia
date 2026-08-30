@@ -7,7 +7,7 @@ import { Menu, Phone, X } from "lucide-react";
 import { Monogram } from "@/components/brand/monogram";
 import { ThemeToggle } from "@/components/site/theme-toggle";
 import { primaryNav } from "@/lib/nav";
-import { cn } from "@/lib/cn";
+import { cn } from "@/lib/utils";
 
 /**
  * Site header.

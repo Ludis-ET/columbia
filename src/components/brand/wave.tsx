@@ -1,10 +1,26 @@
 /**
  * The navy-and-sage wave that divides the header from the body in the
- * infographic. Used as the header-to-hero transition.
+ * infographic.
  *
- * Two stacked paths, the sage one offset slightly, exactly as in the artwork.
+ * Two stacked paths, the back one offset slightly, exactly as in the artwork.
+ * Both fills are configurable so the same shape can cap a navy footer or bleed
+ * a photographic hero into the page ground.
+ *
+ * The paths fill upward from the curve, so `flip` is what you want when the
+ * solid colour belongs below.
  */
-export function Wave({ className, flip = false }: { className?: string; flip?: boolean }) {
+export function Wave({
+  className,
+  flip = false,
+  fill = "var(--ink)",
+  backFill = "var(--sage)",
+}: {
+  className?: string;
+  flip?: boolean;
+  fill?: string;
+  /** Pass null for a single-colour wave. */
+  backFill?: string | null;
+}) {
   return (
     <svg
       viewBox="0 0 1440 96"
@@ -13,12 +29,14 @@ export function Wave({ className, flip = false }: { className?: string; flip?: b
       aria-hidden="true"
       style={flip ? { transform: "scaleY(-1)" } : undefined}
     >
-      <path
-        d="M0 40c180 44 360 52 540 26s360-58 540-42 240 46 360 58V0H0Z"
-        fill="var(--sage)"
-        opacity="0.85"
-      />
-      <path d="M0 26c180 44 360 52 540 26s360-58 540-42 240 46 360 58V0H0Z" fill="var(--ink)" />
+      {backFill ? (
+        <path
+          d="M0 40c180 44 360 52 540 26s360-58 540-42 240 46 360 58V0H0Z"
+          fill={backFill}
+          opacity="0.85"
+        />
+      ) : null}
+      <path d="M0 26c180 44 360 52 540 26s360-58 540-42 240 46 360 58V0H0Z" fill={fill} />
     </svg>
   );
 }

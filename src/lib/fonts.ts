@@ -1,4 +1,10 @@
-import { Fraunces, Source_Sans_3, Parisienne, IBM_Plex_Mono } from "next/font/google";
+import {
+  Fraunces,
+  Source_Sans_3,
+  Parisienne,
+  IBM_Plex_Mono,
+  Atkinson_Hyperlegible,
+} from "next/font/google";
 
 /**
  * Fonts are self-hosted by next/font at build time — no render-blocking request
@@ -41,9 +47,25 @@ export const plexMono = IBM_Plex_Mono({
   variable: "--font-plex-mono",
 });
 
+/**
+ * Offered by the accessibility toolbar as "Easier reading font".
+ *
+ * Atkinson Hyperlegible was designed by the Braille Institute to keep similar
+ * letterforms distinguishable at low vision. Chosen over OpenDyslexic because
+ * it is better tested and reads as a normal typeface rather than a novelty one,
+ * which matters when the reader is choosing it in front of family.
+ */
+export const hyperlegible = Atkinson_Hyperlegible({
+  subsets: ["latin"],
+  display: "swap",
+  weight: ["400", "700"],
+  variable: "--font-hyperlegible",
+});
+
 export const fontVariables = [
   fraunces.variable,
   sourceSans.variable,
   parisienne.variable,
   plexMono.variable,
+  hyperlegible.variable,
 ].join(" ");
