@@ -1,0 +1,252 @@
+@import "tailwindcss";
+
+/* ============================================================================
+   Columbia Care design tokens
+
+   Every colour is sampled from the client's "A Day in Our AFH" infographic.
+   Do not add a colour that is not in that artwork — see CLAUDE.md.
+
+   Theming has THREE states, not two:
+     :root                                   → light (also the un-stamped default)
+     @media (prefers-color-scheme: dark)     → dark, unless the user forced light
+     :root[data-theme="dark"]                → dark, forced
+
+   Never declare a colour only inside a media or [data-theme] block. Style
+   through the tokens so all three states resolve.
+   ========================================================================= */
+
+@theme inline {
+  /* surfaces & text */
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-paper: var(--paper);
+  --color-paper-raise: var(--paper-raise);
+  --color-paper-sunk: var(--paper-sunk);
+  --color-stone: var(--stone);
+  --color-rule: var(--rule);
+  --color-rule-strong: var(--rule-strong);
+
+  /* brand */
+  --color-sage: var(--sage);
+  --color-sage-deep: var(--sage-deep);
+  --color-sage-wash: var(--sage-wash);
+
+  /* time-of-day accents — timeline and its icons ONLY.
+     `-on` variants are the text-safe version for the current ground. */
+  --color-dawn: var(--accent-blue);
+  --color-dawn-on: var(--accent-blue-on);
+  --color-activity: var(--accent-violet);
+  --color-activity-on: var(--accent-violet-on);
+  --color-kitchen: var(--accent-amber);
+  --color-kitchen-on: var(--accent-amber-on);
+  --color-rest: var(--accent-rose);
+  --color-rest-on: var(--accent-rose-on);
+
+  /* semantic — admin status only, never borrows the accents above */
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-danger: var(--danger);
+
+  /* type */
+  --font-display: var(--font-fraunces), Georgia, "Times New Roman", serif;
+  --font-sans: var(--font-source-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-script: var(--font-parisienne), cursive;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+
+  /* type scale — see CLAUDE.md. Body is 18px, never 16. */
+  --text-hero: clamp(2.6rem, 6vw, 4.2rem);
+  --text-hero--line-height: 1.02;
+  --text-h1: clamp(2.1rem, 4.4vw, 3rem);
+  --text-h1--line-height: 1.08;
+  --text-h2: clamp(1.5rem, 3vw, 2rem);
+  --text-h2--line-height: 1.14;
+  --text-h3: 1.25rem;
+  --text-h3--line-height: 1.3;
+  --text-lead: 1.3rem;
+  --text-lead--line-height: 1.55;
+  --text-body: 1.125rem;
+  --text-body--line-height: 1.65;
+  --text-small: 1rem;
+  --text-small--line-height: 1.5;
+  --text-label: 0.8125rem;
+  --text-label--line-height: 1.4;
+}
+
+:root {
+  color-scheme: light;
+
+  --ink: #10254a;
+  --ink-soft: #33436a;
+  --paper: #f6f5ee;
+  --paper-raise: #fcfbf6;
+  --paper-sunk: #edece2;
+  --stone: #6b7266;
+  --rule: #d6d6c8;
+  --rule-strong: #b9bca9;
+
+  --sage: #5e7c3c;
+  --sage-deep: #3f5528;
+  --sage-wash: #e7ebdc;
+
+  --accent-blue: #2a6bb0;
+  --accent-blue-on: #235c99;
+  --accent-violet: #6b4c9a;
+  --accent-violet-on: #6b4c9a;
+  --accent-amber: #b8720f;
+  --accent-amber-on: #8f580b;
+  --accent-rose: #a93659;
+  --accent-rose-on: #a93659;
+
+  --ok: #3f5528;
+  --warn: #8f580b;
+  --danger: #a02033;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --ink: #e9ece3;
+    --ink-soft: #b6bfb8;
+    --paper: #10171c;
+    --paper-raise: #182026;
+    --paper-sunk: #0a0f13;
+    --stone: #8b948a;
+    --rule: #28313a;
+    --rule-strong: #3d4854;
+
+    --sage: #a2c16c;
+    --sage-deep: #c3d89a;
+    --sage-wash: #1a241a;
+
+    --accent-blue: #2a6bb0;
+    --accent-blue-on: #8fbdea;
+    --accent-violet: #6b4c9a;
+    --accent-violet-on: #bda4e2;
+    --accent-amber: #b8720f;
+    --accent-amber-on: #e0a855;
+    --accent-rose: #a93659;
+    --accent-rose-on: #e895ac;
+
+    --ok: #a2c16c;
+    --warn: #e0a855;
+    --danger: #ee8b98;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --ink: #e9ece3;
+  --ink-soft: #b6bfb8;
+  --paper: #10171c;
+  --paper-raise: #182026;
+  --paper-sunk: #0a0f13;
+  --stone: #8b948a;
+  --rule: #28313a;
+  --rule-strong: #3d4854;
+
+  --sage: #a2c16c;
+  --sage-deep: #c3d89a;
+  --sage-wash: #1a241a;
+
+  --accent-blue: #2a6bb0;
+  --accent-blue-on: #8fbdea;
+  --accent-violet: #6b4c9a;
+  --accent-violet-on: #bda4e2;
+  --accent-amber: #b8720f;
+  --accent-amber-on: #e0a855;
+  --accent-rose: #a93659;
+  --accent-rose-on: #e895ac;
+
+  --ok: #a2c16c;
+  --warn: #e0a855;
+  --danger: #ee8b98;
+}
+
+/* ---------------------------------------------------------------------------
+   Base
+   ------------------------------------------------------------------------ */
+
+@layer base {
+  * {
+    border-color: var(--rule);
+  }
+
+  html {
+    /* 18px base — the aged-care readability floor. Not 16. */
+    font-size: 112.5%;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-variation-settings:
+      "SOFT" 55,
+      "opsz" 60;
+    font-weight: 600;
+    letter-spacing: -0.018em;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Visible focus on everything, 2px, against both grounds. */
+  :focus-visible {
+    outline: 2px solid var(--sage);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  /* Reduced motion collapses transitions to an instant state change. */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* Mono eyebrow / label treatment used across the site and admin. */
+  .label {
+    font-family: var(--font-mono);
+    font-size: var(--text-label);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  /* Skip link: off-screen until focused, then pinned top-left. */
+  .skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: 100;
+  }
+  .skip-link:focus {
+    left: 0.5rem;
+    top: 0.5rem;
+  }
+}

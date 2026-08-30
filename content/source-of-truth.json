@@ -1,0 +1,661 @@
+{
+  "_rules": {
+    "READ_THIS_FIRST": "This file is the ONLY approved source of published copy for the Columbia Care website. If a string is not in this file with provenance 'ARTWORK', or has been moved to 'ARTWORK' after written client confirmation, it MUST NOT appear on the public site.",
+    "provenance": {
+      "ARTWORK": "Transcribed verbatim from one of the three client-supplied artwork files listed in `sources`. Safe to publish as-is.",
+      "ASK_CLIENT": "Not stated anywhere in the artwork. `value` is null. The UI must render nothing for this field until the client confirms it in writing and the value is moved here with provenance changed to ARTWORK_CONFIRMED.",
+      "ARTWORK_CONFIRMED": "Supplied by the client in writing after kickoff, not present in the original artwork. Record the date and channel in `confirmedOn`. Safe to publish.",
+      "RECOMMEND": "A proposal from the build plan. Never a claim about this business. Needs sign-off before it becomes copy."
+    },
+    "hardRules": [
+      "Never invent a capacity, bed count, room type, rate, payment method, service, service area, licence number, staff name, or language.",
+      "A null value renders NOTHING. Not a placeholder, not 'Coming soon', not a stub heading.",
+      "The seven entries in `services` and the three in `careTypes` are the complete published offering. Nothing may be added without ARTWORK_CONFIRMED provenance.",
+      "Only Everett is a confirmed service area. Do not name another city.",
+      "No photograph of a person publishes without `releaseOnFile: true`."
+    ]
+  },
+
+  "meta": {
+    "business": "Columbia Care Adult Family Home",
+    "revision": "Phase 0 — initial extraction",
+    "extractedFrom": "client-supplied artwork only",
+    "lastUpdated": "2026-08-30"
+  },
+
+  "sources": [
+    {
+      "id": "A1",
+      "name": "A Day in Our AFH infographic",
+      "type": "single-page infographic, full colour",
+      "contains": "logo, tagline, values, 13-entry daily schedule, 'Every Day' list, contact footer, promise, icon system"
+    },
+    {
+      "id": "A2",
+      "name": "Tri-fold brochure — panel 1",
+      "type": "brochure panel, cyan/navy treatment",
+      "contains": "contact block, meals paragraph, care-type chips, tour CTA, 3 photographs"
+    },
+    {
+      "id": "A3",
+      "name": "Tri-fold brochure — panel 2",
+      "type": "brochure panel, cyan/navy treatment",
+      "contains": "about paragraph, services list, why-families list, 3 photographs"
+    }
+  ],
+
+  "identity": {
+    "name": {
+      "value": "Columbia Care Adult Family Home",
+      "provenance": "ARTWORK",
+      "source": "A1, A2, A3"
+    },
+    "shortName": { "value": "Columbia Care AFH", "provenance": "ARTWORK", "source": "A1, A3" },
+    "tagline": {
+      "value": "A Place to Feel at Home, A Place to Be Cared For.",
+      "provenance": "ARTWORK",
+      "source": "A1"
+    },
+    "promise": {
+      "value": "A safe place. A caring heart. A better quality of life.",
+      "provenance": "ARTWORK",
+      "source": "A1"
+    },
+    "closingLine": {
+      "value": "We treat your loved one like family.",
+      "provenance": "ARTWORK",
+      "source": "A1",
+      "note": "Set in the script face. Use at most twice site-wide."
+    },
+    "tourCta": {
+      "value": "Contact us to book a house tour!",
+      "provenance": "ARTWORK",
+      "source": "A2",
+      "note": "Keep this exact phrasing. 'House tour' is the client's own word and is warmer than 'schedule a visit'."
+    },
+
+    "values": {
+      "provenance": "ARTWORK",
+      "source": "A1",
+      "value": ["24-Hour Care", "Compassion", "Dignity", "Respect", "Safety"]
+    },
+
+    "about": {
+      "provenance": "ARTWORK",
+      "source": "A3",
+      "value": "At Columbia Care Adult Family Home, we provide a safe, comfortable, and caring home where every resident is treated with dignity and respect. Our goal is to help each resident maintain the highest possible quality of life while receiving personalized care in a family-like environment."
+    },
+
+    "meals": {
+      "provenance": "ARTWORK",
+      "source": "A2",
+      "value": "Our home provides a wide variety of nutritious, home-cooked meals daily for breakfast, lunch, dinner, and snacks between meals such as fresh fruit and vegetables."
+    }
+  },
+
+  "contact": {
+    "phonePrimary": {
+      "value": null,
+      "provenance": "ASK_CLIENT",
+      "blocks": "every call-to-action on the site, schema, Google Business Profile",
+      "question": "Which number do we publish as the main line?",
+      "candidates": [
+        {
+          "value": "206-499-0849",
+          "provenance": "ARTWORK",
+          "source": "A2",
+          "note": "The only complete, usable number in the artwork."
+        },
+        {
+          "value": "(425) 212-XXXX",
+          "provenance": "ARTWORK",
+          "source": "A1",
+          "note": "Deliberately masked in the artwork. NOT a usable number. Shares the 425-212 prefix with the fax, suggesting a second line exists on that exchange."
+        }
+      ]
+    },
+    "sms": {
+      "value": null,
+      "provenance": "ASK_CLIENT",
+      "question": "Is the primary line able to receive text messages? Many adult children text before they call."
+    },
+    "fax": { "value": "425-212-9108", "provenance": "ARTWORK", "source": "A2" },
+    "email": { "value": "columbiacareafh@gmail.com", "provenance": "ARTWORK", "source": "A1, A2" },
+
+    "address": {
+      "provenance": "ARTWORK",
+      "source": "A2",
+      "value": {
+        "streetAddress": "2215 Columbia Ave",
+        "addressLocality": "Everett",
+        "addressRegion": "WA",
+        "postalCode": "98203",
+        "addressCountry": "US"
+      }
+    },
+
+    "geo": {
+      "value": null,
+      "provenance": "ASK_CLIENT",
+      "question": "Geocode from the confirmed address once verified. Do not estimate coordinates.",
+      "blocks": "map pin, LocalBusiness schema"
+    },
+
+    "serviceArea": {
+      "provenance": "ARTWORK",
+      "source": "A1",
+      "value": ["Everett"],
+      "statedAs": "Serving Everett Area",
+      "note": "Everett is the ONLY city named anywhere in the artwork. Do not add Mukilteo, Lynnwood, Marysville, Snohomish County or any other area without ARTWORK_CONFIRMED provenance."
+    },
+
+    "locationLine": {
+      "value": "Close to Broadway Ave, easy access to Evergreen Way and Interstate 5.",
+      "provenance": "ARTWORK",
+      "source": "A1"
+    },
+
+    "hours": {
+      "value": "24 hours, every day",
+      "provenance": "ARTWORK",
+      "source": "A1",
+      "note": "Justified by the 'Overnight — 24-Hour Care' schedule entry and the '24-Hour Care & Supervision' line. Maps to opens 00:00 / closes 23:59 in schema."
+    },
+
+    "licenseNumber": {
+      "value": null,
+      "provenance": "ASK_CLIENT",
+      "question": "What is the DSHS licence number? Families verify it on the DSHS lookup.",
+      "blocks": "footer, About page, trust badge"
+    },
+    "licensedCapacity": {
+      "value": null,
+      "provenance": "ASK_CLIENT",
+      "question": "How many residents is the home licensed for?",
+      "note": "NOT STATED ANYWHERE IN THE ARTWORK. Do not infer a number from what is typical for the category."
+    }
+  },
+
+  "careTypes": {
+    "provenance": "ARTWORK",
+    "source": "A2",
+    "note": "The brochure chips. These three plus the seven services below are the complete published offering.",
+    "value": ["Long term care", "Memory care", "Personal care, assistance and more"]
+  },
+
+  "services": {
+    "provenance": "ARTWORK",
+    "source": "A3",
+    "note": "COMPLETE LIST. Respite, hospice-supportive, diabetic, mobility/transfer and incontinence care are common in this category but appear NOWHERE in the artwork. Do not add them.",
+    "value": [
+      {
+        "slug": "24-hour-care",
+        "title": "24-hour compassionate care and supervision",
+        "icon": "shield",
+        "hasDetailPage": false
+      },
+      {
+        "slug": "personal-care",
+        "title": "Assistance with activities of daily living (ADLs)",
+        "icon": "people",
+        "hasDetailPage": true
+      },
+      {
+        "slug": "medication-management",
+        "title": "Medication management",
+        "icon": "capsule",
+        "hasDetailPage": true
+      },
+      {
+        "slug": "meals",
+        "title": "Fresh and nutritious meals",
+        "icon": "bowl",
+        "hasDetailPage": false
+      },
+      {
+        "slug": "housekeeping-laundry",
+        "title": "Housekeeping and laundry",
+        "icon": "house",
+        "hasDetailPage": false
+      },
+      {
+        "slug": "transportation",
+        "title": "Transportation for appointments",
+        "icon": "car",
+        "hasDetailPage": false
+      },
+      {
+        "slug": "memory-care",
+        "title": "Dementia and Alzheimer's care",
+        "icon": "heart",
+        "hasDetailPage": true
+      }
+    ]
+  },
+
+  "whyFamilies": {
+    "provenance": "ARTWORK",
+    "source": "A3",
+    "value": [
+      "Experienced and caring staff",
+      "Clean and comfortable home-like environment",
+      "Personalized care for every resident",
+      "Conveniently located near Broadway Avenue, Evergreen Way, and Interstate 5"
+    ],
+    "note": "The artwork renders the last item as 'Evergreen way' with a lowercase w. Corrected to 'Evergreen Way' here — this is a typo fix, not a content change."
+  },
+
+  "everyDay": {
+    "provenance": "ARTWORK",
+    "source": "A1",
+    "note": "The 'Every Day at Columbia Care AFH' block. Becomes the What's Included grid.",
+    "value": [
+      { "title": "24-Hour Care & Supervision", "icon": "shield" },
+      { "title": "Medication Management", "icon": "capsule" },
+      { "title": "Nutritious Homemade Meals", "icon": "bowl" },
+      { "title": "Meaningful Activities", "icon": "people" },
+      { "title": "Assistance with Appointments & Transportation", "icon": "car" },
+      { "title": "Clean, Safe & Comfortable Home", "icon": "house" },
+      { "title": "Dignity, Respect & Compassion", "icon": "heart" }
+    ]
+  },
+
+  "schedule": {
+    "provenance": "ARTWORK",
+    "source": "A1",
+    "note": "All 13 entries transcribed verbatim. `accent` values come from the client's own icon badge colours in the infographic.",
+    "value": [
+      {
+        "position": 1,
+        "timeLabel": "7:00 AM",
+        "sortMinutes": 420,
+        "title": "Good Morning",
+        "icon": "sunrise",
+        "accent": "navy",
+        "body": "Residents are gently welcomed and assisted with getting up according to their individual care plans. Staff assist with toileting, bathing, dressing, grooming, and other activities of daily living."
+      },
+      {
+        "position": 2,
+        "timeLabel": "8:00 AM",
+        "sortMinutes": 480,
+        "title": "Breakfast",
+        "icon": "coffee-cup",
+        "accent": "sage",
+        "body": "Residents enjoy a nutritious homemade breakfast. Medications are administered according to each resident's orders and medication schedule. Staff document care and medication administration."
+      },
+      {
+        "position": 3,
+        "timeLabel": "9:00 AM",
+        "sortMinutes": 540,
+        "title": "Morning Routine",
+        "icon": "open-book",
+        "accent": "navy",
+        "body": "Residents have time to relax, read, watch TV, listen to music, or socialize. Staff help residents with appointments and other scheduled activities."
+      },
+      {
+        "position": 4,
+        "timeLabel": "10:30 AM",
+        "sortMinutes": 630,
+        "title": "Activities",
+        "icon": "palette",
+        "accent": "violet",
+        "body": "Residents participate in activities based on their interests and abilities, such as:",
+        "bullets": [
+          "Games and puzzles",
+          "Music",
+          "Arts and crafts",
+          "Walking or light exercise",
+          "Conversation and social activities"
+        ]
+      },
+      {
+        "position": 5,
+        "timeLabel": "12:00 PM",
+        "sortMinutes": 720,
+        "title": "Lunch",
+        "icon": "plate-heart",
+        "accent": "sage",
+        "body": "Residents enjoy lunch together. Staff encourage hydration and provide assistance as needed."
+      },
+      {
+        "position": 6,
+        "timeLabel": "1:00 PM",
+        "sortMinutes": 780,
+        "title": "Rest & Personal Time",
+        "icon": "armchair-clock",
+        "accent": "rose",
+        "body": "Residents can take a nap, relax in their rooms, watch television, or spend time with family and friends."
+      },
+      {
+        "position": 7,
+        "timeLabel": "2:30 PM",
+        "sortMinutes": 870,
+        "title": "Afternoon Activities",
+        "icon": "tree",
+        "accent": "sage",
+        "body": "Depending on the day, residents may enjoy a walk, outdoor time, an activity, an appointment, or simply socializing with others."
+      },
+      {
+        "position": 8,
+        "timeLabel": "4:30 PM",
+        "sortMinutes": 990,
+        "title": "Dinner Preparation",
+        "icon": "cooking-pot",
+        "accent": "amber",
+        "body": "Staff prepare a fresh, homemade dinner while maintaining a safe environment. Residents may spend time together in the common area."
+      },
+      {
+        "position": 9,
+        "timeLabel": "5:30 PM",
+        "sortMinutes": 1050,
+        "title": "Dinner",
+        "icon": "fork-knife",
+        "accent": "blue",
+        "body": "Residents enjoy dinner together. Staff provide assistance according to individual needs and document required care."
+      },
+      {
+        "position": 10,
+        "timeLabel": "6:30 PM",
+        "sortMinutes": 1110,
+        "title": "Evening Activities",
+        "icon": "music-note",
+        "accent": "violet",
+        "body": "Residents may watch a favorite program, listen to music, play games, talk with others, or visit with family."
+      },
+      {
+        "position": 11,
+        "timeLabel": "8:00 PM",
+        "sortMinutes": 1200,
+        "title": "Evening Routine",
+        "icon": "moon-stars",
+        "accent": "rose",
+        "body": "Staff assist residents with toileting, changing clothes, oral care, and getting ready for bed according to their care plans."
+      },
+      {
+        "position": 12,
+        "timeLabel": "9:00 PM",
+        "sortMinutes": 1260,
+        "title": "Quiet Time",
+        "icon": "moon",
+        "accent": "navy",
+        "body": "The home becomes quieter so residents can rest. Staff continue safety checks and provide assistance as needed."
+      },
+      {
+        "position": 13,
+        "timeLabel": "Overnight",
+        "sortMinutes": 1440,
+        "title": "24-Hour Care",
+        "icon": "house-heart",
+        "accent": "navy",
+        "body": "Caregivers remain available throughout the night. Residents receive assistance when needed, and staff monitor safety and document any significant changes or care provided."
+      }
+    ]
+  },
+
+  "assets": {
+    "brand": {
+      "provenance": "ARTWORK",
+      "source": "A1",
+      "note": "Request the ORIGINAL VECTOR files from whoever produced the infographic. Redraw as SVG only if unavailable.",
+      "value": [
+        {
+          "id": "monogram",
+          "description": "Navy 'C' enclosing an illustrated cottage — shingled roof, stone base, trees, red-orange flowers",
+          "usedFor": "header logo, favicon, social icon",
+          "haveVector": false
+        },
+        {
+          "id": "heart-shield",
+          "description": "Navy hexagonal shield containing a heart",
+          "usedFor": "Why Families Choose Us section mark, trust badge",
+          "haveVector": false
+        },
+        {
+          "id": "laurel-sprig",
+          "description": "Small green laurel leaves flanking the infographic title",
+          "usedFor": "section divider",
+          "haveVector": false
+        },
+        {
+          "id": "wave",
+          "description": "Navy and green wave dividing header from body",
+          "usedFor": "header-to-hero transition",
+          "haveVector": false
+        }
+      ]
+    },
+    "icons": {
+      "provenance": "ARTWORK",
+      "source": "A1",
+      "note": "A complete icon set already exists and is already colour-assigned. Redraw as one SVG sprite in Phase 1.",
+      "timeline": [
+        "sunrise",
+        "coffee-cup",
+        "open-book",
+        "palette",
+        "plate-heart",
+        "armchair-clock",
+        "tree",
+        "cooking-pot",
+        "fork-knife",
+        "music-note",
+        "moon-stars",
+        "moon",
+        "house-heart"
+      ],
+      "everyDay": ["shield", "capsule", "bowl", "people", "car", "house", "heart"],
+      "contact": ["phone", "map-pin", "heart-in-hands"]
+    },
+    "photos": {
+      "provenance": "ARTWORK",
+      "source": "A2, A3",
+      "note": "Six real photographs of the actual home. Request FULL-RESOLUTION ORIGINALS — the brochure versions are compressed, oddly cropped and partly overlaid with graphics.",
+      "value": [
+        {
+          "id": "living-room-kitchen",
+          "source": "A2",
+          "shows": "Wide shot: wall-mounted TV, white armchair, console table, coffee table with flowers, dark-wood dining chairs, white-grey kitchen cabinets, green tablecloth",
+          "usedFor": "hero candidate, gallery/living-areas, home block 2",
+          "containsPeople": false,
+          "haveOriginal": false
+        },
+        {
+          "id": "table-setting",
+          "source": "A2",
+          "shows": "Stacked blue bowls and plates, glassware, green tablecloth",
+          "usedFor": "meals page hero, home block 7",
+          "containsPeople": false,
+          "haveOriginal": false
+        },
+        {
+          "id": "patio",
+          "source": "A3",
+          "shows": "Blue-and-white cushioned chairs, green-and-white umbrella, white vinyl fence, lawn",
+          "usedFor": "gallery/outdoors",
+          "containsPeople": false,
+          "haveOriginal": false
+        },
+        {
+          "id": "backyard",
+          "source": "A3",
+          "shows": "White picket fence, tall hedge, mature trees, lawn",
+          "usedFor": "gallery/outdoors",
+          "containsPeople": false,
+          "haveOriginal": false
+        },
+        {
+          "id": "flowers-detail",
+          "source": "A3",
+          "shows": "Fresh flowers in a green ribbed vase on a dark-wood table, living room behind",
+          "usedFor": "section divider imagery, About page",
+          "containsPeople": false,
+          "haveOriginal": false
+        },
+        {
+          "id": "map",
+          "source": "A2",
+          "shows": "Street map with the home marked",
+          "usedFor": "reference only — replace with a live embed",
+          "containsPeople": false,
+          "haveOriginal": false
+        }
+      ]
+    },
+    "missing": {
+      "provenance": "RECOMMEND",
+      "note": "Nothing in the artwork covers these. Blocks the gallery and the photo walkthrough.",
+      "mustHave": [
+        "exterior front of house",
+        "a bedroom",
+        "bathroom with grab bars",
+        "entryway and hallway"
+      ],
+      "recommended": [
+        "provider portrait",
+        "caregiver hands assisting (no faces)",
+        "plated home-cooked meal",
+        "an activity in progress"
+      ]
+    }
+  },
+
+  "testimonials": {
+    "value": [],
+    "provenance": "ASK_CLIENT",
+    "question": "Are any families willing to be quoted? Are there existing reviews we may reuse?",
+    "note": "Empty. The homepage testimonials band renders NOTHING while this is empty. Never write a sample quote."
+  },
+
+  "team": {
+    "value": [],
+    "provenance": "ASK_CLIENT",
+    "question": "Provider/owner name, and do they want a photo and short bio published? Caregiver first names?",
+    "note": "The artwork contains no person at all — no name, no photo, no role."
+  },
+
+  "availability": {
+    "value": null,
+    "provenance": "ASK_CLIENT",
+    "question": "Current availability, and what room types are offered?",
+    "note": "The artwork says nothing about rooms or vacancy. Badge renders nothing until first set.",
+    "allowedStates": ["unset", "accepting", "limited", "waitlist", "full"]
+  },
+
+  "admissions": {
+    "paymentTypes": {
+      "value": null,
+      "provenance": "ASK_CLIENT",
+      "question": "Which payment types are accepted?"
+    },
+    "rate": {
+      "value": null,
+      "provenance": "ASK_CLIENT",
+      "question": "Monthly rate or rate range, and what is included vs. extra?"
+    },
+    "admissionCriteria": {
+      "value": null,
+      "provenance": "ASK_CLIENT",
+      "question": "Who can and cannot the home accept?"
+    },
+    "dshsDisclosure": {
+      "value": null,
+      "provenance": "ASK_CLIENT",
+      "question": "Please send the current DSHS Disclosure of Services (form 10-508).",
+      "note": "Highest-leverage single request — answers licence, scope of care and services in the client's own regulator-filed words, and becomes a download on the Admissions page."
+    }
+  },
+
+  "languages": {
+    "value": null,
+    "provenance": "ASK_CLIENT",
+    "question": "What languages do caregivers speak?",
+    "note": "Decides whether a second-language version of the site is worth building. Only publish if true."
+  },
+
+  "openQuestions": [
+    {
+      "id": 1,
+      "priority": "blocker",
+      "question": "Which phone number do we publish as the main line?",
+      "blocks": "everything"
+    },
+    {
+      "id": 2,
+      "priority": "blocker",
+      "question": "Please send the current DSHS Disclosure of Services (form 10-508).",
+      "blocks": "services scope, licence, Admissions page"
+    },
+    {
+      "id": 3,
+      "priority": "blocker",
+      "question": "DSHS licence number, and how many residents the home is licensed for.",
+      "blocks": "footer, About, schema"
+    },
+    {
+      "id": 4,
+      "priority": "high",
+      "question": "Is the seven-service list complete, or does the home offer more?",
+      "blocks": "Services pages"
+    },
+    {
+      "id": 5,
+      "priority": "high",
+      "question": "Current availability and room types offered.",
+      "blocks": "availability badge"
+    },
+    {
+      "id": 6,
+      "priority": "high",
+      "question": "Payment types accepted, and rate or rate range.",
+      "blocks": "Admissions page"
+    },
+    {
+      "id": 7,
+      "priority": "high",
+      "question": "Provider name, and consent for a photo and short bio.",
+      "blocks": "About, Team module"
+    },
+    {
+      "id": 8,
+      "priority": "medium",
+      "question": "Admission criteria — who can and cannot be accepted.",
+      "blocks": "FAQ, Admissions, care-fit quiz"
+    },
+    {
+      "id": 9,
+      "priority": "medium",
+      "question": "Languages spoken by caregivers.",
+      "blocks": "i18n scope"
+    },
+    {
+      "id": 10,
+      "priority": "medium",
+      "question": "Beyond Everett, which areas are actually served?",
+      "blocks": "location copy, schema"
+    },
+    {
+      "id": 11,
+      "priority": "medium",
+      "question": "Families willing to be quoted, and existing reviews.",
+      "blocks": "testimonials"
+    },
+    {
+      "id": 12,
+      "priority": "medium",
+      "question": "Should we create or claim the Google Business Profile?",
+      "blocks": "Phase 7"
+    },
+    {
+      "id": 13,
+      "priority": "high",
+      "question": "Original vector files for the logo and icons.",
+      "blocks": "Phase 1 asset work"
+    },
+    {
+      "id": 14,
+      "priority": "high",
+      "question": "Full-resolution originals of the six photographs.",
+      "blocks": "gallery, hero"
+    }
+  ]
+}

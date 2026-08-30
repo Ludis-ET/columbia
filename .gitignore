@@ -2,9 +2,17 @@
 node_modules
 
 # Build
+.next
+out
 dist
 dist-ssr
 *.local
+
+# Next
+next-env.d.ts
+
+# Vercel
+.vercel
 
 # Logs
 logs
