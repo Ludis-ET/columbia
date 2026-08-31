@@ -3,6 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient, getAdminProfile, recordAudit } from "@/lib/db/server";
+import {
+  isSectionSlot,
+  MEDIA_MAX_BYTES,
+  MEDIA_MIME_TYPES,
+  type SectionSlot,
+} from "@/lib/media";
 
 /**
  * Admin server actions.
@@ -35,7 +41,7 @@ const AFFECTED: Record<string, string[]> = {
   availability: ["/"],
   services: ["/", "/services"],
   schedule_items: ["/", "/a-day-in-our-home", "/meals", "/services"],
-  media: ["/", "/our-home"],
+  media: ["/"],
   testimonials: ["/"],
   faqs: ["/faq"],
   team: ["/about"],
@@ -295,4 +301,201 @@ export async function saveRow(
   revalidateFor(table);
 
   return { ok: true, message: "Saved." };
+}
+
+// ---------------------------------------------------------------------------
+// Photos
+// ---------------------------------------------------------------------------
+
+function photoFields(formData: FormData) {
+  const alt = String(formData.get("alt") ?? "").trim();
+  const caption = String(formData.get("caption") ?? "").trim() || null;
+  const categoryRaw = String(formData.get("category") ?? "").trim();
+  const category = categoryRaw === "" ? null : categoryRaw;
+  const containsPeople = formData.get("contains_people") === "on";
+  const releaseOnFile = formData.get("release_on_file") === "on";
+
+  return { alt, caption, category, containsPeople, releaseOnFile };
+}
+
+async function clearSectionSlot(supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>, slot: SectionSlot, exceptId?: string) {
+  let query = supabase.from("media").update({ category: null }).eq("category", slot);
+  if (exceptId) query = query.neq("id", exceptId);
+  await query;
+}
+
+export async function uploadPhoto(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  await requireAdmin();
+  const supabase = await createClient();
+  if (!supabase) return { ok: false, message: GENERIC_ERROR };
+
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    return { ok: false, message: "Choose a photo to upload." };
+  }
+
+  if (file.size > MEDIA_MAX_BYTES) {
+    return { ok: false, message: "Photos must be under 8 MB." };
+  }
+
+  if (!MEDIA_MIME_TYPES.includes(file.type as (typeof MEDIA_MIME_TYPES)[number])) {
+    return { ok: false, message: "Use a JPEG, PNG, WebP or AVIF photo." };
+  }
+
+  const { alt, caption, category, containsPeople, releaseOnFile } = photoFields(formData);
+  if (!alt) {
+    return { ok: false, message: "Every photo needs a description for screen readers." };
+  }
+
+  const ext = file.type === "image/jpeg" ? "jpg" : file.type.replace("image/", "");
+  const path = `gallery/${crypto.randomUUID()}.${ext}`;
+  const buffer = Buffer.from(await file.arrayBuffer());
+
+  const { error: uploadError } = await supabase.storage
+    .from("media")
+    .upload(path, buffer, { contentType: file.type, upsert: false });
+
+  if (uploadError) {
+    console.error("[uploadPhoto] storage", uploadError.message);
+    return { ok: false, message: "Could not upload that photo. Try again." };
+  }
+
+  if (category && isSectionSlot(category)) {
+    await clearSectionSlot(supabase, category);
+  }
+
+  const { data: last } = await supabase
+    .from("media")
+    .select("position")
+    .order("position", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const position = (last?.position ?? -1) + 1;
+
+  const { error: insertError } = await supabase.from("media").insert({
+    storage_path: path,
+    alt,
+    caption,
+    category,
+    contains_people: containsPeople,
+    release_on_file: releaseOnFile,
+    position,
+    published: false,
+  });
+
+  if (insertError) {
+    await supabase.storage.from("media").remove([path]);
+    if (insertError.message.includes("media_release_required")) {
+      return {
+        ok: false,
+        message:
+          "This photo shows a person, so it needs a signed release on file before it can go on the website.",
+      };
+    }
+    return { ok: false, message: GENERIC_ERROR };
+  }
+
+  await recordAudit("create", "media", path, { category });
+  revalidateFor("media");
+
+  return { ok: true, message: "Photo uploaded." };
+}
+
+export async function updatePhoto(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  await requireAdmin();
+  const supabase = await createClient();
+  if (!supabase) return { ok: false, message: GENERIC_ERROR };
+
+  const id = String(formData.get("id") ?? "");
+  if (!id) return { ok: false, message: GENERIC_ERROR };
+
+  const { alt, caption, category, containsPeople, releaseOnFile } = photoFields(formData);
+  if (!alt) {
+    return { ok: false, message: "Every photo needs a description for screen readers." };
+  }
+
+  if (category && isSectionSlot(category)) {
+    await clearSectionSlot(supabase, category, id);
+  }
+
+  const { error } = await supabase
+    .from("media")
+    .update({
+      alt,
+      caption,
+      category,
+      contains_people: containsPeople,
+      release_on_file: releaseOnFile,
+    })
+    .eq("id", id);
+
+  if (error) {
+    if (error.message.includes("media_release_required")) {
+      return {
+        ok: false,
+        message:
+          "This photo shows a person, so it needs a signed release on file before it can go on the website.",
+      };
+    }
+    return { ok: false, message: GENERIC_ERROR };
+  }
+
+  await recordAudit("update", "media", id, { category });
+  revalidateFor("media");
+
+  return { ok: true, message: "Photo updated." };
+}
+
+export async function assignSectionPhoto(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  await requireAdmin();
+  const supabase = await createClient();
+  if (!supabase) return { ok: false, message: GENERIC_ERROR };
+
+  const id = String(formData.get("id") ?? "");
+  const slot = String(formData.get("slot") ?? "");
+  if (!id || !isSectionSlot(slot)) return { ok: false, message: GENERIC_ERROR };
+
+  await clearSectionSlot(supabase, slot, id);
+
+  const { error } = await supabase.from("media").update({ category: slot }).eq("id", id);
+  if (error) return { ok: false, message: GENERIC_ERROR };
+
+  await recordAudit("update", "media", id, { category: slot });
+  revalidateFor("media");
+
+  return { ok: true, message: `Now used in the ${slot === "hero" ? "homepage hero" : "meals section"}.` };
+}
+
+export async function deletePhoto(id: string): Promise<ActionResult> {
+  await requireAdmin();
+  const supabase = await createClient();
+  if (!supabase) return { ok: false, message: GENERIC_ERROR };
+
+  const { data: row } = await supabase
+    .from("media")
+    .select("storage_path")
+    .eq("id", id)
+    .maybeSingle();
+
+  const { error } = await supabase.from("media").delete().eq("id", id);
+  if (error) return { ok: false, message: GENERIC_ERROR };
+
+  if (row?.storage_path) {
+    await supabase.storage.from("media").remove([row.storage_path as string]);
+  }
+
+  await recordAudit("delete", "media", id);
+  revalidateFor("media");
+
+  return { ok: true, message: "Photo deleted." };
 }

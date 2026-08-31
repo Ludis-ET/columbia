@@ -5,6 +5,8 @@ import { ArrowDown, ArrowUp, Check, Eye, EyeOff, Loader2, Trash2 } from "lucide-
 import { cn } from "@/lib/utils";
 import { deleteRow, reorder, togglePublished, type ActionResult } from "@/app/admin/actions";
 
+export { AdminCard, AdminSection, PageHeader } from "@/components/admin/cards";
+
 /**
  * Shared admin list primitives.
  *
@@ -16,31 +18,6 @@ import { deleteRow, reorder, togglePublished, type ActionResult } from "@/app/ad
  *   - Optimistic feel, honest result: the toast names what actually changed,
  *     and constraint failures come back in the owner's words.
  */
-
-export function PageHeader({
-  title,
-  lead,
-  count,
-  action,
-}: {
-  title: string;
-  lead?: string;
-  count?: string;
-  action?: ReactNode;
-}) {
-  return (
-    <header className="border-rule mb-6 flex flex-wrap items-end justify-between gap-4 border-b pb-4">
-      <div>
-        <h1 className="text-h2">{title}</h1>
-        {lead ? <p className="text-stone mt-1 max-w-[60ch]">{lead}</p> : null}
-      </div>
-      <div className="flex items-center gap-3">
-        {count ? <span className="label text-stone">{count}</span> : null}
-        {action}
-      </div>
-    </header>
-  );
-}
 
 /** Announces the result of the last action. */
 export function Toast({ result }: { result: ActionResult | null }) {
@@ -183,11 +160,13 @@ function IconButton({
   label,
   onClick,
   disabled,
+  destructive,
   children,
 }: {
   label: string;
   onClick: () => void;
   disabled?: boolean;
+  destructive?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -195,12 +174,28 @@ function IconButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="border-rule text-stone hover:text-ink inline-flex size-11 items-center justify-center rounded border disabled:opacity-50"
+      className={cn(
+        "inline-flex size-11 items-center justify-center rounded border disabled:opacity-50",
+        destructive
+          ? "border-[var(--danger)] text-[var(--danger)] hover:bg-[color-mix(in_srgb,var(--danger)_8%,transparent)]"
+          : "border-rule text-stone hover:text-ink",
+      )}
     >
       {children}
       <span className="sr-only">{label}</span>
     </button>
   );
+}
+
+/** Icon-only control for dense toolbars (photos, lists). */
+export function AdminIconButton(props: {
+  label: string;
+  onClick: () => void;
+  disabled?: boolean;
+  destructive?: boolean;
+  children: ReactNode;
+}) {
+  return <IconButton {...props} />;
 }
 
 /** A single row in an admin list. */

@@ -17,7 +17,6 @@ import { Reveal } from "@/components/motion/reveal";
 import { LaurelDivider } from "@/components/brand/laurel";
 import { HeartShield } from "@/components/brand/heart-shield";
 import { IconBadge, isIconName } from "@/components/icons";
-import { heroImage, mealsImage } from "@/lib/images";
 import { identity, published } from "@/lib/content";
 import {
   getAvailability,
@@ -26,6 +25,7 @@ import {
   getGallery,
   getSchedule,
   getServices,
+  getSectionImage,
   getSiteSettings,
   getTestimonials,
   getWhyFamilies,
@@ -58,7 +58,7 @@ export default async function HomePage() {
 
   const values = published(identity.values) ?? [];
 
-  const [settings, availability, services, care, included, reasons, quotes, schedule, gallery] =
+  const [settings, availability, services, care, included, reasons, quotes, schedule, gallery, hero, mealsPhoto] =
     await Promise.all([
       getSiteSettings(),
       getAvailability(),
@@ -69,6 +69,8 @@ export default async function HomePage() {
       getTestimonials(),
       getSchedule(),
       getGallery(),
+      getSectionImage("hero"),
+      getSectionImage("meals"),
     ]);
 
   const { phone, telHref: tel, addressLine: address, locationLine, email, fax, hours } = settings;
@@ -81,7 +83,7 @@ export default async function HomePage() {
         size="home"
         title={tagline ?? "Columbia Care Adult Family Home"}
         lead="An adult family home in Everett, Washington."
-        image={heroImage}
+        image={hero}
         badge={
           <AvailabilityBadge
             status={availability.status}
@@ -263,8 +265,8 @@ export default async function HomePage() {
             <Reveal>
               <div className="relative aspect-4/3 w-full overflow-hidden rounded">
                 <Image
-                  src={mealsImage.src}
-                  alt={mealsImage.alt}
+                  src={mealsPhoto.src}
+                  alt={mealsPhoto.alt}
                   fill
                   sizes="(min-width: 1024px) 50vw, 100vw"
                   className="object-cover"

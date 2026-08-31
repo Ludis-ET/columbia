@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/db/server";
-import { PageHeader, EmptyState } from "@/components/admin/ui";
+import { PageHeader } from "@/components/admin/cards";
+import { EmptyState } from "@/components/admin/ui";
 import { InquiryList } from "@/components/admin/inquiry-list";
 import type { InquiryRow } from "@/lib/db/database.types";
 

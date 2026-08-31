@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/db/server";
-import { PageHeader, EmptyState } from "@/components/admin/ui";
+import { PageHeader } from "@/components/admin/cards";
+import { EmptyState } from "@/components/admin/ui";
 import { ContentList, type ContentRow } from "@/components/admin/content-list";
 
 export const metadata = { title: "Daily schedule" };

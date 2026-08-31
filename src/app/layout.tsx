@@ -58,7 +58,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang="en" suppressHydrationWarning>
       <head>
         {/* Applies stored theme and reader preferences before first paint. */}
-        <script dangerouslySetInnerHTML={{ __html: preferencesScript }} />
+        <script suppressHydrationWarning dangerouslySetInnerHTML={{ __html: preferencesScript }} />
         {/* Emitted from live data, and only for fields the client has confirmed, a guessed phone number here would be shown as fact in search results. */}
         <OrganisationJsonLd />
       </head>

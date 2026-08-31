@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/db/server";
-import { PageHeader } from "@/components/admin/ui";
+import { PageHeader } from "@/components/admin/cards";
 import { AvailabilityForm } from "@/components/admin/availability-form";
 import type { AvailabilityStatus } from "@/lib/db/database.types";
 

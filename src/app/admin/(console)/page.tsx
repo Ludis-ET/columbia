@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ImageIcon } from "lucide-react";
 import { createClient, getAdminProfile } from "@/lib/db/server";
 import { AvailabilityForm } from "@/components/admin/availability-form";
+import { AdminCard } from "@/components/admin/cards";
 import type { AvailabilityStatus } from "@/lib/db/database.types";
 
 export const metadata = { title: "Dashboard" };
@@ -57,9 +58,10 @@ export default async function AdminDashboard() {
 
   return (
     <>
-      <header className="mb-8">
-        <h1 className="text-h2">{greeting()}</h1>
-        <p className="text-stone mt-1">
+      <header className="mb-8 border-b border-rule pb-6">
+        <p className="label text-sage-deep mb-2">Dashboard</p>
+        <h1 className="text-h1">{greeting()}</h1>
+        <p className="text-stone mt-2">
           {newCount?.count
             ? `${newCount.count} ${newCount.count === 1 ? "enquiry needs" : "enquiries need"} a reply.`
             : "Nothing needs your attention right now."}
@@ -68,6 +70,38 @@ export default async function AdminDashboard() {
 
       {/* Availability first: the thing the owner changes most, editable here
           rather than one click away. */}
+      <section className="mb-10" aria-labelledby="quick-heading">
+        <h2 id="quick-heading" className="label text-stone mb-3">
+          Quick links
+        </h2>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Link
+            href="/admin/photos"
+            className="border-rule bg-paper-raise hover:border-sage group flex min-h-16 items-center gap-3 rounded-lg border p-4 transition-colors"
+          >
+            <span className="bg-sage-wash text-sage-deep flex size-11 items-center justify-center rounded-md">
+              <ImageIcon className="size-5" aria-hidden="true" />
+            </span>
+            <span>
+              <span className="block font-semibold group-hover:text-sage-deep">Photos & gallery</span>
+              <span className="text-stone text-[0.875rem]">Hero, meals, and home tour pictures</span>
+            </span>
+          </Link>
+          <Link
+            href="/admin/inquiries"
+            className="border-rule bg-paper-raise hover:border-sage group flex min-h-16 items-center gap-3 rounded-lg border p-4 transition-colors"
+          >
+            <span className="bg-sage-wash text-sage-deep flex size-11 items-center justify-center rounded-md font-bold tabular-nums">
+              {newCount?.count ?? 0}
+            </span>
+            <span>
+              <span className="block font-semibold group-hover:text-sage-deep">Enquiries</span>
+              <span className="text-stone text-[0.875rem]">Families waiting to hear back</span>
+            </span>
+          </Link>
+        </div>
+      </section>
+
       <section className="mb-10" aria-labelledby="availability-heading">
         <h2 id="availability-heading" className="label text-stone mb-3">
           Availability
@@ -146,12 +180,12 @@ function Stat({
   small?: boolean;
 }) {
   return (
-    <div className="border-rule bg-paper-raise rounded border p-4">
+    <AdminCard className="p-4">
       <p className="label text-stone">{label}</p>
       <p className={small ? "mt-1 text-lg font-bold" : "mt-1 text-3xl font-bold tabular-nums"}>
         {value}
       </p>
       <p className="text-stone text-[0.875rem]">{detail}</p>
-    </div>
+    </AdminCard>
   );
 }

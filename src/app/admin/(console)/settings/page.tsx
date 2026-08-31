@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient, getAdminProfile } from "@/lib/db/server";
-import { PageHeader } from "@/components/admin/ui";
+import { PageHeader } from "@/components/admin/cards";
 import { SettingsForm } from "@/components/admin/settings-form";
 import type { SiteSettingsRow } from "@/lib/db/database.types";
 

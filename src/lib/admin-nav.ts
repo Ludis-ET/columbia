@@ -22,7 +22,7 @@ export const adminNav: AdminNavItem[] = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/inquiries", label: "Enquiries", badge: "newInquiries" },
   { href: "/admin/availability", label: "Availability" },
-  { href: "/admin/photos", label: "Photos" },
+  { href: "/admin/photos", label: "Photos & gallery" },
   { href: "/admin/services", label: "Services" },
   { href: "/admin/schedule", label: "Daily schedule" },
   { href: "/admin/testimonials", label: "Testimonials" },

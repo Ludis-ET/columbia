@@ -153,6 +153,10 @@ function JsonLd({ data }: { data: Record<string, unknown> }) {
     <script
       type="application/ld+json"
       // Content is our own, from the database, not user input.
+      // suppressHydrationWarning: SEO browser extensions often rewrite ld+json
+      // script nodes (injecting blob: src) before React hydrates. The server
+      // markup is still what crawlers receive; this silences the dev warning.
+      suppressHydrationWarning
       dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
     />
   );

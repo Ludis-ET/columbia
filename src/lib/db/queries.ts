@@ -15,7 +15,8 @@ import type {
 } from "./database.types";
 
 import * as file from "@/lib/content";
-import { galleryImages as placeholderGallery } from "@/lib/images";
+import { galleryImages as placeholderGallery, heroImage, mealsImage } from "@/lib/images";
+import { isGalleryItem, mediaPublicUrl, type SectionSlot } from "@/lib/media";
 import type { CareType, EveryDayItem, ScheduleItem, Service } from "@/lib/content";
 import type { GalleryImage } from "@/components/site/gallery";
 import type { TestimonialItem } from "@/components/site/testimonial";
@@ -273,20 +274,54 @@ export const getGallery = cache(async (): Promise<GalleryImage[]> => {
 
   if (!rows || rows.length === 0) return placeholderGallery;
 
-  const base = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/media/`;
+  const galleryRows = rows.filter(
+    (r) =>
+      isGalleryItem(r.category) &&
+      r.published &&
+      (!r.contains_people || r.release_on_file),
+  );
 
-  return rows
-    .filter((r) => r.published && (!r.contains_people || r.release_on_file))
+  if (galleryRows.length === 0) return placeholderGallery;
+
+  return galleryRows
     .sort((a, b) => a.position - b.position)
     .map((r) => ({
-      src: `${base}${r.storage_path}`,
+      src: mediaPublicUrl(r.storage_path) ?? "",
       alt: r.alt,
       caption: r.caption,
       category: r.category,
       width: r.width ?? undefined,
       height: r.height ?? undefined,
-    }));
+    }))
+    .filter((r) => r.src);
 });
+
+/**
+ * A single section photograph (hero or meals band).
+ *
+ * Falls back to the placeholder in `src/lib/images.ts` when nothing is published.
+ */
+export const getSectionImage = cache(
+  async (slot: SectionSlot): Promise<{ src: string; alt: string }> => {
+    const fallback = slot === "hero" ? heroImage : mealsImage;
+    const rows = await select<MediaRow>("media");
+    if (!rows) return fallback;
+
+    const match = rows.find(
+      (r) =>
+        r.category === slot &&
+        r.published &&
+        (!r.contains_people || r.release_on_file),
+    );
+
+    if (!match) return fallback;
+
+    const src = mediaPublicUrl(match.storage_path);
+    if (!src) return fallback;
+
+    return { src, alt: match.alt };
+  },
+);
 
 // ---------------------------------------------------------------------------
 // Derived helpers
