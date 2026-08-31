@@ -7,7 +7,8 @@ import { Footer } from "@/components/site/footer";
 import { MobileCallBar } from "@/components/site/mobile-call-bar";
 import { AccessibilityToolbar } from "@/components/site/accessibility-toolbar";
 import { preferencesScript } from "@/lib/preferences";
-import { contact, identity, published, siteName, telHref } from "@/lib/content";
+import { identity, published, siteName } from "@/lib/content";
+import { getSiteSettings } from "@/lib/db/queries";
 
 const description =
   published(identity.about) ??
@@ -31,11 +32,9 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
   // Resolved server-side so no child ever receives an unconfirmed value.
-  const phone = published(contact.phonePrimary);
-  const phoneHref = telHref();
-  const sms = published(contact.sms);
+  const { phone, telHref: phoneHref, sms } = await getSiteSettings();
 
   return (
     <html lang="en" suppressHydrationWarning>

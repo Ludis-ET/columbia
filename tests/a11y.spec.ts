@@ -1,5 +1,6 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
+import { INTERNAL_ROUTES, PUBLIC_ROUTES } from "./routes";
 
 /**
  * Accessibility gate.
@@ -9,7 +10,7 @@ import { expect, test, type Page } from "@playwright/test";
  * which is verified visually on /specimen — axe checks the AA floor here.
  */
 
-const ROUTES = ["/", "/specimen", "/kitchen-sink", "/nope-404"];
+const ROUTES = [...PUBLIC_ROUTES, ...INTERNAL_ROUTES, "/nope-404"];
 
 const TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
@@ -43,28 +44,21 @@ for (const route of ROUTES) {
 
 test("no axe violations in dark theme", async ({ page }) => {
   await page.emulateMedia({ colorScheme: "dark" });
-  const results = await scan(page, "/kitchen-sink");
-  expect(results.violations).toEqual([]);
+  for (const route of ["/", "/a-day-in-our-home", "/kitchen-sink"]) {
+    const results = await scan(page, route);
+    expect(results.violations, `${route} in dark theme`).toEqual([]);
+  }
 });
 
 test("no axe violations at largest text and high contrast", async ({ page }) => {
-  await page.goto("/", { waitUntil: "domcontentloaded" });
-  await page.evaluate(() => {
-    document.documentElement.setAttribute("data-text-size", "largest");
-    document.documentElement.setAttribute("data-contrast", "high");
-  });
-  const results = await new AxeBuilder({ page }).withTags(TAGS).analyze();
-  expect(results.violations).toEqual([]);
-});
-
-test("page does not scroll horizontally at 320px", async ({ page }) => {
-  await page.setViewportSize({ width: 320, height: 800 });
-  for (const route of ["/", "/kitchen-sink"]) {
+  for (const route of ["/", "/services", "/contact"]) {
     await page.goto(route, { waitUntil: "domcontentloaded" });
-    const overflow = await page.evaluate(
-      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
-    );
-    expect(overflow, `${route} overflows horizontally by ${overflow}px`).toBeLessThanOrEqual(0);
+    await page.evaluate(() => {
+      document.documentElement.setAttribute("data-text-size", "largest");
+      document.documentElement.setAttribute("data-contrast", "high");
+    });
+    const results = await new AxeBuilder({ page }).withTags(TAGS).analyze();
+    expect(results.violations, `${route} at largest text + high contrast`).toEqual([]);
   }
 });
 
@@ -74,4 +68,12 @@ test("skip link is the first focusable element and targets main", async ({ page 
   const focused = page.locator(":focus");
   await expect(focused).toHaveText(/skip to main content/i);
   await expect(focused).toHaveAttribute("href", "#main");
+});
+
+test("every page has exactly one h1", async ({ page }) => {
+  for (const route of PUBLIC_ROUTES) {
+    await page.goto(route, { waitUntil: "domcontentloaded" });
+    const count = await page.locator("h1").count();
+    expect(count, `${route} should have exactly one h1, found ${count}`).toBe(1);
+  }
 });

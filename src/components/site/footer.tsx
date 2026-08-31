@@ -3,7 +3,8 @@ import { Mail, Phone, Printer } from "lucide-react";
 import { Monogram } from "@/components/brand/monogram";
 import { Wave } from "@/components/brand/wave";
 import { legalNav, primaryNav } from "@/lib/nav";
-import { addressLine, contact, identity, published, telHref } from "@/lib/content";
+import { identity, published } from "@/lib/content";
+import { getSiteSettings } from "@/lib/db/queries";
 
 /**
  * Site footer.
@@ -11,15 +12,17 @@ import { addressLine, contact, identity, published, telHref } from "@/lib/conten
  * Every field goes through published(). Anything the client has not confirmed —
  * phone, licence number — is simply absent. No placeholder, no "TBC".
  */
-export function Footer() {
-  const phone = published(contact.phonePrimary);
-  const tel = telHref();
-  const fax = published(contact.fax);
-  const email = published(contact.email);
-  const address = addressLine();
-  const licence = published(contact.licenseNumber);
-  const hours = published(contact.hours);
-  const locationLine = published(contact.locationLine);
+export async function Footer() {
+  const {
+    phone,
+    telHref: tel,
+    fax,
+    email,
+    addressLine: address,
+    licenseNumber: licence,
+    hours,
+    locationLine,
+  } = await getSiteSettings();
   const closingLine = published(identity.closingLine);
 
   return (

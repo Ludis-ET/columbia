@@ -64,6 +64,22 @@ export interface Service {
   title: string;
   icon: string;
   hasDetailPage: boolean;
+  /**
+   * Positions of day-timeline entries that demonstrate this service. An
+   * editorial cross-reference to sentences the client already wrote — it lets a
+   * detail page be built entirely from the artwork, with no invented copy.
+   */
+  relatedSchedule: number[];
+  /** Null until the client writes one. Renders nothing while null. */
+  description: string | null;
+  sourceNote?: string;
+}
+
+export interface CareType {
+  slug: string;
+  title: string;
+  shortTitle: string;
+  icon: string;
 }
 
 export interface EveryDayItem {
@@ -111,14 +127,26 @@ interface SourceOfTruth {
     licenseNumber: Entry<string>;
     licensedCapacity: Entry<number>;
   };
-  careTypes: Entry<string[]>;
+  careTypes: Entry<CareType[]>;
   services: Entry<Service[]>;
   whyFamilies: Entry<string[]>;
   everyDay: Entry<EveryDayItem[]>;
   schedule: Entry<ScheduleItem[]>;
   testimonials: Entry<unknown[]>;
   team: Entry<unknown[]>;
+  faqs: Entry<FaqEntry[]>;
+  admissions: {
+    paymentTypes: Entry<string[]>;
+    rate: Entry<string>;
+    admissionCriteria: Entry<string>;
+    dshsDisclosure: Entry<string>;
+  };
   openQuestions: OpenQuestion[];
+}
+
+export interface FaqEntry {
+  question: string;
+  answer: string;
 }
 
 const content = raw as unknown as SourceOfTruth;
@@ -132,6 +160,8 @@ export const everyDay = content.everyDay;
 export const schedule = content.schedule;
 export const testimonials = content.testimonials;
 export const team = content.team;
+export const faqs = content.faqs;
+export const admissions = content.admissions;
 export const openQuestions = content.openQuestions;
 
 // ---------------------------------------------------------------------------
@@ -160,4 +190,38 @@ export function telHref(): string | null {
 export function pendingQuestions(): OpenQuestion[] {
   const order = { blocker: 0, high: 1, medium: 2 } as const;
   return [...openQuestions].sort((a, b) => order[a.priority] - order[b.priority]);
+}
+
+/** Published services, or an empty list. */
+export function serviceList(): Service[] {
+  return published(services) ?? [];
+}
+
+/** Services that have their own page. Drives generateStaticParams. */
+export function servicesWithPages(): Service[] {
+  return serviceList().filter((service) => service.hasDetailPage);
+}
+
+export function findService(slug: string): Service | null {
+  return serviceList().find((service) => service.slug === slug) ?? null;
+}
+
+/** Published schedule entries in day order. */
+export function scheduleList(): ScheduleItem[] {
+  return [...(published(schedule) ?? [])].sort((a, b) => a.position - b.position);
+}
+
+/**
+ * The schedule entries a service points at. Used to build service pages out of
+ * the client's own words rather than invented description copy.
+ */
+export function scheduleFor(positions: number[]): ScheduleItem[] {
+  if (positions.length === 0) return [];
+  const wanted = new Set(positions);
+  return scheduleList().filter((item) => wanted.has(item.position));
+}
+
+/** The four mealtimes, for the Meals page. Positions are from the artwork. */
+export function mealtimes(): ScheduleItem[] {
+  return scheduleFor([2, 5, 8, 9]);
 }

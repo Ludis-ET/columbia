@@ -46,7 +46,10 @@ export function Header({ phone, phoneHref }: { phone: string | null; phoneHref: 
           aria-label="Columbia Care Adult Family Home — home"
         >
           <Monogram className={cn("transition-all", condensed ? "size-9" : "size-11")} decorative />
-          <span className="hidden leading-tight sm:block">
+          {/* Wordmark hides below md: at the largest reader text size it plus the
+              CTA plus the menu button overflow a 640px viewport. The monogram
+              alone still identifies the home, and the link keeps its aria-label. */}
+          <span className="hidden leading-tight md:block">
             <span className="font-display text-ink block text-[1.05rem] font-semibold">
               Columbia Care
             </span>
@@ -77,7 +80,9 @@ export function Header({ phone, phoneHref }: { phone: string | null; phoneHref: 
         </nav>
 
         <div className="ml-auto flex items-center gap-2 lg:ml-0">
-          <ThemeToggle className="hidden sm:inline-flex" />
+          {/* Below lg the toggle lives in the mobile menu instead — keeping both
+              overflows the bar at the largest reader text size. */}
+          <ThemeToggle className="hidden lg:inline-flex" />
 
           {phone && phoneHref ? (
             <a

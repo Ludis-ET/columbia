@@ -174,11 +174,71 @@ pnpm format         # prettier --write
 - Run `/code-review` and `/security-review` before every deploy — the admin panel handles
   families' personal data.
 
+## Data
+
+Content lives in Supabase (project `wmxvickqaxkuaatftput`), seeded from
+`content/source-of-truth.json`. Full detail in [docs/database.md](docs/database.md).
+
+- Pages read through `src/lib/db/queries.ts`, never through `supabase` directly.
+- **Every read falls back to the content file** when a query fails or a seeded table comes
+  back empty. The public site is static, so a paused or unreachable database cannot take it
+  down — only the admin console and the contact form need Supabase awake.
+- **Empty is not always a failure.** Seeded-from-artwork tables (services, care types,
+  schedule, every-day, why-families, settings) falling to zero rows means something broke —
+  fall back. Deliberately-empty tables (testimonials, faqs, team, media) are empty because
+  the client hasn't supplied that content; `[]` is correct and must NOT fall back.
+- The provenance rule survives into SQL: `published` defaults to `false` everywhere, the seed
+  generator only emits ARTWORK / ARTWORK_CONFIRMED entries, and check constraints block
+  publishing an image of a person without a release or a testimonial without consent.
+- After editing the content file: `pnpm seed:generate && pnpm db:bundle`.
+- The **secret / service-role** key bypasses RLS entirely. Server-side only, never
+  `NEXT_PUBLIC_`, never committed.
+
+## Admin console
+
+Lives at `/admin`, documented in [docs/admin-setup.md](docs/admin-setup.md).
+
+- **No service-role client exists in this codebase.** Admin writes run as the signed-in
+  user, so RLS authorises them and the policies are exercised on every request. If a task
+  seems to need the elevated key, the answer is a better policy or a security-definer
+  function.
+- The login page is **outside** the `(console)` route group. Moving it inside makes the auth
+  layout redirect the login page to itself.
+- Consent and photo-release rules are `CHECK` constraints, not UI conventions. Surface those
+  failures in the owner's language — see `togglePublished` in `src/app/admin/actions.ts`.
+- Admin copy uses the owner's words: "Show on the website", never "published: true";
+  "Photos", never "Media assets".
+- Empty states teach. The testimonials empty state explains how to ask a family for a quote,
+  which is more useful than a shrug and steers the owner away from writing one themselves.
+- Saving revalidates only the affected routes — keep the `AFFECTED` map current.
+
+## Building pages
+
+- **Tier 1** pages are fillable entirely from the artwork and are live.
+- **Tier 2** pages (`/admissions`, `/faq`) have their shell built and call `notFound()` while
+  their data is unconfirmed, so the route 404s rather than publishing guesses. Filling the
+  matching entry in `source-of-truth.json` makes the page appear — no code change.
+- Where a page needs body copy the client has not written, build it from the **day timeline**
+  instead. `scheduleFor()` maps a service to the entries that demonstrate it, so the page is
+  the client's own sentences rather than plausible filler. `services[].relatedSchedule` holds
+  that mapping.
+- Never interpolate a content title into a sentence with `toLowerCase()` — it mangles
+  "Alzheimer's". Let the heading carry the name and write around it.
+
 ## Verification
 
-`pnpm test:a11y` runs axe against every route on desktop and mobile, in both themes, at
-largest text with high contrast, and checks 320px width and the skip link. It is a CI gate.
-Run it after touching anything visual — the token-level contrast table on `/specimen` only
+Three suites, all CI gates, run on desktop and mobile:
+
+- `tests/a11y.spec.ts` — axe/WCAG 2.2 AA on every route, both themes, largest text with high
+  contrast, one-`h1`-per-page, skip link.
+- `tests/responsive.spec.ts` — no horizontal overflow at 320/375/768/1024/1440/1920, and at
+  200% zoom.
+- `tests/content-integrity.spec.ts` — greps the **rendered HTML** for unconfirmed facts
+  (phone, capacity, payment types, extra cities, filler). This catches a hardcoded value that
+  `published()` would never see. When the client confirms something, promote it in
+  `source-of-truth.json` **and** delete its line from `FORBIDDEN`.
+
+Run `pnpm test:a11y` after touching anything visual — the contrast table on `/specimen` only
 covers the pairs it is told about, and axe catches the ones it is not.
 
 ## Reference

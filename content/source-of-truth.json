@@ -15,14 +15,12 @@
       "No photograph of a person publishes without `releaseOnFile: true`."
     ]
   },
-
   "meta": {
     "business": "Columbia Care Adult Family Home",
     "revision": "Phase 0 — initial extraction",
     "extractedFrom": "client-supplied artwork only",
     "lastUpdated": "2026-08-30"
   },
-
   "sources": [
     {
       "id": "A1",
@@ -43,14 +41,17 @@
       "contains": "about paragraph, services list, why-families list, 3 photographs"
     }
   ],
-
   "identity": {
     "name": {
       "value": "Columbia Care Adult Family Home",
       "provenance": "ARTWORK",
       "source": "A1, A2, A3"
     },
-    "shortName": { "value": "Columbia Care AFH", "provenance": "ARTWORK", "source": "A1, A3" },
+    "shortName": {
+      "value": "Columbia Care AFH",
+      "provenance": "ARTWORK",
+      "source": "A1, A3"
+    },
     "tagline": {
       "value": "A Place to Feel at Home, A Place to Be Cared For.",
       "provenance": "ARTWORK",
@@ -73,26 +74,22 @@
       "source": "A2",
       "note": "Keep this exact phrasing. 'House tour' is the client's own word and is warmer than 'schedule a visit'."
     },
-
     "values": {
       "provenance": "ARTWORK",
       "source": "A1",
       "value": ["24-Hour Care", "Compassion", "Dignity", "Respect", "Safety"]
     },
-
     "about": {
       "provenance": "ARTWORK",
       "source": "A3",
       "value": "At Columbia Care Adult Family Home, we provide a safe, comfortable, and caring home where every resident is treated with dignity and respect. Our goal is to help each resident maintain the highest possible quality of life while receiving personalized care in a family-like environment."
     },
-
     "meals": {
       "provenance": "ARTWORK",
       "source": "A2",
       "value": "Our home provides a wide variety of nutritious, home-cooked meals daily for breakfast, lunch, dinner, and snacks between meals such as fresh fruit and vegetables."
     }
   },
-
   "contact": {
     "phonePrimary": {
       "value": null,
@@ -119,9 +116,16 @@
       "provenance": "ASK_CLIENT",
       "question": "Is the primary line able to receive text messages? Many adult children text before they call."
     },
-    "fax": { "value": "425-212-9108", "provenance": "ARTWORK", "source": "A2" },
-    "email": { "value": "columbiacareafh@gmail.com", "provenance": "ARTWORK", "source": "A1, A2" },
-
+    "fax": {
+      "value": "425-212-9108",
+      "provenance": "ARTWORK",
+      "source": "A2"
+    },
+    "email": {
+      "value": "columbiacareafh@gmail.com",
+      "provenance": "ARTWORK",
+      "source": "A1, A2"
+    },
     "address": {
       "provenance": "ARTWORK",
       "source": "A2",
@@ -133,14 +137,12 @@
         "addressCountry": "US"
       }
     },
-
     "geo": {
       "value": null,
       "provenance": "ASK_CLIENT",
       "question": "Geocode from the confirmed address once verified. Do not estimate coordinates.",
       "blocks": "map pin, LocalBusiness schema"
     },
-
     "serviceArea": {
       "provenance": "ARTWORK",
       "source": "A1",
@@ -148,20 +150,17 @@
       "statedAs": "Serving Everett Area",
       "note": "Everett is the ONLY city named anywhere in the artwork. Do not add Mukilteo, Lynnwood, Marysville, Snohomish County or any other area without ARTWORK_CONFIRMED provenance."
     },
-
     "locationLine": {
       "value": "Close to Broadway Ave, easy access to Evergreen Way and Interstate 5.",
       "provenance": "ARTWORK",
       "source": "A1"
     },
-
     "hours": {
       "value": "24 hours, every day",
       "provenance": "ARTWORK",
       "source": "A1",
       "note": "Justified by the 'Overnight — 24-Hour Care' schedule entry and the '24-Hour Care & Supervision' line. Maps to opens 00:00 / closes 23:59 in schema."
     },
-
     "licenseNumber": {
       "value": null,
       "provenance": "ASK_CLIENT",
@@ -175,64 +174,105 @@
       "note": "NOT STATED ANYWHERE IN THE ARTWORK. Do not infer a number from what is typical for the category."
     }
   },
-
   "careTypes": {
     "provenance": "ARTWORK",
     "source": "A2",
-    "note": "The brochure chips. These three plus the seven services below are the complete published offering.",
-    "value": ["Long term care", "Memory care", "Personal care, assistance and more"]
+    "note": "The brochure chips. These three plus the seven services are the complete published offering. `slug` and `shortTitle` are routing/presentation only — no new claims.",
+    "value": [
+      {
+        "slug": "long-term-care",
+        "title": "Long term care",
+        "shortTitle": "Long term care",
+        "icon": "house"
+      },
+      {
+        "slug": "memory-care",
+        "title": "Memory care",
+        "shortTitle": "Memory care",
+        "icon": "heart"
+      },
+      {
+        "slug": "personal-care",
+        "title": "Personal care, assistance and more",
+        "shortTitle": "Personal care",
+        "icon": "people"
+      }
+    ]
   },
-
   "services": {
     "provenance": "ARTWORK",
     "source": "A3",
-    "note": "COMPLETE LIST. Respite, hospice-supportive, diabetic, mobility/transfer and incontinence care are common in this category but appear NOWHERE in the artwork. Do not add them.",
+    "note": "COMPLETE LIST. Respite, hospice-supportive, diabetic, mobility/transfer and incontinence care are common in this category but appear NOWHERE in the artwork. Do not add them. `relatedSchedule` is an editorial cross-reference to schedule entries the client already wrote — it introduces no new claims. `description` is null until the client writes one.",
     "value": [
+      {
+        "slug": "long-term-care",
+        "title": "Long term care",
+        "icon": "house",
+        "hasDetailPage": true,
+        "relatedSchedule": [1, 3, 12, 13],
+        "description": null,
+        "sourceNote": "Title is the verbatim 'Long term care' chip from brochure panel 1 (A2)."
+      },
       {
         "slug": "24-hour-care",
         "title": "24-hour compassionate care and supervision",
         "icon": "shield",
-        "hasDetailPage": false
+        "hasDetailPage": false,
+        "relatedSchedule": [1, 12, 13],
+        "description": null
       },
       {
         "slug": "personal-care",
         "title": "Assistance with activities of daily living (ADLs)",
         "icon": "people",
-        "hasDetailPage": true
+        "hasDetailPage": true,
+        "relatedSchedule": [1, 11],
+        "description": null
       },
       {
         "slug": "medication-management",
         "title": "Medication management",
         "icon": "capsule",
-        "hasDetailPage": true
+        "hasDetailPage": true,
+        "relatedSchedule": [2],
+        "description": null
       },
       {
         "slug": "meals",
         "title": "Fresh and nutritious meals",
         "icon": "bowl",
-        "hasDetailPage": false
+        "hasDetailPage": false,
+        "relatedSchedule": [2, 5, 8, 9],
+        "description": null
       },
       {
         "slug": "housekeeping-laundry",
         "title": "Housekeeping and laundry",
         "icon": "house",
-        "hasDetailPage": false
+        "hasDetailPage": false,
+        "relatedSchedule": [],
+        "description": null
       },
       {
         "slug": "transportation",
         "title": "Transportation for appointments",
         "icon": "car",
-        "hasDetailPage": false
+        "hasDetailPage": false,
+        "relatedSchedule": [3],
+        "description": null
       },
       {
         "slug": "memory-care",
         "title": "Dementia and Alzheimer's care",
         "icon": "heart",
-        "hasDetailPage": true
+        "hasDetailPage": true,
+        "relatedSchedule": [],
+        "description": null
       }
-    ]
+    ],
+    "descriptionsProvenance": "ASK_CLIENT",
+    "descriptionsQuestion": "Would you like a short paragraph describing each service in your own words? Until then each service page is built only from your daily schedule and services list."
   },
-
   "whyFamilies": {
     "provenance": "ARTWORK",
     "source": "A3",
@@ -244,22 +284,41 @@
     ],
     "note": "The artwork renders the last item as 'Evergreen way' with a lowercase w. Corrected to 'Evergreen Way' here — this is a typo fix, not a content change."
   },
-
   "everyDay": {
     "provenance": "ARTWORK",
     "source": "A1",
     "note": "The 'Every Day at Columbia Care AFH' block. Becomes the What's Included grid.",
     "value": [
-      { "title": "24-Hour Care & Supervision", "icon": "shield" },
-      { "title": "Medication Management", "icon": "capsule" },
-      { "title": "Nutritious Homemade Meals", "icon": "bowl" },
-      { "title": "Meaningful Activities", "icon": "people" },
-      { "title": "Assistance with Appointments & Transportation", "icon": "car" },
-      { "title": "Clean, Safe & Comfortable Home", "icon": "house" },
-      { "title": "Dignity, Respect & Compassion", "icon": "heart" }
+      {
+        "title": "24-Hour Care & Supervision",
+        "icon": "shield"
+      },
+      {
+        "title": "Medication Management",
+        "icon": "capsule"
+      },
+      {
+        "title": "Nutritious Homemade Meals",
+        "icon": "bowl"
+      },
+      {
+        "title": "Meaningful Activities",
+        "icon": "people"
+      },
+      {
+        "title": "Assistance with Appointments & Transportation",
+        "icon": "car"
+      },
+      {
+        "title": "Clean, Safe & Comfortable Home",
+        "icon": "house"
+      },
+      {
+        "title": "Dignity, Respect & Compassion",
+        "icon": "heart"
+      }
     ]
   },
-
   "schedule": {
     "provenance": "ARTWORK",
     "source": "A1",
@@ -391,7 +450,6 @@
       }
     ]
   },
-
   "assets": {
     "brand": {
       "provenance": "ARTWORK",
@@ -518,21 +576,18 @@
       ]
     }
   },
-
   "testimonials": {
     "value": [],
     "provenance": "ASK_CLIENT",
     "question": "Are any families willing to be quoted? Are there existing reviews we may reuse?",
     "note": "Empty. The homepage testimonials band renders NOTHING while this is empty. Never write a sample quote."
   },
-
   "team": {
     "value": [],
     "provenance": "ASK_CLIENT",
     "question": "Provider/owner name, and do they want a photo and short bio published? Caregiver first names?",
     "note": "The artwork contains no person at all — no name, no photo, no role."
   },
-
   "availability": {
     "value": null,
     "provenance": "ASK_CLIENT",
@@ -540,7 +595,6 @@
     "note": "The artwork says nothing about rooms or vacancy. Badge renders nothing until first set.",
     "allowedStates": ["unset", "accepting", "limited", "waitlist", "full"]
   },
-
   "admissions": {
     "paymentTypes": {
       "value": null,
@@ -564,14 +618,12 @@
       "note": "Highest-leverage single request — answers licence, scope of care and services in the client's own regulator-filed words, and becomes a download on the Admissions page."
     }
   },
-
   "languages": {
     "value": null,
     "provenance": "ASK_CLIENT",
     "question": "What languages do caregivers speak?",
     "note": "Decides whether a second-language version of the site is worth building. Only publish if true."
   },
-
   "openQuestions": [
     {
       "id": 1,
@@ -657,5 +709,11 @@
       "question": "Full-resolution originals of the six photographs.",
       "blocks": "gallery, hero"
     }
-  ]
+  ],
+  "faqs": {
+    "value": [],
+    "provenance": "ASK_CLIENT",
+    "question": "Which questions do families ask you most, and how would you answer them?",
+    "note": "Empty. /faq returns 404 while this is empty. Never write a sample answer — a care home's FAQ is the worst place to guess. Seed the QUESTIONS from openQuestions: the gaps families ask about are the same gaps we have."
+  }
 }

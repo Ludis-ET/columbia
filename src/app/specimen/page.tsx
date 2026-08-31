@@ -282,8 +282,8 @@ export default function SpecimenPage() {
             <p className="label text-stone mb-2">Care types</p>
             <ul className="space-y-1">
               {careTypeItems.map((v) => (
-                <li key={v} className="marker:text-sage list-disc pl-1 marker:content-['·_']">
-                  {v}
+                <li key={v.slug} className="marker:text-sage list-disc pl-1 marker:content-['·_']">
+                  {v.title}
                 </li>
               ))}
             </ul>
