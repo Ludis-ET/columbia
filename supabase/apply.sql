@@ -513,8 +513,8 @@ end $$;
 -- Rate limiting for the tour form
 --
 -- THE PROBLEM
--- Anonymous visitors may INSERT into `inquiries` but not SELECT from it, the
--- table holds other families' phone numbers and care details. That is correct,
+-- Anonymous visitors may INSERT into `inquiries` but not SELECT from it, because
+-- the table holds other families' phone numbers and care details. That is correct,
 -- but it means the server action cannot ask "has this person just submitted?",
 -- because the answer always comes back empty and the duplicate check silently
 -- never fires.
@@ -522,7 +522,7 @@ end $$;
 -- THE FIX
 -- A SECURITY DEFINER function: it runs with the definer's rights, so it can see
 -- the table, but it returns only a BOOLEAN. No row, no name, no phone number
--- ever crosses back to the caller. That is the right shape for this, reaching
+-- ever crosses back to the caller. That is the right shape for this. Reaching
 -- for a service-role key here would hand the whole table to the web tier to
 -- answer a yes/no question.
 -- ============================================================================
@@ -549,6 +549,173 @@ comment on function has_recent_inquiry is
   'Duplicate-submission guard for the tour form. Returns only a boolean so an anonymous caller learns nothing about existing enquiries.';
 
 
+-- Migration 0004: Admin refinement additions
+-- Adds: inquiries.starred, announcements table, opening_hours table
+--
+-- GENUINELY idempotent. An earlier version DROPPED both tables before creating
+-- them, which meant re-running apply.sql silently destroyed every announcement
+-- the owner had written and any opening hours they had adjusted. Tables are now
+-- created only if absent, and missing columns are added in place.
+
+-- ---------------------------------------------------------------------------
+-- 1. inquiries.starred
+-- ---------------------------------------------------------------------------
+
+ALTER TABLE inquiries
+  ADD COLUMN IF NOT EXISTS starred boolean NOT NULL DEFAULT false;
+
+-- ---------------------------------------------------------------------------
+-- 2. announcements
+--    Drop and recreate cleanly in case a previous partial run left it
+--    in a bad state (e.g. missing the `active` column).
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS announcements (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  message     text NOT NULL CHECK (char_length(message) <= 300),
+  cta_text    text,
+  cta_href    text,
+  active      boolean NOT NULL DEFAULT false,
+  created_at  timestamptz NOT NULL DEFAULT now(),
+  updated_at  timestamptz NOT NULL DEFAULT now()
+);
+
+COMMENT ON TABLE announcements IS
+  'Site-wide banner messages displayed at the top of every public page.';
+
+ALTER TABLE announcements
+  ADD COLUMN IF NOT EXISTS cta_text text,
+  ADD COLUMN IF NOT EXISTS cta_href text,
+  ADD COLUMN IF NOT EXISTS active boolean NOT NULL DEFAULT false;
+
+ALTER TABLE announcements ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "admins can manage announcements" ON announcements;
+DROP POLICY IF EXISTS "public can read active announcements" ON announcements;
+
+CREATE POLICY "admins can manage announcements"
+  ON announcements
+  FOR ALL
+  TO authenticated
+  USING (is_admin())
+  WITH CHECK (is_admin());
+
+CREATE POLICY "public can read active announcements"
+  ON announcements
+  FOR SELECT
+  TO anon
+  USING (active = true);
+
+-- ---------------------------------------------------------------------------
+-- 3. opening_hours
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS opening_hours (
+  day_of_week  int PRIMARY KEY CHECK (day_of_week BETWEEN 1 AND 7),
+  day_name     text NOT NULL,
+  opens        text,
+  closes       text,
+  closed       boolean NOT NULL DEFAULT false,
+  note         text,
+  updated_at   timestamptz NOT NULL DEFAULT now()
+);
+
+COMMENT ON TABLE opening_hours IS
+  'Structured opening hours per day of the week (1=Monday, 7=Sunday).';
+
+ALTER TABLE opening_hours ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "admins can manage opening_hours" ON opening_hours;
+DROP POLICY IF EXISTS "public can read opening_hours" ON opening_hours;
+
+CREATE POLICY "admins can manage opening_hours"
+  ON opening_hours
+  FOR ALL
+  TO authenticated
+  USING (is_admin())
+  WITH CHECK (is_admin());
+
+CREATE POLICY "public can read opening_hours"
+  ON opening_hours
+  FOR SELECT
+  TO anon
+  USING (true);
+
+-- Seed 7 default rows (24/7 care — adjust in the admin once the site is live)
+INSERT INTO opening_hours (day_of_week, day_name, opens, closes, closed, note)
+VALUES
+  (1, 'monday',    '00:00', '23:59', false, null),
+  (2, 'tuesday',   '00:00', '23:59', false, null),
+  (3, 'wednesday', '00:00', '23:59', false, null),
+  (4, 'thursday',  '00:00', '23:59', false, null),
+  (5, 'friday',    '00:00', '23:59', false, null),
+  (6, 'saturday',  '00:00', '23:59', false, null),
+  (7, 'sunday',    '00:00', '23:59', false, null)
+ON CONFLICT (day_of_week) DO NOTHING;
+
+
+-- ============================================================================
+-- site_copy: the words on the page
+--
+-- Until now the tagline, the promise strip, the about paragraph, the meals
+-- paragraph and the five values were compiled into the build from
+-- content/source-of-truth.json. The owner could not change a single word of the
+-- most prominent copy on their own website.
+--
+-- This table holds all of it, plus the section headings that were hardcoded in
+-- page.tsx. Seeded from the same JSON so nothing changes visually.
+--
+-- `source` keeps the audit trail that the content rule depends on:
+--   'artwork'   came from the client's own brochure or infographic, verbatim
+--   'editorial' written for the site, and safe to reword
+-- The admin screen shows that distinction, so nobody edits the client's own
+-- words without realising it.
+-- ============================================================================
+
+do $$ begin
+  create type copy_kind as enum ('short', 'long', 'list');
+exception when duplicate_object then null; end $$;
+
+do $$ begin
+  create type copy_source as enum ('artwork', 'editorial');
+exception when duplicate_object then null; end $$;
+
+create table if not exists site_copy (
+  id          uuid primary key default gen_random_uuid(),
+  slug        text not null unique,
+  section     text not null,
+  label       text not null,
+  help        text,
+  kind        copy_kind not null default 'short',
+  source      copy_source not null default 'editorial',
+  value       text,
+  value_list  text[] not null default '{}',
+  position    integer not null default 0,
+  published   boolean not null default false,
+  updated_at  timestamptz not null default now()
+);
+
+create index if not exists site_copy_section_position_idx on site_copy (section, position);
+
+drop trigger if exists site_copy_set_updated_at on site_copy;
+create trigger site_copy_set_updated_at before update on site_copy
+  for each row execute function set_updated_at();
+
+-- Same policy shape as every other content table.
+alter table site_copy enable row level security;
+
+drop policy if exists "public reads published" on site_copy;
+create policy "public reads published" on site_copy
+  for select using (published = true);
+
+drop policy if exists "admins write" on site_copy;
+create policy "admins write" on site_copy
+  for all using (is_admin()) with check (is_admin());
+
+comment on table site_copy is
+  'Editable page copy. `source` records whether the words came from the client''s own artwork or were written for the site.';
+
+
 -- ============================================================================
 -- Columbia Care, seed data
 --
@@ -570,8 +737,8 @@ insert into site_settings (
   latitude, longitude, license_number, licensed_capacity, hours, location_line, service_area
 ) values (
   'singleton',
-  null,   -- ASK_CLIENT q1, no number published yet
-  null,
+  '206-499-0849',   -- ASK_CLIENT q1, no number published yet
+  '206-499-0849',
   null,
   '425-212-9108',
   'columbiacareafh@gmail.com',
@@ -585,11 +752,13 @@ insert into site_settings (
   array['Everett']::text[]   -- Everett only: the sole confirmed area
 )
 on conflict (id) do update set
-  fax = excluded.fax, email = excluded.email,
+  phone = excluded.phone, phone_display = excluded.phone_display,
+  sms = excluded.sms, fax = excluded.fax, email = excluded.email,
   street_address = excluded.street_address, address_locality = excluded.address_locality,
   address_region = excluded.address_region, postal_code = excluded.postal_code,
   hours = excluded.hours, location_line = excluded.location_line,
-  service_area = excluded.service_area;
+  service_area = excluded.service_area,
+  updated_at = now();
 
 -- availability: starts unset, so the badge renders nothing until the client sets it.
 insert into availability (id, status) values ('singleton', 'unset')
@@ -671,6 +840,43 @@ insert into pages (slug, title, lead, seo_description, published) values
 on conflict (slug) do update set
   title = excluded.title, lead = excluded.lead,
   seo_description = excluded.seo_description, published = excluded.published;
+
+-- site_copy: every editable word on the page, seeded from the artwork file.
+insert into site_copy (slug, section, label, help, kind, source, value, value_list, position, published) values
+  ('hero_tagline', 'Hero', 'Main headline', 'The first thing a family reads.', 'short', 'artwork', 'A Place to Feel at Home, A Place to Be Cared For.', '{}', 0, true),
+  ('hero_lead', 'Hero', 'Line under the headline', null, 'short', 'editorial', 'An adult family home in Everett, Washington.', '{}', 1, true),
+  ('promise', 'Promise strip', 'Promise', 'The band under the hero.', 'short', 'artwork', 'A safe place. A caring heart. A better quality of life.', '{}', 2, true),
+  ('values', 'Promise strip', 'Values', 'Shown as small capitals beneath the promise.', 'list', 'artwork', null, array['24-Hour Care', 'Compassion', 'Dignity', 'Respect', 'Safety']::text[], 3, true),
+  ('about_eyebrow', 'About', 'Small label above the heading', null, 'short', 'editorial', 'Who we are', '{}', 4, true),
+  ('about_heading', 'About', 'Heading', null, 'short', 'editorial', 'A family-like environment', '{}', 5, true),
+  ('about_body', 'About', 'About paragraph', 'Your description of the home.', 'long', 'artwork', 'At Columbia Care Adult Family Home, we provide a safe, comfortable, and caring home where every resident is treated with dignity and respect. Our goal is to help each resident maintain the highest possible quality of life while receiving personalized care in a family-like environment.', '{}', 6, true),
+  ('care_eyebrow', 'Care', 'Small label above the heading', null, 'short', 'editorial', 'Care & services', '{}', 7, true),
+  ('care_heading', 'Care', 'Heading', null, 'short', 'editorial', 'What we do, every day', '{}', 8, true),
+  ('care_included_heading', 'Care', 'Heading above the daily list', null, 'short', 'editorial', 'Included every single day', '{}', 9, true),
+  ('day_eyebrow', 'A day', 'Small label above the heading', null, 'short', 'editorial', 'Morning to night', '{}', 10, true),
+  ('day_heading', 'A day', 'Heading', null, 'short', 'editorial', 'A day in our home', '{}', 11, true),
+  ('day_lead', 'A day', 'Introduction', null, 'long', 'editorial', 'Families always ask what the days actually look like. Here is the whole of one, from the first good morning to the last safety check.', '{}', 12, true),
+  ('home_eyebrow', 'Our home', 'Small label above the heading', null, 'short', 'editorial', 'Our home', '{}', 13, true),
+  ('home_heading', 'Our home', 'Heading', null, 'short', 'editorial', 'Come and look around', '{}', 14, true),
+  ('home_lead', 'Our home', 'Introduction', null, 'short', 'editorial', 'A real house on a quiet street, not a facility.', '{}', 15, true),
+  ('home_note', 'Our home', 'Note under the gallery', null, 'short', 'editorial', 'Photographs show the shared areas of the home. To see everything, come and visit.', '{}', 16, true),
+  ('meals_eyebrow', 'Meals', 'Small label above the heading', null, 'short', 'editorial', 'Meals & dining', '{}', 17, true),
+  ('meals_heading', 'Meals', 'Heading', null, 'short', 'editorial', 'Home-cooked, every day', '{}', 18, true),
+  ('meals_body', 'Meals', 'Meals paragraph', 'Your description of the food.', 'long', 'artwork', 'Our home provides a wide variety of nutritious, home-cooked meals daily for breakfast, lunch, dinner, and snacks between meals such as fresh fruit and vegetables.', '{}', 19, true),
+  ('meals_note', 'Meals', 'Note under the paragraph', null, 'long', 'editorial', 'Does your loved one have a special diet, a food they cannot eat, or a favourite meal? Tell us and we will talk it through.', '{}', 20, true),
+  ('visit_eyebrow', 'Find us', 'Small label above the heading', null, 'short', 'editorial', 'Find us', '{}', 21, true),
+  ('visit_heading', 'Find us', 'Heading', null, 'short', 'editorial', 'Close to home, easy to reach', '{}', 22, true),
+  ('contact_eyebrow', 'Contact', 'Small label above the heading', null, 'short', 'editorial', 'Book a house tour', '{}', 23, true),
+  ('contact_heading', 'Contact', 'Heading', null, 'short', 'editorial', 'Come and see the home', '{}', 24, true),
+  ('contact_lead', 'Contact', 'Introduction', null, 'long', 'editorial', 'Tell us a little about your loved one and what they need. There is no pressure and no obligation, and most families visit two or three homes before they decide.', '{}', 25, true),
+  ('contact_cta', 'Contact', 'Line beside the heart badge', 'Your own wording from the brochure.', 'short', 'artwork', 'Contact us to book a house tour!', '{}', 26, true),
+  ('closing_line', 'Contact', 'Handwritten closing line', 'Set in the script face. Keep it short.', 'short', 'artwork', 'We treat your loved one like family.', '{}', 27, true)
+on conflict (slug) do update set
+  section = excluded.section, label = excluded.label, help = excluded.help,
+  kind = excluded.kind, source = excluded.source, position = excluded.position;
+-- NOTE: `value` is deliberately NOT overwritten on conflict. Re-running the
+-- seed refreshes the labels and grouping without discarding anything the
+-- owner has since reworded in the admin console.
 
 -- testimonials, team, faqs and media are deliberately NOT seeded.
 -- The client has supplied no quotes (q14), no staff names (q7), no FAQ answers,

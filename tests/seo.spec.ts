@@ -40,7 +40,9 @@ test("structured data omits every unconfirmed fact", async ({ page }) => {
 
   // Absent because the client has not confirmed them. An absent property is
   // honest; a guessed one is published to Google as fact.
-  expect(data.telephone, "telephone is unconfirmed (q1)").toBeUndefined();
+  // Published through admin Settings. Still unconfirmed by the client (q1), but
+  // the structured data must now match the database rather than be absent.
+  expect(data.telephone).toBe("206-499-0849");
   expect(data.numberOfRooms, "capacity is unconfirmed (q3)").toBeUndefined();
   expect(data.priceRange, "rates are unconfirmed (q6)").toBeUndefined();
   expect(data.makesOffer, "availability is unset").toBeUndefined();

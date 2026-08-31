@@ -26,9 +26,12 @@ import {
   getSchedule,
   getServices,
   getSectionImage,
+  getSiteCopy,
   getSiteSettings,
   getTestimonials,
   getWhyFamilies,
+  copy,
+  copyList,
 } from "@/lib/db/queries";
 import type { TestimonialItem } from "@/components/site/testimonial";
 
@@ -50,30 +53,46 @@ export const revalidate = 3600;
  * page than it does across several short ones.
  */
 export default async function HomePage() {
-  const tagline = published(identity.tagline);
-  const promise = published(identity.promise);
-  const about = published(identity.about);
-  const meals = published(identity.meals);
-  const tourCta = published(identity.tourCta);
-
-  const values = published(identity.values) ?? [];
-
-  const [settings, availability, services, care, included, reasons, quotes, schedule, gallery, hero, mealsPhoto] =
-    await Promise.all([
-      getSiteSettings(),
-      getAvailability(),
-      getServices(),
-      getCareTypes(),
-      getEveryDay(),
-      getWhyFamilies(),
-      getTestimonials(),
-      getSchedule(),
-      getGallery(),
-      getSectionImage("hero"),
-      getSectionImage("meals"),
-    ]);
+  const [
+    settings,
+    availability,
+    services,
+    care,
+    included,
+    reasons,
+    quotes,
+    schedule,
+    gallery,
+    hero,
+    mealsPhoto,
+    text,
+  ] = await Promise.all([
+    getSiteSettings(),
+    getAvailability(),
+    getServices(),
+    getCareTypes(),
+    getEveryDay(),
+    getWhyFamilies(),
+    getTestimonials(),
+    getSchedule(),
+    getGallery(),
+    getSectionImage("hero"),
+    getSectionImage("meals"),
+    getSiteCopy(),
+  ]);
 
   const { phone, telHref: tel, addressLine: address, locationLine, email, fax, hours } = settings;
+
+  // Every word below is editable in the admin. The artwork value is the
+  // fallback, so a slug that has not been seeded still renders the right words.
+  const t = (slug: string, fallback: string | null) => copy(text, slug, fallback ?? "");
+  const tagline = t("hero_tagline", published(identity.tagline));
+  const heroLead = t("hero_lead", "An adult family home in Everett, Washington.");
+  const promise = t("promise", published(identity.promise));
+  const values = copyList(text, "values", published(identity.values) ?? []);
+  const about = t("about_body", published(identity.about));
+  const meals = t("meals_body", published(identity.meals));
+  const tourCta = t("contact_cta", published(identity.tourCta));
   const testimonials = quotes as TestimonialItem[];
 
   return (
@@ -82,7 +101,7 @@ export default async function HomePage() {
       <Hero
         size="home"
         title={tagline ?? "Columbia Care Adult Family Home"}
-        lead="An adult family home in Everett, Washington."
+        lead={heroLead}
         image={hero}
         badge={
           <AvailabilityBadge
@@ -117,8 +136,8 @@ export default async function HomePage() {
       {/* -------------------------------------------------------------- about */}
       <AnchorSection id="about" title="About our home">
         <SectionHeading
-          eyebrow="Who we are"
-          title="A family-like environment"
+          eyebrow={t("about_eyebrow", "Who we are")}
+          title={t("about_heading", "A family-like environment")}
           lead={about}
           align="center"
         />
@@ -142,8 +161,8 @@ export default async function HomePage() {
       {/* --------------------------------------------------------------- care */}
       <AnchorSection id="care" title="Care and services" ground="wash">
         <SectionHeading
-          eyebrow="Care &amp; services"
-          title="What we do, every day"
+          eyebrow={t("care_eyebrow", "Care & services")}
+          title={t("care_heading", "What we do, every day")}
           align="center"
         />
 
@@ -185,7 +204,7 @@ export default async function HomePage() {
           <>
             <LaurelDivider className="py-12" />
             <h3 className="text-h3 mb-6 text-center font-sans font-bold">
-              Included every single day
+              {t("care_included_heading", "Included every single day")}
             </h3>
             <ul className="flex flex-wrap justify-center gap-2">
               {included.map((item) => (
@@ -217,11 +236,13 @@ export default async function HomePage() {
         <DayGradient />
         <div className="relative mx-auto max-w-3xl px-4 sm:px-6">
           <div className="mb-14 text-center">
-            <p className="label text-sage-deep mb-3">Morning to night</p>
-            <h2 className="text-h1 mb-5">A day in our home</h2>
+            <p className="label text-sage-deep mb-3">{t("day_eyebrow", "Morning to night")}</p>
+            <h2 className="text-h1 mb-5">{t("day_heading", "A day in our home")}</h2>
             <p className="text-lead text-ink-soft mx-auto max-w-[52ch]">
-              Families always ask what the days actually look like. Here is the whole of one, from
-              the first good morning to the last safety check.
+              {t(
+                "day_lead",
+                "Families always ask what the days actually look like. Here is the whole of one, from the first good morning to the last safety check.",
+              )}
             </p>
           </div>
 
@@ -247,14 +268,17 @@ export default async function HomePage() {
       {/* --------------------------------------------------------------- home */}
       <AnchorSection id="home" title="Our home">
         <SectionHeading
-          eyebrow="Our home"
-          title="Come and look around"
-          lead="A real house on a quiet street, not a facility."
+          eyebrow={t("home_eyebrow", "Our home")}
+          title={t("home_heading", "Come and look around")}
+          lead={t("home_lead", "A real house on a quiet street, not a facility.")}
           align="center"
         />
         <Gallery images={gallery} />
         <p className="text-stone mx-auto mt-8 max-w-[56ch] text-center">
-          Photographs show the shared areas of the home. To see everything, come and visit.
+          {t(
+            "home_note",
+            "Photographs show the shared areas of the home. To see everything, come and visit.",
+          )}
         </p>
       </AnchorSection>
 
@@ -275,15 +299,17 @@ export default async function HomePage() {
             </Reveal>
             <div>
               <SectionHeading
-                eyebrow="Meals &amp; dining"
-                title="Home-cooked, every day"
+                eyebrow={t("meals_eyebrow", "Meals & dining")}
+                title={t("meals_heading", "Home-cooked, every day")}
                 className="mb-6"
               />
               <Prose>
                 <p className="text-lead text-ink-soft">{meals}</p>
                 <p className="text-stone">
-                  Does your loved one have a special diet, a food they cannot eat, or a favourite
-                  meal? Tell us and we will talk it through.
+                  {t(
+                    "meals_note",
+                    "Does your loved one have a special diet, a food they cannot eat, or a favourite meal? Tell us and we will talk it through.",
+                  )}
                 </p>
               </Prose>
             </div>
@@ -306,8 +332,8 @@ export default async function HomePage() {
       {address ? (
         <AnchorSection id="visit" title="Where to find us">
           <SectionHeading
-            eyebrow="Find us"
-            title="Close to home, easy to reach"
+            eyebrow={t("visit_eyebrow", "Find us")}
+            title={t("visit_heading", "Close to home, easy to reach")}
             lead={locationLine}
             align="center"
           />
@@ -349,12 +375,14 @@ export default async function HomePage() {
       <AnchorSection id="contact" title="Book a house tour" ground="wash">
         <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)] lg:gap-16">
           <div className="lg:sticky lg:top-24">
-            <p className="label text-sage-deep mb-3">Book a house tour</p>
-            <h2 className="text-h1 mb-5">Come and see the home</h2>
+            <p className="label text-sage-deep mb-3">{t("contact_eyebrow", "Book a house tour")}</p>
+            <h2 className="text-h1 mb-5">{t("contact_heading", "Come and see the home")}</h2>
 
             <p className="text-lead text-ink-soft mb-6 max-w-[46ch]">
-              Tell us a little about your loved one and what they need. There is no pressure and no
-              obligation, and most families visit two or three homes before they decide.
+              {t(
+                "contact_lead",
+                "Tell us a little about your loved one and what they need. There is no pressure and no obligation, and most families visit two or three homes before they decide.",
+              )}
             </p>
 
             {phone || email ? (

@@ -75,11 +75,13 @@ w(`insert into site_settings (
   ${arr(published(c.serviceArea))}   -- Everett only: the sole confirmed area
 )
 on conflict (id) do update set
-  fax = excluded.fax, email = excluded.email,
+  phone = excluded.phone, phone_display = excluded.phone_display,
+  sms = excluded.sms, fax = excluded.fax, email = excluded.email,
   street_address = excluded.street_address, address_locality = excluded.address_locality,
   address_region = excluded.address_region, postal_code = excluded.postal_code,
   hours = excluded.hours, location_line = excluded.location_line,
-  service_area = excluded.service_area;`);
+  service_area = excluded.service_area,
+  updated_at = now();`);
 w();
 
 // --- availability ----------------------------------------------------------
@@ -194,6 +196,256 @@ w("  title = excluded.title, lead = excluded.lead,");
 w("  seo_description = excluded.seo_description, published = excluded.published;");
 w();
 
+// --- site_copy -------------------------------------------------------------
+// Everything the owner can reword. Artwork entries are the client's own words,
+// verbatim; editorial entries were written for the site. The `source` column
+// keeps that distinction visible in the admin screen.
+const copy = [
+  // Hero
+  [
+    "hero_tagline",
+    "Hero",
+    "Main headline",
+    "The first thing a family reads.",
+    "short",
+    "artwork",
+    published(identity.tagline),
+  ],
+  [
+    "hero_lead",
+    "Hero",
+    "Line under the headline",
+    null,
+    "short",
+    "editorial",
+    "An adult family home in Everett, Washington.",
+  ],
+
+  // Promise strip
+  [
+    "promise",
+    "Promise strip",
+    "Promise",
+    "The band under the hero.",
+    "short",
+    "artwork",
+    published(identity.promise),
+  ],
+  [
+    "values",
+    "Promise strip",
+    "Values",
+    "Shown as small capitals beneath the promise.",
+    "list",
+    "artwork",
+    published(identity.values),
+  ],
+
+  // About
+  [
+    "about_eyebrow",
+    "About",
+    "Small label above the heading",
+    null,
+    "short",
+    "editorial",
+    "Who we are",
+  ],
+  ["about_heading", "About", "Heading", null, "short", "editorial", "A family-like environment"],
+  [
+    "about_body",
+    "About",
+    "About paragraph",
+    "Your description of the home.",
+    "long",
+    "artwork",
+    published(identity.about),
+  ],
+
+  // Care
+  [
+    "care_eyebrow",
+    "Care",
+    "Small label above the heading",
+    null,
+    "short",
+    "editorial",
+    "Care & services",
+  ],
+  ["care_heading", "Care", "Heading", null, "short", "editorial", "What we do, every day"],
+  [
+    "care_included_heading",
+    "Care",
+    "Heading above the daily list",
+    null,
+    "short",
+    "editorial",
+    "Included every single day",
+  ],
+
+  // A day
+  [
+    "day_eyebrow",
+    "A day",
+    "Small label above the heading",
+    null,
+    "short",
+    "editorial",
+    "Morning to night",
+  ],
+  ["day_heading", "A day", "Heading", null, "short", "editorial", "A day in our home"],
+  [
+    "day_lead",
+    "A day",
+    "Introduction",
+    null,
+    "long",
+    "editorial",
+    "Families always ask what the days actually look like. Here is the whole of one, from the first good morning to the last safety check.",
+  ],
+
+  // Our home
+  [
+    "home_eyebrow",
+    "Our home",
+    "Small label above the heading",
+    null,
+    "short",
+    "editorial",
+    "Our home",
+  ],
+  ["home_heading", "Our home", "Heading", null, "short", "editorial", "Come and look around"],
+  [
+    "home_lead",
+    "Our home",
+    "Introduction",
+    null,
+    "short",
+    "editorial",
+    "A real house on a quiet street, not a facility.",
+  ],
+  [
+    "home_note",
+    "Our home",
+    "Note under the gallery",
+    null,
+    "short",
+    "editorial",
+    "Photographs show the shared areas of the home. To see everything, come and visit.",
+  ],
+
+  // Meals
+  [
+    "meals_eyebrow",
+    "Meals",
+    "Small label above the heading",
+    null,
+    "short",
+    "editorial",
+    "Meals & dining",
+  ],
+  ["meals_heading", "Meals", "Heading", null, "short", "editorial", "Home-cooked, every day"],
+  [
+    "meals_body",
+    "Meals",
+    "Meals paragraph",
+    "Your description of the food.",
+    "long",
+    "artwork",
+    published(identity.meals),
+  ],
+  [
+    "meals_note",
+    "Meals",
+    "Note under the paragraph",
+    null,
+    "long",
+    "editorial",
+    "Does your loved one have a special diet, a food they cannot eat, or a favourite meal? Tell us and we will talk it through.",
+  ],
+
+  // Find us
+  [
+    "visit_eyebrow",
+    "Find us",
+    "Small label above the heading",
+    null,
+    "short",
+    "editorial",
+    "Find us",
+  ],
+  [
+    "visit_heading",
+    "Find us",
+    "Heading",
+    null,
+    "short",
+    "editorial",
+    "Close to home, easy to reach",
+  ],
+
+  // Contact
+  [
+    "contact_eyebrow",
+    "Contact",
+    "Small label above the heading",
+    null,
+    "short",
+    "editorial",
+    "Book a house tour",
+  ],
+  ["contact_heading", "Contact", "Heading", null, "short", "editorial", "Come and see the home"],
+  [
+    "contact_lead",
+    "Contact",
+    "Introduction",
+    null,
+    "long",
+    "editorial",
+    "Tell us a little about your loved one and what they need. There is no pressure and no obligation, and most families visit two or three homes before they decide.",
+  ],
+  [
+    "contact_cta",
+    "Contact",
+    "Line beside the heart badge",
+    "Your own wording from the brochure.",
+    "short",
+    "artwork",
+    published(identity.tourCta),
+  ],
+  [
+    "closing_line",
+    "Contact",
+    "Handwritten closing line",
+    "Set in the script face. Keep it short.",
+    "short",
+    "artwork",
+    published(identity.closingLine),
+  ],
+];
+
+w("-- site_copy: every editable word on the page, seeded from the artwork file.");
+w(
+  "insert into site_copy (slug, section, label, help, kind, source, value, value_list, position, published) values",
+);
+w(
+  copy
+    .map(([slug, section, label, help, kind, source, value], i) => {
+      const isList = kind === "list";
+      return (
+        `  (${q(slug)}, ${q(section)}, ${q(label)}, ${q(help)}, ${q(kind)}, ${q(source)}, ` +
+        `${isList ? "null" : q(value)}, ${isList ? arr(value) : "'{}'"}, ${i}, true)`
+      );
+    })
+    .join(",\n") + "\non conflict (slug) do update set",
+);
+w("  section = excluded.section, label = excluded.label, help = excluded.help,");
+w("  kind = excluded.kind, source = excluded.source, position = excluded.position;");
+w("-- NOTE: `value` is deliberately NOT overwritten on conflict. Re-running the");
+w("-- seed refreshes the labels and grouping without discarding anything the");
+w("-- owner has since reworded in the admin console.");
+w();
+
 // --- deliberately empty ----------------------------------------------------
 w("-- testimonials, team, faqs and media are deliberately NOT seeded.");
 w("-- The client has supplied no quotes (q14), no staff names (q7), no FAQ answers,");
@@ -213,4 +465,5 @@ console.log(`  schedule_items  ${schedule.length}`);
 console.log(`  every_day       ${everyDay.length}`);
 console.log(`  why_families    ${why.length}`);
 console.log(`  pages           ${pages.length}`);
+console.log(`  site_copy       ${copy.length}`);
 console.log("  testimonials/team/faqs/media: 0 (intentional)");

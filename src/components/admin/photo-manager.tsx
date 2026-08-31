@@ -1,12 +1,17 @@
 "use client";
 
 import Image from "next/image";
-import { useActionState, useEffect, useMemo, useState, useTransition } from "react";
+import { useActionState, useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
   CheckSquare,
+  Eye,
+  EyeOff,
+  Home,
   ImageIcon,
+  LayoutGrid,
   Loader2,
   Pencil,
+  Search,
   Square,
   Trash2,
   Upload,
@@ -14,31 +19,38 @@ import {
   X,
 } from "lucide-react";
 import {
-  assignSectionPhoto,
   bulkPublishPhotos,
   deletePhoto,
+  togglePhotoPlacement,
   togglePublished,
   updatePhoto,
-  uploadPhoto,
+  uploadPhotos,
   type ActionResult,
 } from "@/app/admin/actions";
-import { AdminCard, AdminSection } from "@/components/admin/cards";
+import { AdminCard } from "@/components/admin/cards";
 import { AdminIconButton, Toast } from "@/components/admin/ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   GALLERY_CATEGORIES,
-  SECTION_SLOT_LABELS,
-  SECTION_SLOTS,
-  isSectionSlot,
+  getPlacements,
+  hasPlacement,
+  PLACEMENT_OPTIONS,
   type AdminPhoto,
-  type SectionSlot,
 } from "@/lib/media";
 import { cn } from "@/lib/utils";
 
+const FILTER_TABS = [
+  { id: "all", label: "All photos", icon: LayoutGrid },
+  { id: "hero", label: "Hero", icon: Home },
+  { id: "meals", label: "Meals", icon: UtensilsCrossed },
+  ...GALLERY_CATEGORIES.map((cat) => ({ id: cat, label: cat, icon: ImageIcon })),
+  { id: "uncategorised", label: "Untagged", icon: ImageIcon },
+] as const;
+
 // ---------------------------------------------------------------------------
-// Confirm dialog (replaces window.confirm for delete actions)
+// Confirm dialog
 // ---------------------------------------------------------------------------
 
 function ConfirmDialog({
@@ -52,7 +64,7 @@ function ConfirmDialog({
 }) {
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-ink/50 p-4"
+      className="admin-scrim fixed inset-0 z-[60] flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="confirm-title"
@@ -76,54 +88,56 @@ function ConfirmDialog({
 }
 
 // ---------------------------------------------------------------------------
-// Main photo manager
+// Main library
 // ---------------------------------------------------------------------------
 
 export function PhotoManager({ initialPhotos }: { initialPhotos: AdminPhoto[] }) {
   const [photos, setPhotos] = useState(initialPhotos);
   const [toast, setToast] = useState<ActionResult | null>(null);
   const [editing, setEditing] = useState<AdminPhoto | null>(null);
-  const [activeCategory, setActiveCategory] = useState<string>("all");
+  const [activeFilter, setActiveFilter] = useState<string>("all");
+  const [query, setQuery] = useState("");
   const [pending, start] = useTransition();
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
-
-  // Bulk selection state
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  const slots = useMemo(() => {
-    const map: Record<SectionSlot, AdminPhoto | null> = { hero: null, meals: null };
-    for (const photo of photos) {
-      if (photo.category === "hero") map.hero = photo;
-      if (photo.category === "meals") map.meals = photo;
-    }
-    return map;
-  }, [photos]);
-
-  const galleryPhotos = useMemo(
-    () => photos.filter((p) => !isSectionSlot(p.category)).sort((a, b) => a.position - b.position),
+  const sortedPhotos = useMemo(
+    () => [...photos].sort((a, b) => a.position - b.position),
     [photos],
   );
 
-  // Category counts for filter tabs
-  const categoryCounts = useMemo(() => {
-    const counts: Record<string, number> = { all: galleryPhotos.length };
-    for (const cat of GALLERY_CATEGORIES) {
-      counts[cat] = galleryPhotos.filter((p) => p.category === cat).length;
+  const filterCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: photos.length };
+    for (const tab of FILTER_TABS) {
+      if (tab.id === "all") continue;
+      if (tab.id === "uncategorised") {
+        counts.uncategorised = photos.filter((p) => getPlacements(p).length === 0).length;
+        continue;
+      }
+      counts[tab.id] = photos.filter((p) => hasPlacement(p, tab.id)).length;
     }
-    counts["uncategorised"] = galleryPhotos.filter((p) => !p.category).length;
     return counts;
-  }, [galleryPhotos]);
+  }, [photos]);
 
   const visiblePhotos = useMemo(() => {
-    if (activeCategory === "all") return galleryPhotos;
-    if (activeCategory === "uncategorised") return galleryPhotos.filter((p) => !p.category);
-    return galleryPhotos.filter((p) => p.category === activeCategory);
-  }, [galleryPhotos, activeCategory]);
+    const q = query.trim().toLowerCase();
+    return sortedPhotos.filter((photo) => {
+      if (activeFilter === "uncategorised") {
+        if (getPlacements(photo).length > 0) return false;
+      } else if (activeFilter !== "all") {
+        if (!hasPlacement(photo, activeFilter)) return false;
+      }
+      if (!q) return true;
+      const haystack = `${photo.caption ?? ""} ${photo.alt}`.toLowerCase();
+      return haystack.includes(q);
+    });
+  }, [sortedPhotos, activeFilter, query]);
+
+  const liveCount = photos.filter((p) => p.published).length;
 
   function announce(result: ActionResult) {
     setToast(result);
-    // Auto-dismiss success toasts after 4 s
     if (result.ok) setTimeout(() => setToast(null), 4000);
   }
 
@@ -133,7 +147,11 @@ export function PhotoManager({ initialPhotos }: { initialPhotos: AdminPhoto[] })
 
   function removePhoto(id: string) {
     setPhotos((prev) => prev.filter((p) => p.id !== id));
-    setSelected((prev) => { const s = new Set(prev); s.delete(id); return s; });
+    setSelected((prev) => {
+      const s = new Set(prev);
+      s.delete(id);
+      return s;
+    });
   }
 
   function run(fn: () => Promise<ActionResult>, onOk?: () => void) {
@@ -166,6 +184,26 @@ export function PhotoManager({ initialPhotos }: { initialPhotos: AdminPhoto[] })
     );
   }
 
+  function togglePlacement(id: string, placement: string, enabled: boolean) {
+    run(
+      () => togglePhotoPlacement(id, placement, enabled),
+      () => {
+        setPhotos((prev) =>
+          prev.map((p) => {
+            if (p.id !== id) return p;
+            const current = getPlacements(p);
+            const placements = enabled
+              ? current.includes(placement)
+                ? current
+                : [...current, placement]
+              : current.filter((item) => item !== placement);
+            return { ...p, placements };
+          }),
+        );
+      },
+    );
+  }
+
   return (
     <div className="grid gap-8">
       <Toast result={toast} />
@@ -176,153 +214,143 @@ export function PhotoManager({ initialPhotos }: { initialPhotos: AdminPhoto[] })
           onConfirm={() => {
             const id = confirmDelete;
             setConfirmDelete(null);
-            run(() => deletePhoto(id), () => {
-              removePhoto(id);
-              if (editing?.id === id) setEditing(null);
-            });
+            run(
+              () => deletePhoto(id),
+              () => {
+                removePhoto(id);
+                if (editing?.id === id) setEditing(null);
+              },
+            );
           }}
           onCancel={() => setConfirmDelete(null)}
         />
       ) : null}
 
-      {/* Upload — top of page, always visible */}
-      <AdminSection
-        title="Upload a photo"
-        lead="JPEG, PNG, WebP or AVIF, up to 8 MB. Every photo needs alt text before it can be saved."
-      >
-        <UploadForm />
-      </AdminSection>
+      <UploadZone />
 
-      {/* Section slots */}
-      <AdminSection
-        title="Section images"
-        lead="These two photographs appear outside the gallery — at the top of the home page and beside the meals text."
-      >
-        <div className="grid gap-4 md:grid-cols-2">
-          {SECTION_SLOTS.map((slot) => (
-            <SectionSlotCard
-              key={slot}
-              slot={slot}
-              photo={slots[slot]}
-              photos={photos}
-              pending={pending}
-              onAssign={(id) =>
-                run(() => assignSectionPhoto(null, form({ id, slot })), () => {
-                  setPhotos((prev) =>
-                    prev.map((p) => {
-                      if (p.category === slot) return { ...p, category: null };
-                      if (p.id === id) return { ...p, category: slot };
-                      return p;
-                    }),
-                  );
-                })
-              }
-              onClear={() => {
-                if (!slots[slot]) return;
-                const p = slots[slot]!;
-                run(() => updatePhoto(null, photoForm(p, { category: null })), () =>
-                  refreshPhoto(p.id, { category: null }),
-                );
-              }}
+      <section aria-labelledby="library-heading">
+        <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h2 id="library-heading" className="text-h3 font-sans font-bold">
+              Your library
+            </h2>
+            <p className="text-stone mt-1 text-[0.9375rem]">
+              {liveCount} live on the website · {photos.length} in your library
+            </p>
+          </div>
+          <div className="relative min-w-[14rem] flex-1 sm:max-w-xs">
+            <Search
+              className="text-stone pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
+              aria-hidden="true"
             />
-          ))}
+            <Input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search captions and descriptions…"
+              className="border-rule-strong bg-paper-raise min-h-11 pl-9"
+              aria-label="Search photos"
+            />
+          </div>
         </div>
-      </AdminSection>
 
-      {/* Gallery with category tabs */}
-      <AdminSection
-        title="Gallery"
-        lead={`${galleryPhotos.filter((p) => p.published).length} of ${galleryPhotos.length} showing on the website`}
-      >
-        {/* Category filter tabs */}
-        {galleryPhotos.length > 0 ? (
-          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <div
-              className="flex flex-wrap gap-1.5"
-              role="group"
-              aria-label="Filter by category"
-            >
-              {[
-                { id: "all", label: "All" },
-                ...GALLERY_CATEGORIES.map((c) => ({ id: c, label: c })),
-                { id: "uncategorised", label: "Uncategorised" },
-              ]
-                .filter(({ id }) => id === "all" || (categoryCounts[id] ?? 0) > 0)
-                .map(({ id, label }) => (
+        <div className="border-rule bg-paper-raise mb-5 flex flex-wrap items-center gap-2 rounded-xl border p-2">
+          <div
+            className="flex flex-1 flex-wrap gap-1"
+            role="tablist"
+            aria-label="Filter library"
+          >
+            {FILTER_TABS.filter(({ id }) => id === "all" || (filterCounts[id] ?? 0) > 0).map(
+              ({ id, label, icon: Icon }) => {
+                const active = activeFilter === id;
+                return (
                   <button
                     key={id}
                     type="button"
-                    aria-pressed={activeCategory === id}
-                    onClick={() => setActiveCategory(id)}
+                    role="tab"
+                    aria-selected={active}
+                    onClick={() => setActiveFilter(id)}
                     className={cn(
-                      "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[0.875rem] transition-colors",
-                      activeCategory === id
-                        ? "border-sage bg-sage-wash text-sage-deep font-semibold"
-                        : "border-rule text-stone hover:border-sage/60",
+                      "inline-flex min-h-10 items-center gap-1.5 rounded-lg px-3 text-[0.875rem] transition-all",
+                      active
+                        ? "bg-ink text-paper font-semibold shadow-sm"
+                        : "text-stone hover:bg-sage-wash hover:text-sage-deep",
                     )}
                   >
+                    <Icon className="size-3.5 shrink-0 opacity-80" aria-hidden="true" />
                     {label}
-                    <span className="tabular-nums text-[0.75rem]">
-                      ({categoryCounts[id] ?? 0})
+                    <span
+                      className={cn(
+                        "tabular-nums text-[0.75rem]",
+                        active ? "text-paper/75" : "text-stone",
+                      )}
+                    >
+                      {filterCounts[id] ?? 0}
                     </span>
                   </button>
-                ))}
-            </div>
-
-            {/* Bulk select toggle */}
-            <button
-              type="button"
-              onClick={() => { setSelectMode((v) => !v); setSelected(new Set()); }}
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[0.875rem] transition-colors",
-                selectMode
-                  ? "border-sage bg-sage-wash text-sage-deep font-semibold"
-                  : "border-rule text-stone hover:border-sage/60",
-              )}
-            >
-              {selectMode ? <CheckSquare className="size-4" /> : <Square className="size-4" />}
-              {selectMode ? "Selecting…" : "Select"}
-            </button>
+                );
+              },
+            )}
           </div>
-        ) : null}
 
-        {/* Bulk action bar */}
+          <button
+            type="button"
+            onClick={() => {
+              setSelectMode((v) => !v);
+              setSelected(new Set());
+            }}
+            className={cn(
+              "inline-flex min-h-10 items-center gap-1.5 rounded-lg border px-3 text-[0.875rem] transition-colors",
+              selectMode
+                ? "border-sage bg-sage-wash text-sage-deep font-semibold"
+                : "border-rule text-stone hover:border-sage/60",
+            )}
+          >
+            {selectMode ? <CheckSquare className="size-4" /> : <Square className="size-4" />}
+            {selectMode ? "Selecting…" : "Select"}
+          </button>
+        </div>
+
         {selectMode && selected.size > 0 ? (
-          <div className="bg-sage-wash border-sage mb-4 flex flex-wrap items-center gap-3 rounded-lg border px-4 py-3">
-            <span className="text-sage-deep font-semibold">
-              {selected.size} selected
-            </span>
+          <div className="bg-sage-wash border-sage mb-5 flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3">
+            <span className="text-sage-deep font-semibold">{selected.size} selected</span>
             <Button size="dense" onClick={() => runBulk(true)} disabled={pending}>
-              Publish all
+              Show on website
             </Button>
             <Button size="dense" variant="outline" onClick={() => runBulk(false)} disabled={pending}>
-              Hide all
+              Hide
             </Button>
             <button
               type="button"
-              onClick={() => { setSelected(new Set()); setSelectMode(false); }}
-              className="text-stone ml-auto hover:text-ink"
+              onClick={() => {
+                setSelected(new Set());
+                setSelectMode(false);
+              }}
+              className="text-stone hover:text-ink ml-auto inline-flex min-h-10 items-center gap-1"
             >
               <X className="size-4" aria-hidden="true" />
-              <span className="sr-only">Cancel selection</span>
+              Cancel
             </button>
           </div>
         ) : null}
 
-        {galleryPhotos.length === 0 ? (
-          <AdminCard className="border-dashed p-10 text-center">
-            <ImageIcon className="text-stone mx-auto mb-3 size-10" aria-hidden="true" />
-            <p className="text-stone">Upload photos above to build the gallery.</p>
+        {photos.length === 0 ? (
+          <AdminCard className="border-dashed p-12 text-center">
+            <ImageIcon className="text-stone mx-auto mb-3 size-12" aria-hidden="true" />
+            <p className="text-stone text-[1.05rem]">Your library is empty.</p>
+            <p className="text-stone mt-1 text-[0.9375rem]">
+              Upload a photograph above — it will appear here instantly.
+            </p>
           </AdminCard>
         ) : visiblePhotos.length === 0 ? (
           <AdminCard className="border-dashed p-10 text-center">
-            <p className="text-stone">No photos in this category yet.</p>
+            <p className="text-stone">No photos match this filter.</p>
           </AdminCard>
         ) : (
-          <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {visiblePhotos.map((photo) => (
               <li key={photo.id}>
-                <PhotoCard
+                <PhotoTile
                   photo={photo}
                   pending={pending}
                   selectMode={selectMode}
@@ -336,174 +364,464 @@ export function PhotoManager({ initialPhotos }: { initialPhotos: AdminPhoto[] })
                     )
                   }
                   onDelete={() => setConfirmDelete(photo.id)}
+                  onTogglePlacement={togglePlacement}
                 />
               </li>
             ))}
           </ul>
         )}
-      </AdminSection>
+      </section>
 
-      {editing ? (
-        <EditDialog photo={editing} onClose={() => setEditing(null)} />
-      ) : null}
+      {editing ? <EditDialog photo={editing} onClose={() => setEditing(null)} /> : null}
     </div>
   );
 }
 
-function photoForm(photo: AdminPhoto, overrides: { category?: string | null } = {}) {
-  const fd = new FormData();
-  fd.set("id", photo.id);
-  fd.set("alt", photo.alt);
-  fd.set("caption", photo.caption ?? "");
-  const category =
-    overrides.category === null ? "" : (overrides.category ?? photo.category ?? "");
-  fd.set("category", category);
-  if (photo.contains_people) fd.set("contains_people", "on");
-  if (photo.release_on_file) fd.set("release_on_file", "on");
-  return fd;
+// ---------------------------------------------------------------------------
+// Upload zone
+// ---------------------------------------------------------------------------
+
+interface PendingUpload {
+  id: string;
+  file: File;
+  preview: string;
+  alt: string;
+  caption: string;
 }
 
-function form(entries: Record<string, string>) {
-  const fd = new FormData();
-  for (const [key, value] of Object.entries(entries)) fd.set(key, value);
-  return fd;
+function altFromFilename(name: string): string {
+  const base = name
+    .replace(/\.[^.]+$/, "")
+    .replace(/[-_]+/g, " ")
+    .trim();
+  if (!base) return "";
+  return base.charAt(0).toUpperCase() + base.slice(1);
 }
 
-function SectionSlotCard({
-  slot,
-  photo,
-  photos,
-  pending,
-  onAssign,
-  onClear,
-}: {
-  slot: SectionSlot;
-  photo: AdminPhoto | null;
-  photos: AdminPhoto[];
-  pending: boolean;
-  onAssign: (id: string) => void;
-  onClear: () => void;
-}) {
-  const Icon = slot === "hero" ? ImageIcon : UtensilsCrossed;
-  const choices = photos.filter((p) => !isSectionSlot(p.category) || p.category === slot);
+function UploadZone() {
+  const [toast, setToast] = useState<ActionResult | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const [pending, setPending] = useState<PendingUpload[]>([]);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [selectedPlacements, setSelectedPlacements] = useState<Set<string>>(new Set());
+  const [containsPeople, setContainsPeople] = useState(false);
+  const [releaseOnFile, setReleaseOnFile] = useState(false);
+  const [uploading, startUpload] = useTransition();
+  const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(
+    null,
+  );
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const active = pending.find((p) => p.id === activeId) ?? pending[0] ?? null;
+
+  const clearPending = useCallback(() => {
+    setPending((current) => {
+      for (const item of current) URL.revokeObjectURL(item.preview);
+      return [];
+    });
+    setActiveId(null);
+  }, []);
+
+  useEffect(() => () => clearPending(), [clearPending]);
+
+  const addFiles = useCallback((list: FileList | File[], append = false) => {
+    const incoming = Array.from(list).filter((f) => f.type.startsWith("image/"));
+    if (incoming.length === 0) return;
+
+    setPending((current) => {
+      const kept = append ? current : (current.forEach((i) => URL.revokeObjectURL(i.preview)), []);
+      const room = Math.max(0, 24 - kept.length);
+      const slice = incoming.slice(0, room);
+      const nextItems = slice.map((file) => ({
+        id: crypto.randomUUID(),
+        file,
+        preview: URL.createObjectURL(file),
+        alt: altFromFilename(file.name),
+        caption: "",
+      }));
+      const merged = [...kept, ...nextItems];
+      setActiveId((prev) =>
+        prev && merged.some((p) => p.id === prev) ? prev : (merged[0]?.id ?? null),
+      );
+      return merged;
+    });
+  }, []);
+
+  function updatePending(id: string, patch: Partial<Pick<PendingUpload, "alt" | "caption">>) {
+    setPending((current) => current.map((p) => (p.id === id ? { ...p, ...patch } : p)));
+  }
+
+  function removePending(id: string) {
+    setPending((current) => {
+      const target = current.find((p) => p.id === id);
+      if (target) URL.revokeObjectURL(target.preview);
+      const next = current.filter((p) => p.id !== id);
+      setActiveId((prev) => {
+        if (prev !== id) return prev;
+        return next[0]?.id ?? null;
+      });
+      return next;
+    });
+  }
+
+  function onDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragOver(false);
+    if (e.dataTransfer.files?.length) addFiles(e.dataTransfer.files, pending.length > 0);
+  }
+
+  function toggleUploadPlacement(id: string) {
+    setSelectedPlacements((prev) => {
+      const s = new Set(prev);
+      if (s.has(id)) s.delete(id);
+      else s.add(id);
+      return s;
+    });
+  }
+
+  function submitUpload() {
+    if (pending.length === 0) return;
+
+    const missingAlt = pending.find((p) => !p.alt.trim());
+    if (missingAlt) {
+      setToast({
+        ok: false,
+        message: `Add a description for "${missingAlt.file.name}" before uploading.`,
+      });
+      setActiveId(missingAlt.id);
+      return;
+    }
+
+    startUpload(async () => {
+      let uploaded = 0;
+
+      for (let i = 0; i < pending.length; i++) {
+        const item = pending[i];
+        setUploadProgress({ done: i + 1, total: pending.length });
+
+        const fd = new FormData();
+        fd.append("files", item.file);
+        fd.append("alt_0", item.alt.trim());
+        if (item.caption.trim()) fd.append("caption_0", item.caption.trim());
+        selectedPlacements.forEach((placement) => fd.append("placements", placement));
+        if (containsPeople) fd.set("contains_people", "on");
+        if (releaseOnFile) fd.set("release_on_file", "on");
+
+        const result = await uploadPhotos(null, fd);
+        if (!result.ok) {
+          setUploadProgress(null);
+          setToast({
+            ok: false,
+            message:
+              uploaded > 0
+                ? `${result.message} (${uploaded} photo${uploaded === 1 ? "" : "s"} uploaded before this one failed.)`
+                : result.message,
+          });
+          if (uploaded > 0) window.location.reload();
+          return;
+        }
+
+        uploaded += 1;
+      }
+
+      setUploadProgress(null);
+      setToast({
+        ok: true,
+        message: uploaded === 1 ? "1 photo uploaded." : `${uploaded} photos uploaded.`,
+      });
+      clearPending();
+      setSelectedPlacements(new Set());
+      setContainsPeople(false);
+      setReleaseOnFile(false);
+      window.location.reload();
+    });
+  }
 
   return (
-    <AdminCard className="overflow-hidden p-0">
-      <div className="relative aspect-[16/10] bg-sage-wash">
-        {photo?.url ? (
-          <Image src={photo.url} alt="" fill className="object-cover" sizes="400px" />
-        ) : (
-          <div className="text-stone flex h-full flex-col items-center justify-center gap-2">
-            <Icon className="size-8" aria-hidden="true" />
-            <span className="text-[0.875rem]">Placeholder showing</span>
+    <section aria-labelledby="upload-heading">
+      <Toast result={toast} />
+
+      <div className="mb-4">
+        <h2 id="upload-heading" className="font-display text-h2 text-ink">
+          Add to your library
+        </h2>
+        <p className="text-stone mt-1 max-w-[52ch] text-[0.9375rem]">
+          Drop one or many photographs, preview them large, then upload together. Tag for the hero,
+          meals, or gallery — you can refine each photo later.
+        </p>
+      </div>
+
+      <AdminCard className="overflow-hidden p-0 shadow-md">
+        <div className="grid xl:grid-cols-[1.25fr_1fr]">
+          <div
+            role="button"
+            tabIndex={0}
+            aria-label="Drop photos here or press Enter to browse files"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                inputRef.current?.click();
+              }
+            }}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragOver(true);
+            }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={onDrop}
+            className={cn(
+              "relative flex min-h-[22rem] flex-col border-b xl:min-h-[28rem] xl:border-r xl:border-b-0",
+              "bg-[radial-gradient(ellipse_at_30%_20%,color-mix(in_srgb,var(--sage-wash)_90%,transparent),transparent_55%),radial-gradient(ellipse_at_80%_80%,color-mix(in_srgb,var(--sage)_12%,transparent),transparent_50%)]",
+              dragOver && "ring-sage bg-sage-wash/80 ring-2 ring-inset",
+            )}
+          >
+            {active ? (
+              <div className="flex flex-1 flex-col p-4 sm:p-6">
+                <div className="border-rule relative min-h-[14rem] flex-1 overflow-hidden rounded-xl border bg-[#0a0f13]/5 shadow-inner sm:min-h-[18rem] xl:min-h-[20rem]">
+                  <Image
+                    src={active.preview}
+                    alt=""
+                    fill
+                    unoptimized
+                    className="object-contain p-1"
+                    sizes="(max-width: 1280px) 100vw, 60vw"
+                    priority
+                  />
+                </div>
+
+                {pending.length > 1 ? (
+                  <ul
+                    className="mt-4 flex gap-2 overflow-x-auto pb-1"
+                    aria-label="Selected photos"
+                  >
+                    {pending.map((item) => {
+                      const selected = item.id === active.id;
+                      return (
+                        <li key={item.id} className="shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => setActiveId(item.id)}
+                            aria-pressed={selected}
+                            className={cn(
+                              "border-rule relative size-16 overflow-hidden rounded-lg border transition-all sm:size-20",
+                              selected && "ring-sage ring-2 ring-offset-2",
+                            )}
+                          >
+                            <Image
+                              src={item.preview}
+                              alt=""
+                              fill
+                              unoptimized
+                              className="object-cover"
+                              sizes="80px"
+                            />
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : null}
+
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold">{active.file.name}</p>
+                    <p className="text-stone text-[0.8125rem]">
+                      {(active.file.size / (1024 * 1024)).toFixed(1)} MB
+                      {pending.length > 1 ? ` · ${pending.length} photos selected` : null}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removePending(active.id)}
+                    className="text-stone hover:text-ink inline-flex min-h-10 items-center gap-1 text-[0.875rem] underline"
+                  >
+                    <X className="size-4" aria-hidden="true" />
+                    Remove
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-1 flex-col items-center justify-center gap-4 px-8 py-12">
+                <div
+                  className={cn(
+                    "flex size-16 items-center justify-center rounded-full border shadow-sm transition-transform",
+                    dragOver ? "border-sage bg-paper scale-105" : "border-rule bg-paper-raise",
+                  )}
+                >
+                  <Upload className="text-sage-deep size-7" aria-hidden="true" strokeWidth={1.6} />
+                </div>
+                <div className="text-center">
+                  <p className="font-display text-[1.35rem] font-semibold">
+                    {dragOver ? "Release to add photos" : "Drop photos here"}
+                  </p>
+                  <p className="text-stone mt-1 text-[0.875rem]">
+                    JPEG, PNG, WebP or AVIF · up to 8 MB each · 24 at a time
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => inputRef.current?.click()}
+                  className="border-rule bg-paper-raise text-sage-deep hover:border-sage inline-flex min-h-11 items-center rounded-lg border px-5 text-[0.9375rem] font-semibold shadow-sm transition-colors"
+                >
+                  Browse files
+                </button>
+              </div>
+            )}
+
+            <input
+              ref={inputRef}
+              id="photo-file"
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/avif"
+              multiple
+              className="sr-only"
+              onChange={(e) => {
+                if (e.target.files?.length) addFiles(e.target.files);
+                e.target.value = "";
+              }}
+            />
           </div>
-        )}
-        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/80 to-transparent p-4">
-          <p className="font-display text-lg font-semibold text-white">
-            {SECTION_SLOT_LABELS[slot]}
-          </p>
-          {photo ? (
-            <p className="text-[0.8125rem] text-white/80">
-              {photo.published ? "Live on the website" : "Hidden — turn on below"}
-            </p>
-          ) : null}
+
+          <div className="grid gap-5 p-6 lg:p-8">
+            {pending.length === 0 ? (
+              <p className="text-stone text-[0.9375rem]">
+                Choose photos on the left to add descriptions and tags before uploading.
+              </p>
+            ) : (
+              <>
+                {pending.length === 1 ? (
+                  <>
+                    <div className="grid gap-1.5">
+                      <Label htmlFor="upload-alt-0">
+                        Description for screen readers <span className="text-stone">(required)</span>
+                      </Label>
+                      <Input
+                        id="upload-alt-0"
+                        value={pending[0].alt}
+                        onChange={(e) => updatePending(pending[0].id, { alt: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="grid gap-1.5">
+                      <Label htmlFor="upload-caption-0">Caption (optional)</Label>
+                      <Input
+                        id="upload-caption-0"
+                        value={pending[0].caption}
+                        onChange={(e) => updatePending(pending[0].id, { caption: e.target.value })}
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <fieldset className="border-rule rounded-lg border p-4">
+                    <legend className="px-1 text-[0.875rem] font-semibold">
+                      Descriptions for each photo
+                    </legend>
+                    <ul className="mt-3 grid max-h-64 gap-3 overflow-y-auto pr-1">
+                      {pending.map((item, index) => (
+                        <li key={item.id} className="grid gap-2 sm:grid-cols-[4.5rem_1fr]">
+                          <div className="border-rule relative size-16 overflow-hidden rounded-md border sm:size-[4.5rem]">
+                            <Image
+                              src={item.preview}
+                              alt=""
+                              fill
+                              unoptimized
+                              className="object-cover"
+                              sizes="72px"
+                            />
+                          </div>
+                          <div className="grid gap-1.5">
+                            <Label htmlFor={`upload-alt-${index}`} className="text-[0.8125rem]">
+                              Photo {index + 1} · {item.file.name}
+                            </Label>
+                            <Input
+                              id={`upload-alt-${index}`}
+                              value={item.alt}
+                              onChange={(e) => updatePending(item.id, { alt: e.target.value })}
+                              required
+                            />
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </fieldset>
+                )}
+
+                <fieldset>
+                  <legend className="label text-stone mb-2">Where should these appear?</legend>
+                  <p className="text-stone mb-3 text-[0.8125rem]">
+                    Applied to every photo in this batch. Change individual photos later in the
+                    library.
+                  </p>
+                  <PlacementPicker
+                    selected={selectedPlacements}
+                    onToggle={toggleUploadPlacement}
+                    disabled={uploading}
+                  />
+                </fieldset>
+
+                <fieldset className="border-rule rounded-lg border p-4">
+                  <legend className="px-1 text-[0.875rem] font-semibold">Privacy</legend>
+                  <div className="mt-2 grid gap-2">
+                    <label className="flex min-h-11 cursor-pointer items-center gap-2 text-[0.9375rem]">
+                      <input
+                        type="checkbox"
+                        checked={containsPeople}
+                        onChange={(e) => setContainsPeople(e.target.checked)}
+                        className="size-4"
+                      />
+                      These photos show a person
+                    </label>
+                    <label className="flex min-h-11 cursor-pointer items-center gap-2 text-[0.9375rem]">
+                      <input
+                        type="checkbox"
+                        checked={releaseOnFile}
+                        onChange={(e) => setReleaseOnFile(e.target.checked)}
+                        className="size-4"
+                      />
+                      Signed photo release on file
+                    </label>
+                  </div>
+                </fieldset>
+
+                <div className="flex flex-wrap gap-3">
+                  <Button
+                    type="button"
+                    disabled={uploading || pending.length === 0}
+                    onClick={submitUpload}
+                    className="w-full sm:w-auto"
+                  >
+                    {uploading ? <Loader2 className="animate-spin" aria-hidden="true" /> : null}
+                    {uploading && uploadProgress
+                      ? `Uploading ${uploadProgress.done} of ${uploadProgress.total}…`
+                      : uploading
+                        ? "Uploading…"
+                        : pending.length === 1
+                          ? "Add to library"
+                          : `Add ${pending.length} photos`}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={uploading}
+                    onClick={clearPending}
+                  >
+                    Clear
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
-      </div>
-      <div className="grid gap-3 p-4">
-        <Label htmlFor={`slot-${slot}`} className="text-[0.875rem]">
-          Choose from your library
-        </Label>
-        <select
-          id={`slot-${slot}`}
-          disabled={pending || choices.length === 0}
-          defaultValue={photo?.id ?? ""}
-          onChange={(e) => {
-            const id = e.target.value;
-            if (id) onAssign(id);
-          }}
-          className="border-rule-strong bg-paper min-h-11 w-full rounded border px-3 text-[0.9375rem]"
-        >
-          <option value="">Select a photo…</option>
-          {choices.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.caption || p.alt.slice(0, 48)}
-            </option>
-          ))}
-        </select>
-        {photo ? (
-          <button
-            type="button"
-            disabled={pending}
-            onClick={onClear}
-            className="text-stone hover:text-ink text-left text-[0.875rem] underline"
-          >
-            Remove from this section
-          </button>
-        ) : null}
-      </div>
-    </AdminCard>
+      </AdminCard>
+    </section>
   );
 }
 
-function UploadForm() {
-  const [state, action, uploading] = useActionState(uploadPhoto, null);
+// ---------------------------------------------------------------------------
+// Photo tile
+// ---------------------------------------------------------------------------
 
-  useEffect(() => {
-    if (state?.ok) window.location.reload();
-  }, [state]);
-
-  return (
-    <AdminCard>
-      <form action={action} className="grid gap-4">
-        {state && !state.ok ? (
-          <p className="text-[0.9375rem] text-[var(--danger)]" role="alert">
-            {state.message}
-          </p>
-        ) : null}
-        <div className="border-rule bg-sage-wash/60 flex flex-col items-center justify-center gap-3 rounded border border-dashed px-6 py-10">
-          <Upload className="text-sage-deep size-8" aria-hidden="true" />
-          <Label htmlFor="photo-file" className="text-sage-deep cursor-pointer font-semibold underline">
-            Choose a photo
-          </Label>
-          <Input id="photo-file" name="file" type="file" accept="image/jpeg,image/png,image/webp,image/avif" required className="max-w-xs" />
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Field id="upload-alt" name="alt" label="Description for screen readers" required />
-          <Field id="upload-caption" name="caption" label="Caption (optional)" />
-        </div>
-
-        <div className="grid gap-1.5">
-          <Label htmlFor="upload-category">Where does this go?</Label>
-          <select
-            id="upload-category"
-            name="category"
-            defaultValue=""
-            className="border-rule-strong bg-paper min-h-11 rounded border px-3"
-          >
-            <option value="">Gallery only</option>
-            <option value="hero">Homepage hero</option>
-            <option value="meals">Meals section</option>
-            {GALLERY_CATEGORIES.map((cat) => (
-              <option key={cat} value={cat}>
-                Gallery — {cat}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <PrivacyFields idPrefix="upload" />
-
-        <Button type="submit" disabled={uploading} className="w-full sm:w-auto">
-          {uploading ? <Loader2 className="animate-spin" aria-hidden="true" /> : null}
-          Upload photo
-        </Button>
-      </form>
-    </AdminCard>
-  );
-}
-
-function PhotoCard({
+function PhotoTile({
   photo,
   pending,
   selectMode,
@@ -512,6 +830,7 @@ function PhotoCard({
   onEdit,
   onToggle,
   onDelete,
+  onTogglePlacement,
 }: {
   photo: AdminPhoto;
   pending: boolean;
@@ -521,64 +840,86 @@ function PhotoCard({
   onEdit: () => void;
   onToggle: () => void;
   onDelete: () => void;
+  onTogglePlacement: (id: string, placement: string, enabled: boolean) => void;
 }) {
   const blocked = photo.contains_people && !photo.release_on_file;
+  const placements = getPlacements(photo);
 
   return (
-    <AdminCard
+    <article
       className={cn(
-        "overflow-hidden p-0 transition-all",
-        selected && "ring-2 ring-sage ring-offset-2",
+        "border-rule bg-paper-raise group overflow-hidden rounded-xl border shadow-sm transition-shadow hover:shadow-md",
+        selected && "ring-sage ring-2 ring-offset-2",
       )}
     >
-      <div className="relative aspect-[4/3] bg-sage-wash">
+      <div className="bg-sage-wash relative aspect-[4/3] overflow-hidden">
         {photo.url ? (
-          <Image src={photo.url} alt="" fill className="object-cover" sizes="320px" />
+          <Image
+            src={photo.url}
+            alt=""
+            fill
+            className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+            sizes="280px"
+          />
         ) : (
           <div className="text-stone flex h-full items-center justify-center text-[0.875rem]">
             Preview unavailable
           </div>
         )}
+
+        <div className="from-ink/70 absolute inset-x-0 bottom-0 bg-gradient-to-t to-transparent p-3 pt-10">
+          <p className="line-clamp-1 text-[0.875rem] font-semibold text-white">
+            {photo.caption || "Untitled"}
+          </p>
+        </div>
+
         <span
           className={cn(
-            "label absolute top-2 left-2 rounded px-2 py-1 text-[0.6875rem]",
+            "label absolute top-2 left-2 rounded-md px-2 py-1 text-[0.6875rem] shadow-sm",
             photo.published ? "bg-sage text-paper" : "bg-paper text-stone border-rule border",
           )}
         >
           {photo.published ? "Live" : "Hidden"}
         </span>
 
-        {/* Bulk select overlay */}
         {selectMode ? (
           <button
             type="button"
             onClick={onSelect}
-            className="absolute inset-0 flex items-end justify-end p-2"
+            className="absolute inset-0 flex items-start justify-end p-2"
             aria-label={selected ? "Deselect photo" : "Select photo"}
           >
-            <span className={cn(
-              "flex size-6 items-center justify-center rounded border-2 transition-colors",
-              selected
-                ? "border-sage bg-sage text-white"
-                : "border-white bg-white/30 backdrop-blur-sm",
-            )}>
+            <span
+              className={cn(
+                "flex size-7 items-center justify-center rounded-md border-2 transition-colors",
+                selected
+                  ? "border-sage bg-sage text-white"
+                  : "border-white/80 bg-black/20 backdrop-blur-sm",
+              )}
+            >
               {selected ? <CheckSquare className="size-4" /> : null}
             </span>
           </button>
         ) : null}
       </div>
-      <div className="grid gap-2 p-4">
-        <p className="line-clamp-1 font-semibold">{photo.caption || "Untitled"}</p>
-        <p className="text-stone line-clamp-2 text-[0.8125rem]">{photo.alt}</p>
-        {photo.category && !isSectionSlot(photo.category) ? (
-          <p className="label text-sage-deep text-[0.6875rem]">{photo.category}</p>
-        ) : null}
+
+      <div className="grid gap-3 p-3">
+        <p className="text-stone line-clamp-2 text-[0.8125rem] leading-snug">{photo.alt}</p>
+
         {blocked ? (
           <p className="text-[0.8125rem] text-[var(--warn)]">Needs a signed release</p>
         ) : null}
+
+        <PlacementPicker
+          selected={new Set(placements)}
+          onToggle={(id) => onTogglePlacement(photo.id, id, !placements.includes(id))}
+          disabled={pending || selectMode}
+          compact
+        />
+
         {!selectMode ? (
-          <div className="mt-1 flex flex-wrap gap-1">
-            <AdminIconButton label="Edit" onClick={onEdit} disabled={pending}>
+          <div className="flex flex-wrap gap-1 border-t border-[color-mix(in_srgb,var(--rule)_70%,transparent)] pt-2">
+            <AdminIconButton label="Edit details" onClick={onEdit} disabled={pending}>
               <Pencil className="size-4" aria-hidden="true" />
             </AdminIconButton>
             <button
@@ -586,12 +927,17 @@ function PhotoCard({
               disabled={pending || blocked}
               onClick={onToggle}
               className={cn(
-                "inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded border px-3 text-[0.8125rem] font-semibold",
+                "inline-flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border px-2 text-[0.8125rem] font-semibold",
                 photo.published
                   ? "border-sage bg-sage-wash text-sage-deep"
-                  : "border-rule text-stone",
+                  : "border-rule text-stone hover:text-ink",
               )}
             >
+              {photo.published ? (
+                <Eye className="size-4" aria-hidden="true" />
+              ) : (
+                <EyeOff className="size-4" aria-hidden="true" />
+              )}
               {photo.published ? "On site" : "Show on site"}
             </button>
             <AdminIconButton label="Delete" onClick={onDelete} disabled={pending} destructive>
@@ -600,12 +946,136 @@ function PhotoCard({
           </div>
         ) : null}
       </div>
-    </AdminCard>
+    </article>
   );
 }
 
+// ---------------------------------------------------------------------------
+// Placement picker (shared upload + tiles + edit)
+// ---------------------------------------------------------------------------
+
+function PlacementPicker({
+  selected,
+  onToggle,
+  disabled,
+  compact,
+  name,
+}: {
+  selected: Set<string>;
+  onToggle: (id: string) => void;
+  disabled?: boolean;
+  compact?: boolean;
+  name?: string;
+}) {
+  const site = PLACEMENT_OPTIONS.filter((p) => p.group === "site");
+  const gallery = PLACEMENT_OPTIONS.filter((p) => p.group === "gallery");
+
+  return (
+    <div className={cn("grid gap-2", compact ? "gap-1.5" : "gap-3")}>
+      {!compact ? (
+        <>
+          <PlacementGroup label="On the home page" options={site} {...{ selected, onToggle, disabled, name }} />
+          <PlacementGroup label="In the gallery" options={gallery} {...{ selected, onToggle, disabled, name }} />
+        </>
+      ) : (
+        <div className="flex flex-wrap gap-1">
+          {PLACEMENT_OPTIONS.map((option) => (
+            <PlacementChip
+              key={option.id}
+              option={option}
+              active={selected.has(option.id)}
+              onClick={() => onToggle(option.id)}
+              disabled={disabled}
+              name={name}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PlacementGroup({
+  label,
+  options,
+  selected,
+  onToggle,
+  disabled,
+  name,
+}: {
+  label: string;
+  options: typeof PLACEMENT_OPTIONS;
+  selected: Set<string>;
+  onToggle: (id: string) => void;
+  disabled?: boolean;
+  name?: string;
+}) {
+  return (
+    <div>
+      <p className="label text-stone mb-1.5 text-[0.625rem]">{label}</p>
+      <div className="flex flex-wrap gap-1.5">
+        {options.map((option) => (
+          <PlacementChip
+            key={option.id}
+            option={option}
+            active={selected.has(option.id)}
+            onClick={() => onToggle(option.id)}
+            disabled={disabled}
+            name={name}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PlacementChip({
+  option,
+  active,
+  onClick,
+  disabled,
+  name,
+}: {
+  option: (typeof PLACEMENT_OPTIONS)[number];
+  active: boolean;
+  onClick: () => void;
+  disabled?: boolean;
+  name?: string;
+}) {
+  return (
+    <>
+      {name && active ? <input type="hidden" name={name} value={option.id} /> : null}
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={onClick}
+        aria-pressed={active}
+        className={cn(
+          "inline-flex min-h-8 items-center rounded-full border px-2.5 text-[0.75rem] font-semibold transition-colors",
+          active
+            ? "border-sage bg-sage-wash text-sage-deep"
+            : "border-rule text-stone hover:border-sage/60 hover:text-sage-deep",
+          compactSize(option.id),
+        )}
+      >
+        {option.label}
+      </button>
+    </>
+  );
+}
+
+function compactSize(id: string): string {
+  if (id === "hero" || id === "meals") return "";
+  return "max-w-full truncate";
+}
+
+// ---------------------------------------------------------------------------
+// Edit dialog
+// ---------------------------------------------------------------------------
+
 function EditDialog({ photo, onClose }: { photo: AdminPhoto; onClose: () => void }) {
   const [state, action, saving] = useActionState(updatePhoto, null);
+  const [placements, setPlacements] = useState<Set<string>>(new Set(getPlacements(photo)));
 
   useEffect(() => {
     if (state?.ok) window.location.reload();
@@ -613,44 +1083,56 @@ function EditDialog({ photo, onClose }: { photo: AdminPhoto; onClose: () => void
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 p-4 sm:items-center"
+      className="admin-scrim fixed inset-0 z-50 flex items-end justify-center p-4 sm:items-center"
       role="dialog"
       aria-modal="true"
       aria-labelledby="edit-photo-title"
     >
       <AdminCard className="max-h-[90dvh] w-full max-w-lg overflow-y-auto p-6 shadow-xl">
         <h2 id="edit-photo-title" className="text-h3 mb-4 font-sans font-bold">
-          Edit photo
+          Photo details
         </h2>
-        <form
-          action={action}
-          className="grid gap-4"
-          onSubmit={() => {
-            /* result handled below */
-          }}
-        >
+        <form action={action} className="grid gap-4">
           <input type="hidden" name="id" value={photo.id} />
-          <Field id="edit-alt" name="alt" label="Description for screen readers" required defaultValue={photo.alt} />
-          <Field id="edit-caption" name="caption" label="Caption" defaultValue={photo.caption ?? ""} />
+          {Array.from(placements).map((p) => (
+            <input key={p} type="hidden" name="placements" value={p} />
+          ))}
 
-          <div className="grid gap-1.5">
-            <Label htmlFor="edit-category">Placement</Label>
-            <select
-              id="edit-category"
-              name="category"
-              defaultValue={photo.category ?? ""}
-              className="border-rule-strong bg-paper min-h-11 rounded border px-3"
-            >
-              <option value="">Gallery only</option>
-              <option value="hero">Homepage hero</option>
-              <option value="meals">Meals section</option>
-              {GALLERY_CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>
-                  Gallery — {cat}
-                </option>
-              ))}
-            </select>
-          </div>
+          {photo.url ? (
+            <div className="border-rule relative aspect-video overflow-hidden rounded-lg border">
+              <Image src={photo.url} alt="" fill className="object-cover" sizes="480px" />
+            </div>
+          ) : null}
+
+          <Field
+            id="edit-alt"
+            name="alt"
+            label="Description for screen readers"
+            required
+            defaultValue={photo.alt}
+          />
+          <Field
+            id="edit-caption"
+            name="caption"
+            label="Caption"
+            defaultValue={photo.caption ?? ""}
+          />
+
+          <fieldset>
+            <legend className="label text-stone mb-2">Appearances on the website</legend>
+            <PlacementPicker
+              selected={placements}
+              onToggle={(id) =>
+                setPlacements((prev) => {
+                  const s = new Set(prev);
+                  if (s.has(id)) s.delete(id);
+                  else s.add(id);
+                  return s;
+                })
+              }
+              disabled={saving}
+            />
+          </fieldset>
 
           <PrivacyFields
             idPrefix="edit"
@@ -681,6 +1163,10 @@ function EditDialog({ photo, onClose }: { photo: AdminPhoto; onClose: () => void
     </div>
   );
 }
+
+// ---------------------------------------------------------------------------
+// Shared fields
+// ---------------------------------------------------------------------------
 
 function Field({
   id,
@@ -716,7 +1202,7 @@ function PrivacyFields({
   releaseOnFile?: boolean;
 }) {
   return (
-    <fieldset className="border-rule rounded border p-4">
+    <fieldset className="border-rule rounded-lg border p-4">
       <legend className="px-1 text-[0.875rem] font-semibold">Privacy</legend>
       <div className="mt-2 grid gap-2">
         <label className="flex min-h-11 cursor-pointer items-center gap-2 text-[0.9375rem]">

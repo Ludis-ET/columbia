@@ -22,6 +22,9 @@ const parts = [
   "supabase/migrations/0001_schema.sql",
   "supabase/migrations/0002_storage.sql",
   "supabase/migrations/0003_rate_limit.sql",
+  "supabase/migrations/0004_admin_refinement.sql",
+  "supabase/migrations/0005_site_copy.sql",
+  "supabase/migrations/0006_media_placements.sql",
   "supabase/seed.sql",
 ];
 

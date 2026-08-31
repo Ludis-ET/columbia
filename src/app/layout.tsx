@@ -2,12 +2,19 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { fontVariables } from "@/lib/fonts";
 import { HashScroll } from "@/components/site/hash-scroll";
-import { SiteChrome } from "@/components/site/site-chrome";
 import { preferencesScript } from "@/lib/preferences";
+import { revealScript } from "@/lib/reveal";
 import { identity, published, siteName } from "@/lib/content";
-import { getSiteSettings } from "@/lib/db/queries";
 import { OrganisationJsonLd } from "@/components/seo/structured-data";
 import { siteUrl } from "@/lib/site-url";
+
+/**
+ * Document shell only: html, body, fonts, pre-paint preferences, structured data.
+ *
+ * The site chrome lives in (site)/layout.tsx and the admin shell in
+ * admin/(console)/layout.tsx. Nothing here is a client component, and nothing
+ * here should branch on the current route.
+ */
 
 const description =
   published(identity.about) ??
@@ -46,23 +53,22 @@ export const viewport: Viewport = {
   ],
 };
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  // Resolved server-side so no child ever receives an unconfirmed value.
-  const { phone, telHref: phoneHref, sms } = await getSiteSettings();
-
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
         {/* Applies stored theme and reader preferences before first paint. */}
         <script suppressHydrationWarning dangerouslySetInnerHTML={{ __html: preferencesScript }} />
-        {/* Emitted from live data, and only for fields the client has confirmed, a guessed phone number here would be shown as fact in search results. */}
+        {/* Arms the scroll reveal and owns its observer. Independent of React,
+            so a hydration problem can never leave content invisible. */}
+        <script suppressHydrationWarning dangerouslySetInnerHTML={{ __html: revealScript }} />
+        {/* Emitted from live data, and only for fields the client has confirmed.
+            A guessed phone number here would be shown as fact in search results. */}
         <OrganisationJsonLd />
       </head>
       <body className={`${fontVariables} flex min-h-dvh flex-col antialiased`}>
         <HashScroll />
-        <SiteChrome phone={phone} phoneHref={phoneHref} sms={sms}>
-          {children}
-        </SiteChrome>
+        {children}
       </body>
     </html>
   );

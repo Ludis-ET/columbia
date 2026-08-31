@@ -106,6 +106,7 @@ export interface MediaRow {
   alt: string;
   caption: string | null;
   category: string | null;
+  placements?: string[];
   width: number | null;
   height: number | null;
   blur_data_url: string | null;
@@ -161,5 +162,23 @@ export interface InquiryRow {
   source: string | null;
   utm: Record<string, string> | null;
   created_at: string;
+  updated_at: string;
+}
+
+export type CopyKind = "short" | "long" | "list";
+export type CopySource = "artwork" | "editorial";
+
+export interface SiteCopyRow {
+  id: string;
+  slug: string;
+  section: string;
+  label: string;
+  help: string | null;
+  kind: CopyKind;
+  source: CopySource;
+  value: string | null;
+  value_list: string[];
+  position: number;
+  published: boolean;
   updated_at: string;
 }

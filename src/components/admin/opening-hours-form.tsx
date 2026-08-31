@@ -49,9 +49,7 @@ export function OpeningHoursForm({ hours }: { hours: HoursRow[] }) {
 
   // Local closed toggles (to show/hide time inputs)
   const [closedMap, setClosedMap] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(
-      DAYS.map(({ key, num }) => [key, defaultForDay(hours, num).closed]),
-    ),
+    Object.fromEntries(DAYS.map(({ key, num }) => [key, defaultForDay(hours, num).closed])),
   );
 
   return (
@@ -60,7 +58,7 @@ export function OpeningHoursForm({ hours }: { hours: HoursRow[] }) {
 
       <AdminCard className="overflow-hidden p-0">
         {/* Header row */}
-        <div className="border-rule grid grid-cols-[1fr_auto_auto_auto_1fr] items-center gap-4 border-b bg-paper-raise px-4 py-2 text-[0.8125rem] font-semibold text-stone">
+        <div className="border-rule bg-paper-raise text-stone grid grid-cols-[1fr_auto_auto_auto_1fr] items-center gap-4 border-b px-4 py-2 text-[0.8125rem] font-semibold">
           <span>Day</span>
           <span>Opens</span>
           <span>—</span>
@@ -107,9 +105,7 @@ export function OpeningHoursForm({ hours }: { hours: HoursRow[] }) {
                   type="checkbox"
                   name={`${key}_closed`}
                   defaultChecked={isClosed}
-                  onChange={(e) =>
-                    setClosedMap((prev) => ({ ...prev, [key]: e.target.checked }))
-                  }
+                  onChange={(e) => setClosedMap((prev) => ({ ...prev, [key]: e.target.checked }))}
                   className="size-4"
                 />
                 <span className={cn(isClosed ? "text-stone" : "text-stone/60")}>Closed</span>

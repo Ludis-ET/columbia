@@ -47,30 +47,23 @@ export default async function AdminDashboard() {
   const supabase = await createClient();
   const profile = await getAdminProfile();
 
-  const [
-    availability,
-    newCount,
-    monthCount,
-    pipeline,
-    photoStats,
-    settingsRow,
-    recentActivity,
-  ] = await Promise.all([
-    supabase?.from("availability").select("*").eq("id", "singleton").maybeSingle(),
-    supabase?.from("inquiries").select("id", { count: "exact", head: true }).eq("status", "new"),
-    supabase
-      ?.from("inquiries")
-      .select("id", { count: "exact", head: true })
-      .gte("created_at", new Date(Date.now() - 30 * 86_400_000).toISOString()),
-    supabase?.from("inquiries").select("status"),
-    supabase?.from("media").select("id, published"),
-    supabase?.from("site_settings").select("*").eq("id", "singleton").maybeSingle(),
-    supabase
-      ?.from("audit_log")
-      .select("id, action, entity, created_at")
-      .order("created_at", { ascending: false })
-      .limit(5),
-  ]);
+  const [availability, newCount, monthCount, pipeline, photoStats, settingsRow, recentActivity] =
+    await Promise.all([
+      supabase?.from("availability").select("*").eq("id", "singleton").maybeSingle(),
+      supabase?.from("inquiries").select("id", { count: "exact", head: true }).eq("status", "new"),
+      supabase
+        ?.from("inquiries")
+        .select("id", { count: "exact", head: true })
+        .gte("created_at", new Date(Date.now() - 30 * 86_400_000).toISOString()),
+      supabase?.from("inquiries").select("status"),
+      supabase?.from("media").select("id, published"),
+      supabase?.from("site_settings").select("*").eq("id", "singleton").maybeSingle(),
+      supabase
+        ?.from("audit_log")
+        .select("id, action, entity, created_at")
+        .order("created_at", { ascending: false })
+        .limit(5),
+    ]);
 
   const statuses = (pipeline?.data ?? []) as { status: string }[];
   const counts = statuses.reduce<Record<string, number>>((acc, r) => {
@@ -95,7 +88,9 @@ export default async function AdminDashboard() {
   ];
   const missing = settingsFields.filter((f) => !s?.[f.key]);
   const settingsComplete = missing.length === 0;
-  const completeness = Math.round(((settingsFields.length - missing.length) / settingsFields.length) * 100);
+  const completeness = Math.round(
+    ((settingsFields.length - missing.length) / settingsFields.length) * 100,
+  );
 
   const activity = (recentActivity?.data ?? []) as {
     id: string;
@@ -114,9 +109,12 @@ export default async function AdminDashboard() {
 
   return (
     <>
-      <header className="mb-8 border-b border-rule pb-6">
+      <header className="border-rule mb-8 border-b pb-6">
         <p className="label text-sage-deep mb-2">Dashboard</p>
-        <h1 className="text-h1">{greeting()}{profile?.fullName ? `, ${profile.fullName.split(" ")[0]}` : ""}</h1>
+        <h1 className="text-h1">
+          {greeting()}
+          {profile?.fullName ? `, ${profile.fullName.split(" ")[0]}` : ""}
+        </h1>
         <p className="text-stone mt-2">
           {newCount?.count
             ? `${newCount.count} ${newCount.count === 1 ? "enquiry needs" : "enquiries need"} a reply.`
@@ -130,7 +128,7 @@ export default async function AdminDashboard() {
           <div className="border-rule bg-paper-raise rounded-lg border p-5">
             <div className="mb-3 flex items-start justify-between gap-3">
               <div className="flex items-center gap-2">
-                <AlertCircle className="text-[var(--warn)] size-5 shrink-0" aria-hidden="true" />
+                <AlertCircle className="size-5 shrink-0 text-[var(--warn)]" aria-hidden="true" />
                 <h2 id="completeness-heading" className="font-semibold">
                   Finish setting up your contact info
                 </h2>
@@ -147,8 +145,7 @@ export default async function AdminDashboard() {
             </div>
 
             <p className="text-stone mb-3 text-[0.875rem]">
-              Still missing:{" "}
-              {missing.map((f) => f.label).join(", ")}.
+              Still missing: {missing.map((f) => f.label).join(", ")}.
             </p>
             <Link
               href="/admin/settings"
@@ -163,8 +160,13 @@ export default async function AdminDashboard() {
         <section className="mb-8">
           <div className="border-rule bg-sage-wash/50 flex items-center gap-3 rounded-lg border px-4 py-3">
             <CheckCircle2 className="text-sage-deep size-5 shrink-0" aria-hidden="true" />
-            <p className="text-sage-deep text-[0.9375rem] font-semibold">All contact info is filled in.</p>
-            <Link href="/admin/settings" className="text-stone ml-auto text-[0.875rem] underline hover:text-ink">
+            <p className="text-sage-deep text-[0.9375rem] font-semibold">
+              All contact info is filled in.
+            </p>
+            <Link
+              href="/admin/settings"
+              className="text-stone hover:text-ink ml-auto text-[0.875rem] underline"
+            >
               <Settings className="size-4" aria-hidden="true" />
               <span className="sr-only">Settings</span>
             </Link>
@@ -186,7 +188,9 @@ export default async function AdminDashboard() {
               <ImageIcon className="size-5" aria-hidden="true" />
             </span>
             <span>
-              <span className="block font-semibold group-hover:text-sage-deep">Photos & gallery</span>
+              <span className="group-hover:text-sage-deep block font-semibold">
+                Photos & gallery
+              </span>
               <span className="text-stone text-[0.875rem]">
                 {livePhotos} photo{livePhotos !== 1 ? "s" : ""} live · {photos.length} in library
               </span>
@@ -200,7 +204,7 @@ export default async function AdminDashboard() {
               {newCount?.count ?? 0}
             </span>
             <span>
-              <span className="block font-semibold group-hover:text-sage-deep">Enquiries</span>
+              <span className="group-hover:text-sage-deep block font-semibold">Enquiries</span>
               <span className="text-stone text-[0.875rem]">Families waiting to hear back</span>
             </span>
           </Link>
@@ -283,7 +287,9 @@ export default async function AdminDashboard() {
             {activity.map((entry) => (
               <div key={entry.id} className="flex items-center justify-between gap-3 px-4 py-3">
                 <p className="text-[0.9375rem]">{auditLabel(entry.action, entry.entity)}</p>
-                <p className="text-stone shrink-0 text-[0.8125rem]">{sinceLabel(entry.created_at)}</p>
+                <p className="text-stone shrink-0 text-[0.8125rem]">
+                  {sinceLabel(entry.created_at)}
+                </p>
               </div>
             ))}
           </AdminCard>

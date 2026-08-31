@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import { Loader2, Pencil } from "lucide-react";
 import { AdminRow, RowControls, Toast } from "@/components/admin/ui";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,8 @@ export interface EditableField {
   label: string;
   multiline?: boolean;
   placeholder?: string;
+  /** Checkbox stored as true/false in the database. */
+  checkbox?: boolean;
 }
 
 export function ContentList({
@@ -72,56 +74,55 @@ export function ContentList({
       <Toast result={result} />
       <ul className="grid gap-3">
         {state.map((row) => (
-          <li key={row.id}>
-            <AdminRow
-              title={row.title}
-              meta={row.meta}
-              controls={
-                <div className="flex items-center gap-2">
-                  {editableFields ? (
-                    <button
-                      type="button"
-                      onClick={() => setEditingId((id) => (id === row.id ? null : row.id))}
-                      aria-expanded={editingId === row.id}
-                      className="text-sage-deep inline-flex min-h-11 items-center gap-1.5 px-2 text-[0.875rem] font-semibold underline"
-                    >
-                      <Pencil className="size-3.5" aria-hidden="true" />
-                      {editingId === row.id ? "Close" : "Edit"}
-                    </button>
-                  ) : null}
-                  <RowControls
-                    table={table}
-                    id={row.id}
-                    published={row.published}
-                    canReorder={canReorder}
-                    canDelete={canDelete}
-                    onResult={(r) => handle(row.id, !row.published, r)}
-                  />
-                </div>
-              }
-            >
-              {row.body ? (
-                <p className="text-stone max-w-[70ch] text-[0.9375rem]">{row.body}</p>
-              ) : null}
-              {row.blocked ? (
-                <p className="mt-2 text-[0.875rem] text-[var(--warn)]">{row.blocked}</p>
-              ) : null}
-
-              {/* Inline edit form */}
-              {editableFields && editingId === row.id ? (
-                <InlineEditForm
+          <AdminRow
+            key={row.id}
+            title={row.title}
+            meta={row.meta}
+            controls={
+              <div className="flex items-center gap-2">
+                {editableFields ? (
+                  <button
+                    type="button"
+                    onClick={() => setEditingId((id) => (id === row.id ? null : row.id))}
+                    aria-expanded={editingId === row.id}
+                    className="text-sage-deep inline-flex min-h-11 items-center gap-1.5 px-2 text-[0.875rem] font-semibold underline"
+                  >
+                    <Pencil className="size-3.5" aria-hidden="true" />
+                    {editingId === row.id ? "Close" : "Edit"}
+                  </button>
+                ) : null}
+                <RowControls
                   table={table}
                   id={row.id}
-                  fields={editableFields}
-                  defaultValues={row.rawValues ?? {}}
-                  onSaved={(r) => {
-                    setResult(r);
-                    if (r.ok) setEditingId(null);
-                  }}
+                  published={row.published}
+                  canReorder={canReorder}
+                  canDelete={canDelete}
+                  onResult={(r) => handle(row.id, !row.published, r)}
                 />
-              ) : null}
-            </AdminRow>
-          </li>
+              </div>
+            }
+          >
+            {row.body ? (
+              <p className="text-stone max-w-[70ch] text-[0.9375rem]">{row.body}</p>
+            ) : null}
+            {row.blocked ? (
+              <p className="mt-2 text-[0.875rem] text-[var(--warn)]">{row.blocked}</p>
+            ) : null}
+
+            {/* Inline edit form */}
+            {editableFields && editingId === row.id ? (
+              <InlineEditForm
+                table={table}
+                id={row.id}
+                fields={editableFields}
+                defaultValues={row.rawValues ?? {}}
+                onSaved={(r) => {
+                  setResult(r);
+                  if (r.ok) setEditingId(null);
+                }}
+              />
+            ) : null}
+          </AdminRow>
         ))}
       </ul>
     </>
@@ -150,19 +151,31 @@ function InlineEditForm({
     onSaved(state);
   }
 
+  // Cmd/Ctrl+S saves. Attached to the node rather than as a JSX handler: a
+  // keydown prop on a <form> trips jsx-a11y/no-noninteractive-element-interactions,
+  // and adding a listener is both lint-clean and closer to what this actually is,
+  // a shortcut scoped to the form rather than a form-level interaction.
+  const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    const form = formRef.current;
+    if (!form) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === "s") {
+        event.preventDefault();
+        form.requestSubmit();
+      }
+    };
+
+    form.addEventListener("keydown", onKeyDown);
+    return () => form.removeEventListener("keydown", onKeyDown);
+  }, []);
+
   const fieldNames = fields.map((f) => f.name).join(",");
 
   return (
-    <form
-      action={action}
-      className="border-rule mt-4 rounded border p-4"
-      onKeyDown={(e) => {
-        if ((e.metaKey || e.ctrlKey) && e.key === "s") {
-          e.preventDefault();
-          (e.currentTarget as HTMLFormElement).requestSubmit();
-        }
-      }}
-    >
+    <form ref={formRef} action={action} className="border-rule mt-4 rounded border p-4">
       <input type="hidden" name="__table" value={table} />
       <input type="hidden" name="__id" value={id} />
       <input type="hidden" name="__fields" value={fieldNames} />
@@ -170,22 +183,41 @@ function InlineEditForm({
       <div className="grid gap-4">
         {fields.map((field) => (
           <div key={field.name} className="grid gap-1.5">
-            <Label htmlFor={`edit-${id}-${field.name}`}>{field.label}</Label>
-            {field.multiline ? (
-              <Textarea
-                id={`edit-${id}-${field.name}`}
-                name={field.name}
-                rows={3}
-                defaultValue={defaultValues[field.name] ?? ""}
-                placeholder={field.placeholder}
-              />
+            {field.checkbox ? (
+              <label
+                htmlFor={`edit-${id}-${field.name}`}
+                className="flex min-h-11 cursor-pointer items-start gap-3 text-[0.9375rem]"
+              >
+                <input
+                  id={`edit-${id}-${field.name}`}
+                  name={field.name}
+                  type="checkbox"
+                  value="true"
+                  defaultChecked={defaultValues[field.name] === "true"}
+                  className="mt-1 size-4 shrink-0"
+                />
+                <span>{field.label}</span>
+              </label>
             ) : (
-              <Input
-                id={`edit-${id}-${field.name}`}
-                name={field.name}
-                defaultValue={defaultValues[field.name] ?? ""}
-                placeholder={field.placeholder}
-              />
+              <>
+                <Label htmlFor={`edit-${id}-${field.name}`}>{field.label}</Label>
+                {field.multiline ? (
+                  <Textarea
+                    id={`edit-${id}-${field.name}`}
+                    name={field.name}
+                    rows={3}
+                    defaultValue={defaultValues[field.name] ?? ""}
+                    placeholder={field.placeholder}
+                  />
+                ) : (
+                  <Input
+                    id={`edit-${id}-${field.name}`}
+                    name={field.name}
+                    defaultValue={defaultValues[field.name] ?? ""}
+                    placeholder={field.placeholder}
+                  />
+                )}
+              </>
             )}
           </div>
         ))}

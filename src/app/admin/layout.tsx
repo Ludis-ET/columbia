@@ -21,5 +21,9 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default function AdminRootLayout({ children }: { children: React.ReactNode }) {
-  return children;
+  return (
+    <div data-admin className="min-h-dvh">
+      {children}
+    </div>
+  );
 }

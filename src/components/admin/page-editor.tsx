@@ -23,12 +23,15 @@ export function PageEditor({
   title,
   lead,
   seoDescription,
+  asDiv = false,
 }: {
   id: string;
   slug: string;
   title: string;
   lead: string | null;
   seoDescription: string | null;
+  /** When nested inside another list item (pages admin). */
+  asDiv?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [desc, setDesc] = useState(seoDescription ?? "");
@@ -36,9 +39,10 @@ export function PageEditor({
   const [state, action, pending] = useActionState<ActionResult | null, FormData>(saveRow, null);
 
   const tooLong = desc.length > 160;
+  const Tag = asDiv ? "div" : "li";
 
   return (
-    <li className="border-rule bg-paper-raise rounded border">
+    <Tag className={asDiv ? undefined : "border-rule bg-paper-raise rounded border"}>
       <div className="flex flex-wrap items-center justify-between gap-3 p-4">
         <div className="min-w-0">
           <p className="font-semibold">{title}</p>
@@ -133,6 +137,6 @@ export function PageEditor({
           </form>
         </div>
       ) : null}
-    </li>
+    </Tag>
   );
 }

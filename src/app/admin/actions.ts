@@ -4,10 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient, getAdminProfile, recordAudit } from "@/lib/db/server";
 import {
+  getPlacements,
   isSectionSlot,
   MEDIA_MAX_BYTES,
   MEDIA_MIME_TYPES,
-  type SectionSlot,
+  syncLegacyCategory,
 } from "@/lib/media";
 
 /**
@@ -39,9 +40,17 @@ async function requireAdmin() {
  */
 const AFFECTED: Record<string, string[]> = {
   availability: ["/"],
+  care_types: ["/"],
+  every_day: ["/"],
+  why_families: ["/"],
   services: ["/", "/services"],
   schedule_items: ["/", "/a-day-in-our-home", "/meals", "/services"],
   media: ["/"],
+  testimonials: ["/"],
+  faqs: ["/", "/faq"],
+  team: ["/"],
+  pages: ["/", "/faq", "/admissions"],
+  site_copy: ["/"],
   settings: ["/", "/contact", "/about", "/our-home", "/privacy", "/accessibility", "/terms"],
   announcements: ["/"],
   opening_hours: ["/", "/contact"],
@@ -237,6 +246,72 @@ export async function deleteRow(table: string, id: string): Promise<ActionResult
   return { ok: true, message: "Deleted." };
 }
 
+const CREATABLE: Record<string, (formData: FormData) => Record<string, unknown>> = {
+  testimonials: (formData) => ({
+    quote: String(formData.get("quote") ?? "").trim(),
+    author: String(formData.get("author") ?? "").trim(),
+    relationship: String(formData.get("relationship") ?? "").trim() || null,
+    consent_on_file: formData.get("consent_on_file") === "true",
+    published: false,
+  }),
+  faqs: (formData) => ({
+    question: String(formData.get("question") ?? "").trim(),
+    answer: String(formData.get("answer") ?? "").trim(),
+    category: String(formData.get("category") ?? "").trim() || null,
+    published: false,
+  }),
+  team: (formData) => ({
+    name: String(formData.get("name") ?? "").trim(),
+    role: String(formData.get("role") ?? "").trim() || null,
+    bio: String(formData.get("bio") ?? "").trim() || null,
+    published: false,
+  }),
+};
+
+/** Adds a row to a table the owner fills in over time. */
+export async function createRow(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  await requireAdmin();
+  const supabase = await createClient();
+  if (!supabase) return { ok: false, message: GENERIC_ERROR };
+
+  const table = String(formData.get("__table") ?? "");
+  const build = CREATABLE[table];
+  if (!build) return { ok: false, message: GENERIC_ERROR };
+
+  const row = build(formData);
+  if (table === "testimonials" && (!row.quote || !row.author)) {
+    return { ok: false, message: "A quote and a name are both required." };
+  }
+  if (table === "faqs" && (!row.question || !row.answer)) {
+    return { ok: false, message: "Both the question and the answer are required." };
+  }
+  if (table === "team" && !row.name) {
+    return { ok: false, message: "A name is required." };
+  }
+
+  const { data: last } = await supabase
+    .from(table)
+    .select("position")
+    .order("position", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const { error } = await supabase.from(table).insert({
+    ...row,
+    position: (last?.position ?? -1) + 1,
+  });
+
+  if (error) return { ok: false, message: GENERIC_ERROR };
+
+  await recordAudit("create", table, null, row);
+  revalidateFor(table);
+
+  return { ok: true, message: "Added. It is hidden until you show it on the website." };
+}
+
 // ---------------------------------------------------------------------------
 // Enquiries
 // ---------------------------------------------------------------------------
@@ -286,8 +361,14 @@ export async function saveRow(
 
   if (!table || !id || fields.length === 0) return { ok: false, message: GENERIC_ERROR };
 
-  const patch: Record<string, string | null> = {};
+  const booleanFields = new Set(["consent_on_file", "contains_people", "release_on_file"]);
+
+  const patch: Record<string, string | null | boolean> = {};
   for (const field of fields) {
+    if (booleanFields.has(field)) {
+      patch[field] = formData.get(field) === "true";
+      continue;
+    }
     const value = String(formData.get(field) ?? "").trim();
     patch[field] = value === "" ? null : value;
   }
@@ -308,44 +389,42 @@ export async function saveRow(
 function photoFields(formData: FormData) {
   const alt = String(formData.get("alt") ?? "").trim();
   const caption = String(formData.get("caption") ?? "").trim() || null;
-  const categoryRaw = String(formData.get("category") ?? "").trim();
-  const category = categoryRaw === "" ? null : categoryRaw;
   const containsPeople = formData.get("contains_people") === "on";
   const releaseOnFile = formData.get("release_on_file") === "on";
+  const placements = formData
+    .getAll("placements")
+    .map(String)
+    .filter(Boolean);
+  const category = syncLegacyCategory(placements);
 
-  return { alt, caption, category, containsPeople, releaseOnFile };
+  return { alt, caption, placements, category, containsPeople, releaseOnFile };
 }
 
-async function clearSectionSlot(supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>, slot: SectionSlot, exceptId?: string) {
-  let query = supabase.from("media").update({ category: null }).eq("category", slot);
-  if (exceptId) query = query.neq("id", exceptId);
-  await query;
-}
+const MAX_BATCH_UPLOAD = 24;
 
-export async function uploadPhoto(
-  _prev: ActionResult | null,
-  formData: FormData,
-): Promise<ActionResult> {
-  await requireAdmin();
-  const supabase = await createClient();
-  if (!supabase) return { ok: false, message: GENERIC_ERROR };
-
-  const file = formData.get("file");
-  if (!(file instanceof File) || file.size === 0) {
-    return { ok: false, message: "Choose a photo to upload." };
-  }
-
+async function uploadOnePhoto(
+  supabase: NonNullable<Awaited<ReturnType<typeof createClient>>>,
+  file: File,
+  meta: {
+    alt: string;
+    caption: string | null;
+    placements: string[];
+    category: string | null;
+    containsPeople: boolean;
+    releaseOnFile: boolean;
+    position: number;
+  },
+): Promise<{ ok: true; path: string } | { ok: false; message: string }> {
   if (file.size > MEDIA_MAX_BYTES) {
-    return { ok: false, message: "Photos must be under 8 MB." };
+    return { ok: false, message: `"${file.name}" is over 8 MB.` };
   }
 
   if (!MEDIA_MIME_TYPES.includes(file.type as (typeof MEDIA_MIME_TYPES)[number])) {
-    return { ok: false, message: "Use a JPEG, PNG, WebP or AVIF photo." };
+    return { ok: false, message: `"${file.name}" is not a supported image type.` };
   }
 
-  const { alt, caption, category, containsPeople, releaseOnFile } = photoFields(formData);
-  if (!alt) {
-    return { ok: false, message: "Every photo needs a description for screen readers." };
+  if (!meta.alt) {
+    return { ok: false, message: `Every photo needs a description. "${file.name}" is missing one.` };
   }
 
   const ext = file.type === "image/jpeg" ? "jpg" : file.type.replace("image/", "");
@@ -358,30 +437,18 @@ export async function uploadPhoto(
 
   if (uploadError) {
     console.error("[uploadPhoto] storage", uploadError.message);
-    return { ok: false, message: "Could not upload that photo. Try again." };
+    return { ok: false, message: `Could not upload "${file.name}". Try again.` };
   }
-
-  if (category && isSectionSlot(category)) {
-    await clearSectionSlot(supabase, category);
-  }
-
-  const { data: last } = await supabase
-    .from("media")
-    .select("position")
-    .order("position", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  const position = (last?.position ?? -1) + 1;
 
   const { error: insertError } = await supabase.from("media").insert({
     storage_path: path,
-    alt,
-    caption,
-    category,
-    contains_people: containsPeople,
-    release_on_file: releaseOnFile,
-    position,
+    alt: meta.alt,
+    caption: meta.caption,
+    category: meta.category,
+    placements: meta.placements,
+    contains_people: meta.containsPeople,
+    release_on_file: meta.releaseOnFile,
+    position: meta.position,
     published: false,
   });
 
@@ -391,16 +458,117 @@ export async function uploadPhoto(
       return {
         ok: false,
         message:
-          "This photo shows a person, so it needs a signed release on file before it can go on the website.",
+          "A photo shows a person without a signed release, so it cannot be saved yet.",
       };
     }
     return { ok: false, message: GENERIC_ERROR };
   }
 
-  await recordAudit("create", "media", path, { category });
+  await recordAudit("create", "media", path, {
+    placements: meta.placements,
+    category: meta.category,
+  });
+
+  return { ok: true, path };
+}
+
+export async function uploadPhotos(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  await requireAdmin();
+  const supabase = await createClient();
+  if (!supabase) return { ok: false, message: GENERIC_ERROR };
+
+  const files = formData
+    .getAll("files")
+    .filter((entry): entry is File => entry instanceof File && entry.size > 0);
+
+  if (files.length === 0) {
+    return { ok: false, message: "Choose at least one photo to upload." };
+  }
+
+  if (files.length > MAX_BATCH_UPLOAD) {
+    return {
+      ok: false,
+      message: `Upload up to ${MAX_BATCH_UPLOAD} photos at a time.`,
+    };
+  }
+
+  const { placements, category, containsPeople, releaseOnFile } = photoFields(formData);
+
+  const { data: last } = await supabase
+    .from("media")
+    .select("position")
+    .order("position", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  let position = (last?.position ?? -1) + 1;
+  let uploaded = 0;
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    const alt =
+      String(formData.get(`alt_${i}`) ?? formData.get("alt") ?? "").trim() ||
+      altFromFilename(file.name);
+    const captionRaw = String(formData.get(`caption_${i}`) ?? formData.get("caption") ?? "").trim();
+    const caption = captionRaw || null;
+
+    const result = await uploadOnePhoto(supabase, file, {
+      alt,
+      caption,
+      placements,
+      category,
+      containsPeople,
+      releaseOnFile,
+      position,
+    });
+
+    if (!result.ok) {
+      if (uploaded > 0) revalidateFor("media");
+      return {
+        ok: false,
+        message:
+          uploaded > 0
+            ? `${result.message} (${uploaded} photo${uploaded === 1 ? "" : "s"} uploaded before this one failed.)`
+            : result.message,
+      };
+    }
+
+    uploaded += 1;
+    position += 1;
+  }
+
   revalidateFor("media");
 
-  return { ok: true, message: "Photo uploaded." };
+  return {
+    ok: true,
+    message:
+      uploaded === 1 ? "1 photo uploaded." : `${uploaded} photos uploaded.`,
+  };
+}
+
+/** @deprecated Use uploadPhotos — kept for stale bundles. */
+export async function uploadPhoto(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  const file = formData.get("file");
+  if (file instanceof File && file.size > 0) {
+    formData.delete("file");
+    formData.append("files", file);
+  }
+  return uploadPhotos(_prev, formData);
+}
+
+function altFromFilename(name: string): string {
+  const base = name
+    .replace(/\.[^.]+$/, "")
+    .replace(/[-_]+/g, " ")
+    .trim();
+  if (!base) return "";
+  return base.charAt(0).toUpperCase() + base.slice(1);
 }
 
 export async function updatePhoto(
@@ -414,13 +582,9 @@ export async function updatePhoto(
   const id = String(formData.get("id") ?? "");
   if (!id) return { ok: false, message: GENERIC_ERROR };
 
-  const { alt, caption, category, containsPeople, releaseOnFile } = photoFields(formData);
+  const { alt, caption, placements, category, containsPeople, releaseOnFile } = photoFields(formData);
   if (!alt) {
     return { ok: false, message: "Every photo needs a description for screen readers." };
-  }
-
-  if (category && isSectionSlot(category)) {
-    await clearSectionSlot(supabase, category, id);
   }
 
   const { error } = await supabase
@@ -429,6 +593,7 @@ export async function updatePhoto(
       alt,
       caption,
       category,
+      placements,
       contains_people: containsPeople,
       release_on_file: releaseOnFile,
     })
@@ -445,33 +610,70 @@ export async function updatePhoto(
     return { ok: false, message: GENERIC_ERROR };
   }
 
-  await recordAudit("update", "media", id, { category });
+  await recordAudit("update", "media", id, { placements, category });
   revalidateFor("media");
 
   return { ok: true, message: "Photo updated." };
 }
 
-export async function assignSectionPhoto(
-  _prev: ActionResult | null,
-  formData: FormData,
+export async function togglePhotoPlacement(
+  id: string,
+  placement: string,
+  enabled: boolean,
 ): Promise<ActionResult> {
   await requireAdmin();
   const supabase = await createClient();
   if (!supabase) return { ok: false, message: GENERIC_ERROR };
 
+  const { data: row, error: readError } = await supabase
+    .from("media")
+    .select("placements, category")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (readError || !row) return { ok: false, message: GENERIC_ERROR };
+
+  let placements = getPlacements(row);
+  if (enabled) {
+    if (!placements.includes(placement)) placements = [...placements, placement];
+  } else {
+    placements = placements.filter((p) => p !== placement);
+  }
+
+  const category = syncLegacyCategory(placements);
+
+  const { error } = await supabase
+    .from("media")
+    .update({ placements, category })
+    .eq("id", id);
+
+  if (error) return { ok: false, message: GENERIC_ERROR };
+
+  await recordAudit("update", "media", id, { placements, category, toggle: placement, enabled });
+  revalidateFor("media");
+
+  const label =
+    placement === "hero"
+      ? "homepage hero"
+      : placement === "meals"
+        ? "meals section"
+        : placement;
+
+  return {
+    ok: true,
+    message: enabled ? `Added to ${label}.` : `Removed from ${label}.`,
+  };
+}
+
+/** @deprecated Use togglePhotoPlacement — kept for any stale client bundles. */
+export async function assignSectionPhoto(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
   const id = String(formData.get("id") ?? "");
   const slot = String(formData.get("slot") ?? "");
   if (!id || !isSectionSlot(slot)) return { ok: false, message: GENERIC_ERROR };
-
-  await clearSectionSlot(supabase, slot, id);
-
-  const { error } = await supabase.from("media").update({ category: slot }).eq("id", id);
-  if (error) return { ok: false, message: GENERIC_ERROR };
-
-  await recordAudit("update", "media", id, { category: slot });
-  revalidateFor("media");
-
-  return { ok: true, message: `Now used in the ${slot === "hero" ? "homepage hero" : "meals section"}.` };
+  return togglePhotoPlacement(id, slot, true);
 }
 
 export async function deletePhoto(id: string): Promise<ActionResult> {
@@ -511,9 +713,18 @@ export async function saveSettings(
   if (!supabase) return { ok: false, message: GENERIC_ERROR };
 
   const flat = [
-    "phone", "sms", "fax", "email",
-    "street_address", "address_locality", "address_region", "postal_code",
-    "location_line", "license_number", "licensed_capacity", "hours",
+    "phone",
+    "sms",
+    "fax",
+    "email",
+    "street_address",
+    "address_locality",
+    "address_region",
+    "postal_code",
+    "location_line",
+    "license_number",
+    "licensed_capacity",
+    "hours",
   ];
 
   const patch: Record<string, unknown> = {};
@@ -525,7 +736,10 @@ export async function saveSettings(
   // service_area — comma-separated input stored as text[]
   const serviceAreaRaw = String(formData.get("service_area") ?? "").trim();
   patch.service_area = serviceAreaRaw
-    ? serviceAreaRaw.split(",").map((s) => s.trim()).filter(Boolean)
+    ? serviceAreaRaw
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)
     : [];
 
   // socials — individual named inputs assembled into JSONB
@@ -538,10 +752,7 @@ export async function saveSettings(
   patch.socials = socials;
   patch.updated_at = new Date().toISOString();
 
-  const { error } = await supabase
-    .from("site_settings")
-    .update(patch)
-    .eq("id", "singleton");
+  const { error } = await supabase.from("site_settings").update(patch).eq("id", "singleton");
 
   if (error) return { ok: false, message: GENERIC_ERROR };
 
@@ -574,7 +785,13 @@ export async function saveAnnouncement(
   if (id) {
     const { error } = await supabase
       .from("announcements")
-      .update({ message, cta_text: ctaText, cta_href: ctaHref, active, updated_at: new Date().toISOString() })
+      .update({
+        message,
+        cta_text: ctaText,
+        cta_href: ctaHref,
+        active,
+        updated_at: new Date().toISOString(),
+      })
       .eq("id", id);
     if (error) return { ok: false, message: GENERIC_ERROR };
   } else {
@@ -585,7 +802,12 @@ export async function saveAnnouncement(
   }
 
   revalidateFor("announcements");
-  return { ok: true, message: active ? "Announcement is live on the website." : "Announcement saved (not yet visible)." };
+  return {
+    ok: true,
+    message: active
+      ? "Announcement is live on the website."
+      : "Announcement saved (not yet visible).",
+  };
 }
 
 export async function deleteAnnouncement(id: string): Promise<ActionResult> {
@@ -624,10 +846,9 @@ export async function saveOpeningHours(
   }));
 
   // Upsert all 7 rows
-  const { error } = await supabase.from("opening_hours").upsert(
-    rows,
-    { onConflict: "day_of_week" },
-  );
+  const { error } = await supabase
+    .from("opening_hours")
+    .upsert(rows, { onConflict: "day_of_week" });
 
   if (error) return { ok: false, message: GENERIC_ERROR };
 
@@ -639,10 +860,7 @@ export async function saveOpeningHours(
 // Inquiries — star + CSV export
 // ---------------------------------------------------------------------------
 
-export async function starInquiry(
-  id: string,
-  starred: boolean,
-): Promise<ActionResult> {
+export async function starInquiry(id: string, starred: boolean): Promise<ActionResult> {
   await requireAdmin();
   const supabase = await createClient();
   if (!supabase) return { ok: false, message: GENERIC_ERROR };
@@ -657,7 +875,11 @@ export async function starInquiry(
   return { ok: true, message: starred ? "Starred." : "Unstarred." };
 }
 
-export async function exportInquiriesCSV(): Promise<{ ok: boolean; csv?: string; message?: string }> {
+export async function exportInquiriesCSV(): Promise<{
+  ok: boolean;
+  csv?: string;
+  message?: string;
+}> {
   await requireAdmin();
   const supabase = await createClient();
   if (!supabase) return { ok: false, message: GENERIC_ERROR };
@@ -669,17 +891,28 @@ export async function exportInquiriesCSV(): Promise<{ ok: boolean; csv?: string;
 
   if (error || !data) return { ok: false, message: GENERIC_ERROR };
 
-  const headers = ["Name", "Email", "Phone", "Kind", "Status", "Message", "Relationship", "Created"];
-  const rows = data.map((r) => [
-    `"${String(r.name ?? "").replace(/"/g, '""')}"`,
-    `"${String(r.email ?? "").replace(/"/g, '""')}"`,
-    `"${String(r.phone ?? "").replace(/"/g, '""')}"`,
-    `"${String(r.kind ?? "").replace(/"/g, '""')}"`,
-    `"${String(r.status ?? "").replace(/"/g, '""')}"`,
-    `"${String(r.message ?? "").replace(/"/g, '""')}"`,
-    `"${String(r.relationship ?? "").replace(/"/g, '""')}"`,
-    `"${new Date(r.created_at as string).toLocaleDateString("en-US")}"`,
-  ].join(","));
+  const headers = [
+    "Name",
+    "Email",
+    "Phone",
+    "Kind",
+    "Status",
+    "Message",
+    "Relationship",
+    "Created",
+  ];
+  const rows = data.map((r) =>
+    [
+      `"${String(r.name ?? "").replace(/"/g, '""')}"`,
+      `"${String(r.email ?? "").replace(/"/g, '""')}"`,
+      `"${String(r.phone ?? "").replace(/"/g, '""')}"`,
+      `"${String(r.kind ?? "").replace(/"/g, '""')}"`,
+      `"${String(r.status ?? "").replace(/"/g, '""')}"`,
+      `"${String(r.message ?? "").replace(/"/g, '""')}"`,
+      `"${String(r.relationship ?? "").replace(/"/g, '""')}"`,
+      `"${new Date(r.created_at as string).toLocaleDateString("en-US")}"`,
+    ].join(","),
+  );
 
   const csv = [headers.join(","), ...rows].join("\n");
   return { ok: true, csv };
@@ -689,19 +922,13 @@ export async function exportInquiriesCSV(): Promise<{ ok: boolean; csv?: string;
 // Bulk photo operations
 // ---------------------------------------------------------------------------
 
-export async function bulkPublishPhotos(
-  ids: string[],
-  published: boolean,
-): Promise<ActionResult> {
+export async function bulkPublishPhotos(ids: string[], published: boolean): Promise<ActionResult> {
   await requireAdmin();
   const supabase = await createClient();
   if (!supabase) return { ok: false, message: GENERIC_ERROR };
   if (ids.length === 0) return { ok: false, message: "No photos selected." };
 
-  const { error } = await supabase
-    .from("media")
-    .update({ published })
-    .in("id", ids);
+  const { error } = await supabase.from("media").update({ published }).in("id", ids);
 
   if (error) return { ok: false, message: GENERIC_ERROR };
 
@@ -714,3 +941,71 @@ export async function bulkPublishPhotos(
   };
 }
 
+// ---------------------------------------------------------------------------
+// Page copy
+// ---------------------------------------------------------------------------
+
+/**
+ * Saves the words on the page.
+ *
+ * Only writes the entries the form reports as changed. That keeps a save from
+ * clobbering something a second person edited in another tab, and keeps the
+ * audit log to what actually moved.
+ */
+export async function saveCopy(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  await requireAdmin();
+  const supabase = await createClient();
+  if (!supabase) return { ok: false, message: GENERIC_ERROR };
+
+  const changed = String(formData.get("__changed") ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  if (changed.length === 0) return { ok: true, message: "Nothing had changed." };
+
+  const { data: rows, error: readError } = await supabase
+    .from("site_copy")
+    .select("slug, kind")
+    .in("slug", changed);
+
+  if (readError || !rows) return { ok: false, message: GENERIC_ERROR };
+
+  const kindBySlug = new Map(rows.map((r) => [r.slug as string, r.kind as string]));
+  let saved = 0;
+
+  for (const slug of changed) {
+    const kind = kindBySlug.get(slug);
+    if (!kind) continue;
+
+    const raw = String(formData.get(slug) ?? "");
+    const patch =
+      kind === "list"
+        ? {
+            value: null,
+            value_list: raw
+              .split("\n")
+              .map((s) => s.trim())
+              .filter(Boolean),
+          }
+        : { value: raw.trim() === "" ? null : raw.trim(), value_list: [] };
+
+    const { error } = await supabase.from("site_copy").update(patch).eq("slug", slug);
+    if (!error) saved += 1;
+  }
+
+  await recordAudit("update", "site_copy", null, { slugs: changed });
+
+  // Copy appears on the home page and in the footer, which is on every page.
+  revalidatePath("/", "layout");
+
+  if (saved === 0) return { ok: false, message: GENERIC_ERROR };
+
+  return {
+    ok: true,
+    message: `Saved ${saved} change${saved === 1 ? "" : "s"}. The website updates within a minute.`,
+  };
+}

@@ -1,5 +1,10 @@
--- Migration 0004: Admin refinement additions (idempotent / safe to re-run)
+-- Migration 0004: Admin refinement additions
 -- Adds: inquiries.starred, announcements table, opening_hours table
+--
+-- GENUINELY idempotent. An earlier version DROPPED both tables before creating
+-- them, which meant re-running apply.sql silently destroyed every announcement
+-- the owner had written and any opening hours they had adjusted. Tables are now
+-- created only if absent, and missing columns are added in place.
 
 -- ---------------------------------------------------------------------------
 -- 1. inquiries.starred
@@ -14,14 +19,7 @@ ALTER TABLE inquiries
 --    in a bad state (e.g. missing the `active` column).
 -- ---------------------------------------------------------------------------
 
--- Drop any policies first (policies must go before the table drop)
-DROP POLICY IF EXISTS "admins can manage announcements"   ON announcements;
-DROP POLICY IF EXISTS "public can read active announcements" ON announcements;
-
--- Drop the table if it exists in an incomplete state
-DROP TABLE IF EXISTS announcements;
-
-CREATE TABLE announcements (
+CREATE TABLE IF NOT EXISTS announcements (
   id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   message     text NOT NULL CHECK (char_length(message) <= 300),
   cta_text    text,
@@ -34,7 +32,15 @@ CREATE TABLE announcements (
 COMMENT ON TABLE announcements IS
   'Site-wide banner messages displayed at the top of every public page.';
 
+ALTER TABLE announcements
+  ADD COLUMN IF NOT EXISTS cta_text text,
+  ADD COLUMN IF NOT EXISTS cta_href text,
+  ADD COLUMN IF NOT EXISTS active boolean NOT NULL DEFAULT false;
+
 ALTER TABLE announcements ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "admins can manage announcements" ON announcements;
+DROP POLICY IF EXISTS "public can read active announcements" ON announcements;
 
 CREATE POLICY "admins can manage announcements"
   ON announcements
@@ -51,15 +57,9 @@ CREATE POLICY "public can read active announcements"
 
 -- ---------------------------------------------------------------------------
 -- 3. opening_hours
---    Same defensive approach.
 -- ---------------------------------------------------------------------------
 
-DROP POLICY IF EXISTS "admins can manage opening_hours" ON opening_hours;
-DROP POLICY IF EXISTS "public can read opening_hours"   ON opening_hours;
-
-DROP TABLE IF EXISTS opening_hours;
-
-CREATE TABLE opening_hours (
+CREATE TABLE IF NOT EXISTS opening_hours (
   day_of_week  int PRIMARY KEY CHECK (day_of_week BETWEEN 1 AND 7),
   day_name     text NOT NULL,
   opens        text,
@@ -73,6 +73,9 @@ COMMENT ON TABLE opening_hours IS
   'Structured opening hours per day of the week (1=Monday, 7=Sunday).';
 
 ALTER TABLE opening_hours ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "admins can manage opening_hours" ON opening_hours;
+DROP POLICY IF EXISTS "public can read opening_hours" ON opening_hours;
 
 CREATE POLICY "admins can manage opening_hours"
   ON opening_hours

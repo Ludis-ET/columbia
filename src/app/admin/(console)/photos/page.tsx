@@ -20,7 +20,6 @@ export default async function PhotosAdminPage() {
     <>
       <PageHeader
         title="Photos & gallery"
-        lead="Manage the homepage hero, the meals photograph, and the gallery families browse in Our home."
         count={`${live} live · ${photos.length} total`}
       />
       <PhotoManager initialPhotos={photos} />

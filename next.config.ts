@@ -2,6 +2,13 @@ import type { NextConfig } from "next";
 import { legacyRedirects, legacyServiceRedirect } from "./src/lib/sections";
 
 const nextConfig: NextConfig = {
+  // Each photo may be up to 8 MB; batch uploads send one file per action.
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "10mb",
+    },
+  },
+
   async redirects() {
     // The site was multi-page during development. Anything that linked or
     // bookmarked those URLs lands on the right section instead of a 404, and

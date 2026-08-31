@@ -44,7 +44,7 @@ const EXPECT = [
   ["every_day", 7, ""],
   ["why_families", 4, ""],
   ["pages", 7, ""],
-  ["media", 0, "deliberately empty, no photographs yet"],
+  ["media", 10, "dev placeholder photographs (pnpm db:seed)"],
   ["testimonials", 0, "deliberately empty, no quotes yet"],
   ["faqs", 0, "deliberately empty, no answers yet"],
   ["team", 0, "deliberately empty, no names or consent yet"],

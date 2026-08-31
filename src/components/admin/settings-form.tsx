@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { Loader2, MapPin, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -104,10 +104,12 @@ function formValuesFromSettings(settings: SiteSettingsRow | null): Record<string
 function ServiceAreaInput({ initialValue }: { initialValue: string[] }) {
   const [chips, setChips] = useState<string[]>(initialValue);
   const [inputVal, setInputVal] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
 
   function addChip(raw: string) {
-    const vals = raw.split(",").map((s) => s.trim()).filter(Boolean);
+    const vals = raw
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
     setChips((prev) => {
       const next = [...prev];
       for (const v of vals) {
@@ -124,13 +126,16 @@ function ServiceAreaInput({ initialValue }: { initialValue: string[] }) {
 
   return (
     <div className="grid gap-1.5">
-      <Label htmlFor="service-area-input">Service area cities</Label>
+      <span className="text-[0.9375rem] font-medium">Service area cities</span>
       {/* Hidden input carries the comma-separated value for the form action */}
       <input type="hidden" name="service_area" value={chips.join(", ")} />
 
-      <div
-        className="border-rule-strong bg-paper flex min-h-11 flex-wrap gap-1.5 rounded border px-3 py-2 cursor-text"
-        onClick={() => inputRef.current?.focus()}
+      {/* A <label> rather than a div with onClick. Clicking anywhere in the box
+          focuses the input natively, with no JavaScript and no keyboard gap:
+          the previous version worked for a mouse and not for a keyboard. */}
+      <label
+        htmlFor="service-area-input"
+        className="border-rule-strong bg-paper flex min-h-11 cursor-text flex-wrap gap-1.5 rounded border px-3 py-2"
       >
         {chips.map((chip) => (
           <span
@@ -150,11 +155,10 @@ function ServiceAreaInput({ initialValue }: { initialValue: string[] }) {
         ))}
         <input
           id="service-area-input"
-          ref={inputRef}
           type="text"
           value={inputVal}
           placeholder={chips.length === 0 ? "Type a city and press Enter or comma…" : ""}
-          className="min-w-24 flex-1 border-none bg-transparent text-[0.9375rem] outline-none placeholder:text-stone/60"
+          className="placeholder:text-stone/60 min-w-24 flex-1 border-none bg-transparent text-[0.9375rem] outline-none"
           onChange={(e) => setInputVal(e.target.value)}
           onKeyDown={(e) => {
             if ((e.key === "Enter" || e.key === ",") && inputVal.trim()) {
@@ -169,7 +173,7 @@ function ServiceAreaInput({ initialValue }: { initialValue: string[] }) {
             if (inputVal.trim()) addChip(inputVal);
           }}
         />
-      </div>
+      </label>
       <p className="text-stone text-[0.875rem]">Press Enter or comma to add each city.</p>
     </div>
   );
@@ -180,9 +184,10 @@ function ServiceAreaInput({ initialValue }: { initialValue: string[] }) {
 // ---------------------------------------------------------------------------
 
 function MapPreview({ settings }: { settings: SiteSettingsRow | null }) {
-  const addr = settings?.street_address && settings?.address_locality
-    ? `${settings.street_address}, ${settings.address_locality}, ${settings.address_region ?? ""} ${settings.postal_code ?? ""}`
-    : null;
+  const addr =
+    settings?.street_address && settings?.address_locality
+      ? `${settings.street_address}, ${settings.address_locality}, ${settings.address_region ?? ""} ${settings.postal_code ?? ""}`
+      : null;
 
   if (!addr) return null;
 
@@ -212,11 +217,18 @@ function MapPreview({ settings }: { settings: SiteSettingsRow | null }) {
 // ---------------------------------------------------------------------------
 
 export function SettingsForm({ settings }: { settings: SiteSettingsRow | null }) {
-  const [state, action, pending] = useActionState<ActionResult | null, FormData>(saveSettings, null);
+  const [state, action, pending] = useActionState<ActionResult | null, FormData>(
+    saveSettings,
+    null,
+  );
   const [values, setValues] = useState(() => formValuesFromSettings(settings));
 
+  // Re-seed the form only when the underlying row actually changed. Depending on
+  // `settings` itself would reset the form on every render and throw away
+  // whatever the owner was in the middle of typing.
   useEffect(() => {
     setValues(formValuesFromSettings(settings));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [settings?.updated_at]);
 
   const set = (name: string) => ({
@@ -255,9 +267,7 @@ export function SettingsForm({ settings }: { settings: SiteSettingsRow | null })
               ))}
 
               {/* Map preview sits after the address group */}
-              {group.legend === "Where you are" ? (
-                <MapPreview settings={settings} />
-              ) : null}
+              {group.legend === "Where you are" ? <MapPreview settings={settings} /> : null}
             </div>
           </fieldset>
         ))}
@@ -267,9 +277,21 @@ export function SettingsForm({ settings }: { settings: SiteSettingsRow | null })
           <legend className="label text-sage-deep px-2">Social links</legend>
           <div className="grid gap-4">
             {[
-              { name: "socials_facebook", label: "Facebook page URL", placeholder: "https://facebook.com/…" },
-              { name: "socials_instagram", label: "Instagram profile URL", placeholder: "https://instagram.com/…" },
-              { name: "socials_google_maps", label: "Google Maps profile URL", placeholder: "https://maps.google.com/…" },
+              {
+                name: "socials_facebook",
+                label: "Facebook page URL",
+                placeholder: "https://facebook.com/…",
+              },
+              {
+                name: "socials_instagram",
+                label: "Instagram profile URL",
+                placeholder: "https://instagram.com/…",
+              },
+              {
+                name: "socials_google_maps",
+                label: "Google Maps profile URL",
+                placeholder: "https://maps.google.com/…",
+              },
             ].map((field) => (
               <div key={field.name} className="grid gap-1.5">
                 <Label htmlFor={field.name}>{field.label}</Label>

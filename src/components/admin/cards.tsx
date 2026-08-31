@@ -2,13 +2,7 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 /** Raised panel — safe for server and client components. */
-export function AdminCard({
-  children,
-  className,
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
+export function AdminCard({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <div className={cn("border-rule bg-paper-raise rounded-lg border shadow-sm", className)}>
       {children}

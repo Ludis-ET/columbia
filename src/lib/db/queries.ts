@@ -9,6 +9,7 @@ import type {
   MediaRow,
   ScheduleItemRow,
   ServiceRow,
+  SiteCopyRow,
   SiteSettingsRow,
   TestimonialRow,
   WhyFamiliesRow,
@@ -16,7 +17,13 @@ import type {
 
 import * as file from "@/lib/content";
 import { galleryImages as placeholderGallery, heroImage, mealsImage } from "@/lib/images";
-import { isGalleryItem, mediaPublicUrl, type SectionSlot } from "@/lib/media";
+import {
+  appearsInGallery,
+  hasPlacement,
+  mediaPublicUrl,
+  primaryGalleryCategory,
+  type SectionSlot,
+} from "@/lib/media";
 import type { CareType, EveryDayItem, ScheduleItem, Service } from "@/lib/content";
 import type { GalleryImage } from "@/components/site/gallery";
 import type { TestimonialItem } from "@/components/site/testimonial";
@@ -219,6 +226,57 @@ export const getSiteSettings = cache(async (): Promise<SiteSettings> => {
 });
 
 // ---------------------------------------------------------------------------
+// Page copy
+// ---------------------------------------------------------------------------
+
+/**
+ * Every editable word on the page, keyed by slug.
+ *
+ * Falls back to the artwork file exactly like the rest of the content layer, so
+ * a missing table or an unreachable database still renders the original wording
+ * rather than a page full of gaps. `copy()` below takes the fallback inline, so
+ * a caller can never accidentally render an empty heading.
+ */
+export type CopyMap = Record<string, string>;
+export type CopyListMap = Record<string, string[]>;
+
+export interface SiteCopy {
+  text: CopyMap;
+  lists: CopyListMap;
+}
+
+export const getSiteCopy = cache(async (): Promise<SiteCopy> => {
+  const rows = await select<SiteCopyRow>("site_copy");
+  const text: CopyMap = {};
+  const lists: CopyListMap = {};
+
+  for (const row of rows ?? []) {
+    if (!row.published) continue;
+    if (row.kind === "list") lists[row.slug] = row.value_list ?? [];
+    else if (row.value !== null) text[row.slug] = row.value;
+  }
+
+  return { text, lists };
+});
+
+/**
+ * Reads one entry with a required fallback.
+ *
+ * The fallback is what the artwork said, so a slug that has not been seeded yet
+ * still renders the right words instead of nothing.
+ */
+export function copy(source: SiteCopy, slug: string, fallback: string): string {
+  const value = source.text[slug];
+  return value && value.trim() !== "" ? value : fallback;
+}
+
+/** Same, for list entries such as the values strip. */
+export function copyList(source: SiteCopy, slug: string, fallback: string[]): string[] {
+  const value = source.lists[slug];
+  return value && value.length > 0 ? value : fallback;
+}
+
+// ---------------------------------------------------------------------------
 // Availability, "unset" is a real state and renders nothing
 // ---------------------------------------------------------------------------
 
@@ -276,7 +334,7 @@ export const getGallery = cache(async (): Promise<GalleryImage[]> => {
 
   const galleryRows = rows.filter(
     (r) =>
-      isGalleryItem(r.category) &&
+      appearsInGallery(r) &&
       r.published &&
       (!r.contains_people || r.release_on_file),
   );
@@ -289,7 +347,7 @@ export const getGallery = cache(async (): Promise<GalleryImage[]> => {
       src: mediaPublicUrl(r.storage_path) ?? "",
       alt: r.alt,
       caption: r.caption,
-      category: r.category,
+      category: primaryGalleryCategory(r) ?? r.category,
       width: r.width ?? undefined,
       height: r.height ?? undefined,
     }))
@@ -307,12 +365,16 @@ export const getSectionImage = cache(
     const rows = await select<MediaRow>("media");
     if (!rows) return fallback;
 
-    const match = rows.find(
-      (r) =>
-        r.category === slot &&
-        r.published &&
-        (!r.contains_people || r.release_on_file),
-    );
+    const matches = rows
+      .filter(
+        (r) =>
+          hasPlacement(r, slot) &&
+          r.published &&
+          (!r.contains_people || r.release_on_file),
+      )
+      .sort((a, b) => a.position - b.position);
+
+    const match = matches[0];
 
     if (!match) return fallback;
 

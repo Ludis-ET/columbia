@@ -51,9 +51,7 @@ export function AnnouncementManager({
         <AdminCard className="border-[#e8c84a]/40 bg-[#fffbeb] p-0">
           <div className="flex items-center gap-3 px-4 py-3">
             <Megaphone className="size-5 shrink-0 text-[#92400e]" aria-hidden="true" />
-            <p className="text-[0.9375rem] font-medium text-[#92400e]">
-              Active banner preview:
-            </p>
+            <p className="text-[0.9375rem] font-medium text-[#92400e]">Active banner preview:</p>
             <p className="text-[0.9375rem] text-[#92400e]">
               {announcements.find((a) => a.active)?.message}
             </p>
@@ -69,7 +67,10 @@ export function AnnouncementManager({
 
       {/* Existing announcements */}
       {announcements.length > 0 ? (
-        <AdminSection title="Your announcements" lead="Toggle active to show on the website. Only one banner shows at a time — the first active one.">
+        <AdminSection
+          title="Your announcements"
+          lead="Toggle active to show on the website. Only one banner shows at a time — the first active one."
+        >
           <ul className="grid gap-3">
             {announcements.map((a) => (
               <AnnouncementRow
@@ -105,11 +106,7 @@ export function AnnouncementManager({
             }}
           />
         ) : (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setShowNew(true)}
-          >
+          <Button type="button" variant="outline" onClick={() => setShowNew(true)}>
             <Plus className="size-4" aria-hidden="true" />
             New announcement
           </Button>
@@ -131,7 +128,10 @@ function AnnouncementRow({
   onSaved: (r: ActionResult, updated?: AnnouncementRow) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [state, action, pending] = useActionState<ActionResult | null, FormData>(saveAnnouncement, null);
+  const [state, action, pending] = useActionState<ActionResult | null, FormData>(
+    saveAnnouncement,
+    null,
+  );
 
   // Propagate result up
   const [lastState, setLastState] = useState<ActionResult | null>(null);
@@ -141,19 +141,23 @@ function AnnouncementRow({
   }
 
   return (
-    <li className={cn(
-      "bg-paper-raise rounded border",
-      announcement.active ? "border-[#e8c84a]/60" : "border-rule",
-    )}>
+    <li
+      className={cn(
+        "bg-paper-raise rounded border",
+        announcement.active ? "border-[#e8c84a]/60" : "border-rule",
+      )}
+    >
       <div className="flex items-start justify-between gap-3 p-4">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <span className={cn(
-              "label rounded-full px-2 py-0.5 text-[0.6875rem]",
-              announcement.active
-                ? "bg-[#fef9c3] text-[#92400e] font-semibold"
-                : "bg-paper text-stone border-rule border",
-            )}>
+            <span
+              className={cn(
+                "label rounded-full px-2 py-0.5 text-[0.6875rem]",
+                announcement.active
+                  ? "bg-[#fef9c3] font-semibold text-[#92400e]"
+                  : "bg-paper text-stone border-rule border",
+              )}
+            >
               {announcement.active ? "Live" : "Off"}
             </span>
             <p className="truncate font-semibold">{announcement.message}</p>
@@ -178,7 +182,7 @@ function AnnouncementRow({
             onClick={onDelete}
             disabled={deleting}
             aria-label="Delete announcement"
-            className="text-stone hover:text-[var(--danger)] inline-flex min-h-11 items-center px-2 transition-colors"
+            className="text-stone inline-flex min-h-11 items-center px-2 transition-colors hover:text-[var(--danger)]"
           >
             <Trash2 className="size-4" aria-hidden="true" />
           </button>
@@ -207,7 +211,10 @@ function NewAnnouncementForm({
   onCancel: () => void;
   onSaved: (r: ActionResult, row?: AnnouncementRow) => void;
 }) {
-  const [state, action, pending] = useActionState<ActionResult | null, FormData>(saveAnnouncement, null);
+  const [state, action, pending] = useActionState<ActionResult | null, FormData>(
+    saveAnnouncement,
+    null,
+  );
 
   const [lastState, setLastState] = useState<ActionResult | null>(null);
   if (state && state !== lastState) {
@@ -219,7 +226,14 @@ function NewAnnouncementForm({
     <AdminCard>
       <AnnouncementForm
         id=""
-        defaultValues={{ id: "", message: "", cta_text: null, cta_href: null, active: false, created_at: "" }}
+        defaultValues={{
+          id: "",
+          message: "",
+          cta_text: null,
+          cta_href: null,
+          active: false,
+          created_at: "",
+        }}
         action={action}
         pending={pending}
         onClose={onCancel}

@@ -24,11 +24,13 @@
    theme states rather than shadcn's default `.dark` class, so its components
    and ours flip together. */
 @custom-variant dark {
-  &:where([data-theme="dark"], [data-theme="dark"] *) {
+  &:where([data-theme="dark"], [data-theme="dark"] *):not(:is([data-admin], [data-admin] *)) {
     @slot;
   }
   @media (prefers-color-scheme: dark) {
-    &:where(:root:not([data-theme="light"]), :root:not([data-theme="light"]) *) {
+    &:where(:root:not([data-theme="light"]), :root:not([data-theme="light"]) *):not(
+        :is([data-admin], [data-admin] *)
+      ) {
       @slot;
     }
   }
@@ -91,15 +93,15 @@
   --color-input: var(--rule-strong);
   --color-ring: var(--sage);
 
-  /* Admin sidebar (Phase 5), the console sidebar is ink navy in every theme. */
-  --color-sidebar: var(--ink);
-  --color-sidebar-foreground: var(--paper);
-  --color-sidebar-primary: var(--sage);
-  --color-sidebar-primary-foreground: var(--paper);
-  --color-sidebar-accent: var(--sage-wash);
-  --color-sidebar-accent-foreground: var(--sage-deep);
-  --color-sidebar-border: var(--rule);
-  --color-sidebar-ring: var(--sage);
+  /* Admin sidebar (Phase 5), fixed brand navy — never the flipped --ink token. */
+  --color-sidebar: #10254a;
+  --color-sidebar-foreground: #f6f5ee;
+  --color-sidebar-primary: #5e7c3c;
+  --color-sidebar-primary-foreground: #f6f5ee;
+  --color-sidebar-accent: #1a2f52;
+  --color-sidebar-accent-foreground: #f6f5ee;
+  --color-sidebar-border: rgb(255 255 255 / 0.12);
+  --color-sidebar-ring: #5e7c3c;
 
   /* Radii stay small and squared, see CLAUDE.md. shadcn's 10px default is out. */
   --radius: 0.25rem;
@@ -306,6 +308,47 @@
 }
 
 /* ---------------------------------------------------------------------------
+   Admin console — always the light palette.
+
+   The public site follows the reader's theme; the admin does not. It was
+   designed for warm paper surfaces and a fixed ink-navy sidebar. When dark
+   mode flipped the --ink token, the sidebar turned pale while the nav text
+   stayed white, and shadcn inputs picked up dark: styles on top of clashing
+   tokens. Lock the light values inside [data-admin] and exclude that subtree
+   from the dark variant above.
+   ------------------------------------------------------------------------ */
+
+[data-admin] {
+  color-scheme: light;
+
+  --ink: #10254a;
+  --ink-soft: #33436a;
+  --paper: #f6f5ee;
+  --paper-raise: #fcfbf6;
+  --paper-sunk: #edece2;
+  --stone: #626859;
+  --rule: #d6d6c8;
+  --rule-strong: #b9bca9;
+
+  --sage: #5e7c3c;
+  --sage-deep: #3f5528;
+  --sage-wash: #e7ebdc;
+
+  --accent-blue: #2a6bb0;
+  --accent-blue-on: #235c99;
+  --accent-violet: #6b4c9a;
+  --accent-violet-on: #6b4c9a;
+  --accent-amber: #b8720f;
+  --accent-amber-on: #8f580b;
+  --accent-rose: #a93659;
+  --accent-rose-on: #a93659;
+
+  --ok: #3f5528;
+  --warn: #8f580b;
+  --danger: #a02033;
+}
+
+/* ---------------------------------------------------------------------------
    Base
    ------------------------------------------------------------------------ */
 
@@ -372,6 +415,13 @@
   :root[data-motion="reduce"] {
     scroll-behavior: auto;
   }
+  /* A reader turning motion off mid-visit must not be left with hidden content. */
+  :root[data-motion="reduce"] [data-reveal],
+  :root[data-motion="reduce"] [data-reveal][data-revealed] {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
   :root[data-motion="reduce"] *,
   :root[data-motion="reduce"] *::before,
   :root[data-motion="reduce"] *::after {
@@ -392,6 +442,25 @@
     font-weight: 500;
   }
 
+  /* Scroll reveal.
+     The hidden state applies ONLY under .reveal-ready, which the inlined script
+     in src/lib/reveal.ts adds before first paint. If that script never runs,
+     nothing is ever hidden. See the long note in that file: the previous
+     implementation started at opacity 0 and left half the page invisible when
+     hydration broke. */
+  .reveal-ready [data-reveal] {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  .reveal-ready [data-reveal][data-revealed] {
+    opacity: 1;
+    transform: none;
+    transition:
+      opacity 320ms cubic-bezier(0.22, 0.61, 0.36, 1),
+      transform 320ms cubic-bezier(0.22, 0.61, 0.36, 1);
+    transition-delay: var(--reveal-delay, 0s);
+  }
+
   /* Skip link: off-screen until focused, then pinned top-left. */
   .skip-link {
     position: absolute;
@@ -402,5 +471,15 @@
   .skip-link:focus {
     left: 0.5rem;
     top: 0.5rem;
+  }
+
+  /* Fixed navy sidebar — immune to the public-site --ink flip. */
+  .admin-sidebar {
+    background-color: #10254a;
+    color: #f6f5ee;
+  }
+
+  .admin-scrim {
+    background-color: color-mix(in srgb, #10254a 55%, transparent);
   }
 }

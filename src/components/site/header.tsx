@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Menu, Phone, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { Monogram } from "@/components/brand/monogram";
 import { AnchorLink } from "@/components/site/anchor-link";
 import { ThemeToggle } from "@/components/site/theme-toggle";
@@ -18,11 +18,10 @@ import { cn } from "@/lib/utils";
  * routes. On the legal pages, which are still separate, the anchors would
  * point nowhere, so they become links back to the home page instead.
  *
- * `phone` and `phoneHref` come from a server component that has already run
- * them through the content gate. They are null until the client confirms which
- * number to publish, and when null the call affordances render nothing at all.
+ * The phone number lives in the hero, contact section, footer and mobile call
+ * bar — not here. The bar was carrying too much at once.
  */
-export function Header({ phone, phoneHref }: { phone: string | null; phoneHref: string | null }) {
+export function Header() {
   const [open, setOpen] = useState(false);
   const [condensed, setCondensed] = useState(false);
   const pathname = usePathname();
@@ -52,8 +51,6 @@ export function Header({ phone, phoneHref }: { phone: string | null; phoneHref: 
           aria-label="Columbia Care Adult Family Home, home"
         >
           <Monogram className={cn("transition-all", condensed ? "size-9" : "size-11")} decorative />
-          {/* Wordmark hides below md: at the largest reader text size it plus the
-              CTA plus the menu button overflow a 640px viewport. */}
           <span className="hidden leading-tight md:block">
             <span className="font-display text-ink block text-[1.05rem] font-semibold">
               Columbia Care
@@ -76,16 +73,6 @@ export function Header({ phone, phoneHref }: { phone: string | null; phoneHref: 
           {/* Below lg the toggle lives in the mobile menu instead, keeping both
               overflows the bar at the largest reader text size. */}
           <ThemeToggle className="hidden lg:inline-flex" />
-
-          {phone && phoneHref ? (
-            <a
-              href={phoneHref}
-              className="text-ink-soft hover:text-sage-deep hidden items-center gap-2 rounded px-2 py-2 font-medium xl:inline-flex"
-            >
-              <Phone className="size-4" aria-hidden="true" strokeWidth={2} />
-              {phone}
-            </a>
-          ) : null}
 
           <AnchorLink
             sectionId="contact"

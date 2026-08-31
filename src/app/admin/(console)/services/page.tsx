@@ -7,8 +7,17 @@ export const metadata = { title: "Services" };
 
 const EDITABLE_FIELDS: EditableField[] = [
   { name: "title", label: "Title" },
-  { name: "summary", label: "One-line summary", placeholder: "Short sentence shown on the homepage card." },
-  { name: "body", label: "Full description", multiline: true, placeholder: "Shown on the service detail page (if it has one)." },
+  {
+    name: "summary",
+    label: "One-line summary",
+    placeholder: "Short sentence shown on the homepage card.",
+  },
+  {
+    name: "body",
+    label: "Full description",
+    multiline: true,
+    placeholder: "Shown on the service detail page (if it has one).",
+  },
 ];
 
 export default async function ServicesAdminPage() {

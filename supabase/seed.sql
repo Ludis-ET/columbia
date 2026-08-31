@@ -19,8 +19,8 @@ insert into site_settings (
   latitude, longitude, license_number, licensed_capacity, hours, location_line, service_area
 ) values (
   'singleton',
-  null,   -- ASK_CLIENT q1, no number published yet
-  null,
+  '206-499-0849',   -- ASK_CLIENT q1, no number published yet
+  '206-499-0849',
   null,
   '425-212-9108',
   'columbiacareafh@gmail.com',
@@ -34,11 +34,13 @@ insert into site_settings (
   array['Everett']::text[]   -- Everett only: the sole confirmed area
 )
 on conflict (id) do update set
-  fax = excluded.fax, email = excluded.email,
+  phone = excluded.phone, phone_display = excluded.phone_display,
+  sms = excluded.sms, fax = excluded.fax, email = excluded.email,
   street_address = excluded.street_address, address_locality = excluded.address_locality,
   address_region = excluded.address_region, postal_code = excluded.postal_code,
   hours = excluded.hours, location_line = excluded.location_line,
-  service_area = excluded.service_area;
+  service_area = excluded.service_area,
+  updated_at = now();
 
 -- availability: starts unset, so the badge renders nothing until the client sets it.
 insert into availability (id, status) values ('singleton', 'unset')
@@ -120,6 +122,43 @@ insert into pages (slug, title, lead, seo_description, published) values
 on conflict (slug) do update set
   title = excluded.title, lead = excluded.lead,
   seo_description = excluded.seo_description, published = excluded.published;
+
+-- site_copy: every editable word on the page, seeded from the artwork file.
+insert into site_copy (slug, section, label, help, kind, source, value, value_list, position, published) values
+  ('hero_tagline', 'Hero', 'Main headline', 'The first thing a family reads.', 'short', 'artwork', 'A Place to Feel at Home, A Place to Be Cared For.', '{}', 0, true),
+  ('hero_lead', 'Hero', 'Line under the headline', null, 'short', 'editorial', 'An adult family home in Everett, Washington.', '{}', 1, true),
+  ('promise', 'Promise strip', 'Promise', 'The band under the hero.', 'short', 'artwork', 'A safe place. A caring heart. A better quality of life.', '{}', 2, true),
+  ('values', 'Promise strip', 'Values', 'Shown as small capitals beneath the promise.', 'list', 'artwork', null, array['24-Hour Care', 'Compassion', 'Dignity', 'Respect', 'Safety']::text[], 3, true),
+  ('about_eyebrow', 'About', 'Small label above the heading', null, 'short', 'editorial', 'Who we are', '{}', 4, true),
+  ('about_heading', 'About', 'Heading', null, 'short', 'editorial', 'A family-like environment', '{}', 5, true),
+  ('about_body', 'About', 'About paragraph', 'Your description of the home.', 'long', 'artwork', 'At Columbia Care Adult Family Home, we provide a safe, comfortable, and caring home where every resident is treated with dignity and respect. Our goal is to help each resident maintain the highest possible quality of life while receiving personalized care in a family-like environment.', '{}', 6, true),
+  ('care_eyebrow', 'Care', 'Small label above the heading', null, 'short', 'editorial', 'Care & services', '{}', 7, true),
+  ('care_heading', 'Care', 'Heading', null, 'short', 'editorial', 'What we do, every day', '{}', 8, true),
+  ('care_included_heading', 'Care', 'Heading above the daily list', null, 'short', 'editorial', 'Included every single day', '{}', 9, true),
+  ('day_eyebrow', 'A day', 'Small label above the heading', null, 'short', 'editorial', 'Morning to night', '{}', 10, true),
+  ('day_heading', 'A day', 'Heading', null, 'short', 'editorial', 'A day in our home', '{}', 11, true),
+  ('day_lead', 'A day', 'Introduction', null, 'long', 'editorial', 'Families always ask what the days actually look like. Here is the whole of one, from the first good morning to the last safety check.', '{}', 12, true),
+  ('home_eyebrow', 'Our home', 'Small label above the heading', null, 'short', 'editorial', 'Our home', '{}', 13, true),
+  ('home_heading', 'Our home', 'Heading', null, 'short', 'editorial', 'Come and look around', '{}', 14, true),
+  ('home_lead', 'Our home', 'Introduction', null, 'short', 'editorial', 'A real house on a quiet street, not a facility.', '{}', 15, true),
+  ('home_note', 'Our home', 'Note under the gallery', null, 'short', 'editorial', 'Photographs show the shared areas of the home. To see everything, come and visit.', '{}', 16, true),
+  ('meals_eyebrow', 'Meals', 'Small label above the heading', null, 'short', 'editorial', 'Meals & dining', '{}', 17, true),
+  ('meals_heading', 'Meals', 'Heading', null, 'short', 'editorial', 'Home-cooked, every day', '{}', 18, true),
+  ('meals_body', 'Meals', 'Meals paragraph', 'Your description of the food.', 'long', 'artwork', 'Our home provides a wide variety of nutritious, home-cooked meals daily for breakfast, lunch, dinner, and snacks between meals such as fresh fruit and vegetables.', '{}', 19, true),
+  ('meals_note', 'Meals', 'Note under the paragraph', null, 'long', 'editorial', 'Does your loved one have a special diet, a food they cannot eat, or a favourite meal? Tell us and we will talk it through.', '{}', 20, true),
+  ('visit_eyebrow', 'Find us', 'Small label above the heading', null, 'short', 'editorial', 'Find us', '{}', 21, true),
+  ('visit_heading', 'Find us', 'Heading', null, 'short', 'editorial', 'Close to home, easy to reach', '{}', 22, true),
+  ('contact_eyebrow', 'Contact', 'Small label above the heading', null, 'short', 'editorial', 'Book a house tour', '{}', 23, true),
+  ('contact_heading', 'Contact', 'Heading', null, 'short', 'editorial', 'Come and see the home', '{}', 24, true),
+  ('contact_lead', 'Contact', 'Introduction', null, 'long', 'editorial', 'Tell us a little about your loved one and what they need. There is no pressure and no obligation, and most families visit two or three homes before they decide.', '{}', 25, true),
+  ('contact_cta', 'Contact', 'Line beside the heart badge', 'Your own wording from the brochure.', 'short', 'artwork', 'Contact us to book a house tour!', '{}', 26, true),
+  ('closing_line', 'Contact', 'Handwritten closing line', 'Set in the script face. Keep it short.', 'short', 'artwork', 'We treat your loved one like family.', '{}', 27, true)
+on conflict (slug) do update set
+  section = excluded.section, label = excluded.label, help = excluded.help,
+  kind = excluded.kind, source = excluded.source, position = excluded.position;
+-- NOTE: `value` is deliberately NOT overwritten on conflict. Re-running the
+-- seed refreshes the labels and grouping without discarding anything the
+-- owner has since reworded in the admin console.
 
 -- testimonials, team, faqs and media are deliberately NOT seeded.
 -- The client has supplied no quotes (q14), no staff names (q7), no FAQ answers,

@@ -47,10 +47,19 @@ export function Hero({
             sizes="100vw"
             className="object-cover"
           />
-          {/* Scrim: heavy enough that white text clears 7:1 over the photograph. */}
+          {/* Lighter wash so the room reads as a room; a centred falloff keeps
+              headline contrast without flattening the whole photograph. */}
           <div
             aria-hidden="true"
-            className="absolute inset-0 bg-[linear-gradient(to_top,color-mix(in_srgb,#10254A_92%,transparent),color-mix(in_srgb,#10254A_62%,transparent))]"
+            className="absolute inset-0 bg-[color-mix(in_srgb,#10254A_22%,transparent)]"
+          />
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 bg-[radial-gradient(ellipse_at_center_42%,color-mix(in_srgb,#10254A_78%,transparent)_0%,color-mix(in_srgb,#10254A_35%,transparent)_52%,transparent_78%)]"
+          />
+          <div
+            aria-hidden="true"
+            className="absolute inset-x-0 bottom-0 h-1/3 bg-[linear-gradient(to_top,color-mix(in_srgb,#10254A_55%,transparent),transparent)]"
           />
         </>
       ) : null}

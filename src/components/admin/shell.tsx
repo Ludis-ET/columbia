@@ -5,17 +5,23 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   CalendarDays,
+  CircleHelp,
   Clock,
   ExternalLink,
+  FileText,
+  Heart,
   ImageIcon,
   Inbox,
   LayoutDashboard,
+  ListChecks,
   LogOut,
   Megaphone,
   Menu,
+  PenLine,
   Settings,
   Sparkles,
   Stethoscope,
+  Users,
   X,
   type LucideIcon,
 } from "lucide-react";
@@ -30,9 +36,17 @@ const NAV_ICONS: Record<string, LucideIcon> = {
   "/admin": LayoutDashboard,
   "/admin/inquiries": Inbox,
   "/admin/availability": Sparkles,
+  "/admin/copy": PenLine,
   "/admin/photos": ImageIcon,
   "/admin/services": Stethoscope,
+  "/admin/care-types": Heart,
+  "/admin/every-day": ListChecks,
+  "/admin/why-families": Heart,
   "/admin/schedule": CalendarDays,
+  "/admin/testimonials": Users,
+  "/admin/faqs": CircleHelp,
+  "/admin/team": Users,
+  "/admin/pages": FileText,
   "/admin/announcements": Megaphone,
   "/admin/hours": Clock,
   "/admin/settings": Settings,
@@ -48,9 +62,7 @@ const MOBILE_TABS: { href: string; label: string; icon: LucideIcon }[] = [
 
 function currentPageTitle(pathname: string): string {
   if (pathname === "/admin") return "Dashboard";
-  const match = adminNav.find(
-    (item) => item.href !== "/admin" && pathname.startsWith(item.href),
-  );
+  const match = adminNav.find((item) => item.href !== "/admin" && pathname.startsWith(item.href));
   return match?.label ?? "Admin";
 }
 
@@ -211,12 +223,12 @@ export function AdminShell({
         <div className="fixed inset-0 z-50 lg:hidden" id="admin-drawer">
           <button
             type="button"
-            className="absolute inset-0 bg-ink/50 backdrop-blur-[2px]"
+            className="admin-scrim absolute inset-0 backdrop-blur-[2px]"
             aria-label="Close menu"
             onClick={() => setOpen(false)}
           />
-          <aside className="relative flex h-full w-[min(100%,18rem)] flex-col bg-ink px-4 py-5 shadow-2xl">
-            <div className="mb-6 flex items-center justify-between gap-3">
+          <aside className="admin-sidebar relative flex h-full w-[min(100%,18rem)] min-h-0 flex-col px-4 py-5 shadow-2xl">
+            <div className="mb-6 flex shrink-0 items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <Monogram className="size-9 shrink-0" decorative />
                 <span className="font-display font-semibold text-white">Columbia Care</span>
@@ -230,17 +242,19 @@ export function AdminShell({
                 <span className="sr-only">Close menu</span>
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto pr-1">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
               <NavLinks onNavigate={() => setOpen(false)} />
             </div>
-            <SidebarFooter />
+            <div className="shrink-0">
+              <SidebarFooter />
+            </div>
           </aside>
         </div>
       ) : null}
 
       {/* Desktop sidebar */}
-      <aside className="hidden w-72 shrink-0 flex-col border-r border-white/10 bg-ink lg:sticky lg:top-0 lg:flex lg:h-dvh">
-        <div className="border-b border-white/10 px-5 py-5">
+      <aside className="admin-sidebar hidden w-72 shrink-0 flex-col border-r border-white/10 lg:sticky lg:top-0 lg:flex lg:h-dvh lg:min-h-0 lg:overflow-hidden">
+        <div className="shrink-0 border-b border-white/10 px-5 py-5">
           <div className="flex items-center gap-3">
             <Monogram className="size-10 shrink-0" decorative />
             <div className="leading-tight">
@@ -264,11 +278,13 @@ export function AdminShell({
           ) : null}
         </div>
 
-        <div className="flex flex-1 flex-col overflow-hidden px-3 py-4">
-          <div className="flex-1 overflow-y-auto pr-1">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden px-3 py-4">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
             <NavLinks />
           </div>
-          <SidebarFooter />
+          <div className="shrink-0">
+            <SidebarFooter />
+          </div>
         </div>
       </aside>
 
@@ -294,7 +310,7 @@ export function AdminShell({
       {/* Mobile bottom tab bar */}
       <nav
         aria-label="Quick navigation"
-        className="border-rule bg-paper/95 fixed bottom-0 inset-x-0 z-40 flex items-stretch border-t backdrop-blur lg:hidden"
+        className="border-rule bg-paper/95 fixed inset-x-0 bottom-0 z-40 flex items-stretch border-t backdrop-blur lg:hidden"
       >
         {MOBILE_TABS.map(({ href, label, icon: Icon }) => {
           const active = isActive(href);

@@ -6,7 +6,7 @@ import { Wave } from "@/components/brand/wave";
 import { legalNav } from "@/lib/nav";
 import { sections } from "@/lib/sections";
 import { identity, published } from "@/lib/content";
-import { getSiteSettings } from "@/lib/db/queries";
+import { copy, getSiteCopy, getSiteSettings } from "@/lib/db/queries";
 
 /**
  * Site footer.
@@ -24,7 +24,12 @@ export async function Footer() {
     hours,
     locationLine,
   } = await getSiteSettings();
-  const closingLine = published(identity.closingLine);
+  // Editable in the admin under Contact. The artwork wording is the fallback.
+  const closingLine = copy(
+    await getSiteCopy(),
+    "closing_line",
+    published(identity.closingLine) ?? "",
+  );
 
   return (
     <footer className="mt-auto">

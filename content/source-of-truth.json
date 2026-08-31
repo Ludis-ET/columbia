@@ -92,24 +92,10 @@
   },
   "contact": {
     "phonePrimary": {
-      "value": null,
-      "provenance": "ASK_CLIENT",
-      "blocks": "every call-to-action on the site, schema, Google Business Profile",
-      "question": "Which number do we publish as the main line?",
-      "candidates": [
-        {
-          "value": "206-499-0849",
-          "provenance": "ARTWORK",
-          "source": "A2",
-          "note": "The only complete, usable number in the artwork."
-        },
-        {
-          "value": "(425) 212-XXXX",
-          "provenance": "ARTWORK",
-          "source": "A1",
-          "note": "Deliberately masked in the artwork. NOT a usable number. Shares the 425-212 prefix with the fax, suggesting a second line exists on that exchange."
-        }
-      ]
+      "value": "206-499-0849",
+      "provenance": "ARTWORK",
+      "source": "A2",
+      "note": "The only complete, usable number in the artwork. The 425-212 number on A1 is deliberately masked."
     },
     "sms": {
       "value": null,

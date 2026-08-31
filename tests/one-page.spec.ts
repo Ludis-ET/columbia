@@ -66,7 +66,11 @@ test("the active section is marked for assistive technology", async ({ page }) =
 
   await page.getByRole("link", { name: "Meals", exact: true }).first().click();
   // aria-current="location", not "page", there is only one page.
-  await expect(page.locator('a[aria-current="location"]')).toHaveText("Meals");
+  // Scoped to the desktop bar: the mobile menu renders the same nav, so an
+  // unscoped locator matches twice.
+  await expect(
+    page.locator('nav[aria-label="Sections of this page"] a[aria-current="location"]'),
+  ).toHaveText("Meals");
 });
 
 test("old multi-page URLs redirect to their section", async ({ page }) => {

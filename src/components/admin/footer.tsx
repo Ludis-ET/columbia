@@ -11,9 +11,7 @@ export function AdminFooter() {
   return (
     <footer className="border-rule bg-paper/60 border-t">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-3 sm:px-6 lg:px-10">
-        <p className="label text-stone text-[0.625rem]">
-          Columbia Care · Website admin · {year}
-        </p>
+        <p className="label text-stone text-[0.625rem]">Columbia Care · Website admin · {year}</p>
 
         <nav
           aria-label="Admin footer"

@@ -110,7 +110,9 @@ export function InquiryList({ inquiries: initial }: { inquiries: InquiryRow[] })
       await starInquiry(id, !currentlyStarred);
       setInquiries((prev) =>
         prev.map((i) =>
-          i.id === id ? { ...i, starred: !currentlyStarred } as InquiryRow & { starred: boolean } : i,
+          i.id === id
+            ? ({ ...i, starred: !currentlyStarred } as InquiryRow & { starred: boolean })
+            : i,
         ),
       );
     });
@@ -124,13 +126,16 @@ export function InquiryList({ inquiries: initial }: { inquiries: InquiryRow[] })
       <div className="mb-5 grid gap-3">
         {/* Search */}
         <div className="relative">
-          <Search className="text-stone absolute top-1/2 left-3 size-4 -translate-y-1/2" aria-hidden="true" />
+          <Search
+            className="text-stone absolute top-1/2 left-3 size-4 -translate-y-1/2"
+            aria-hidden="true"
+          />
           <input
             type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by name, email or phone…"
-            className="border-rule-strong bg-paper w-full rounded border py-2 pl-9 pr-4 text-[0.9375rem] outline-none focus:border-sage"
+            className="border-rule-strong bg-paper focus:border-sage w-full rounded border py-2 pr-4 pl-9 text-[0.9375rem] outline-none"
           />
           {search ? (
             <button
@@ -182,7 +187,11 @@ export function InquiryList({ inquiries: initial }: { inquiries: InquiryRow[] })
           {/* Date filter */}
           <div className="flex flex-wrap gap-1.5" role="group" aria-label="Filter by date">
             {DATE_FILTERS.map((d) => (
-              <FilterChip key={d.id} active={dateFilter === d.id} onClick={() => setDateFilter(d.id)}>
+              <FilterChip
+                key={d.id}
+                active={dateFilter === d.id}
+                onClick={() => setDateFilter(d.id)}
+              >
                 {d.label}
               </FilterChip>
             ))}
@@ -232,13 +241,7 @@ export function InquiryList({ inquiries: initial }: { inquiries: InquiryRow[] })
   );
 }
 
-function InquiryCard({
-  inquiry,
-  onToggleStar,
-}: {
-  inquiry: InquiryRow;
-  onToggleStar: () => void;
-}) {
+function InquiryCard({ inquiry, onToggleStar }: { inquiry: InquiryRow; onToggleStar: () => void }) {
   const [open, setOpen] = useState(inquiry.status === "new");
   const [state, action, pending] = useActionState<ActionResult | null, FormData>(
     updateInquiry,
