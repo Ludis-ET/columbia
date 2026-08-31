@@ -4,7 +4,7 @@ import { ADMIN_ROUTES } from "./routes";
 /**
  * Admin access control.
  *
- * Middleware does the redirect, but RLS is the real boundary — even a forged
+ * Middleware does the redirect, but RLS is the real boundary: even a forged
  * cookie gets an empty result set from Postgres. These tests cover the visible
  * behaviour: signed-out visitors never reach a console screen, and nothing
  * under /admin is ever indexable.

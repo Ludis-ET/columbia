@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { Mail, MapPin, Phone, Printer } from "lucide-react";
+import { Clock, Mail, MapPin, Phone, Printer } from "lucide-react";
 
 import { Hero } from "@/components/site/hero";
 import { AnchorSection } from "@/components/site/anchor-section";
@@ -46,7 +46,7 @@ export const revalidate = 3600;
  * the decision the page is building toward.
  *
  * Exactly one h1 (the hero). Every section is a labelled landmark with an h2, so
- * a screen reader user can jump between them — which matters more on one long
+ * a screen reader user can jump between them, which matters more on one long
  * page than it does across several short ones.
  */
 export default async function HomePage() {
@@ -54,8 +54,8 @@ export default async function HomePage() {
   const promise = published(identity.promise);
   const about = published(identity.about);
   const meals = published(identity.meals);
-  const closingLine = published(identity.closingLine);
   const tourCta = published(identity.tourCta);
+
   const values = published(identity.values) ?? [];
 
   const [settings, availability, services, care, included, reasons, quotes, schedule, gallery] =
@@ -247,7 +247,7 @@ export default async function HomePage() {
         <SectionHeading
           eyebrow="Our home"
           title="Come and look around"
-          lead="A real house on a quiet street — not a facility."
+          lead="A real house on a quiet street, not a facility."
           align="center"
         />
         <Gallery images={gallery} />
@@ -299,6 +299,8 @@ export default async function HomePage() {
       ) : null}
 
       {/* -------------------------------------------------------------- visit */}
+      {/* Location only. The ways to get in touch live in the contact section,
+          where someone is already deciding to act on them. */}
       {address ? (
         <AnchorSection id="visit" title="Where to find us">
           <SectionHeading
@@ -307,73 +309,107 @@ export default async function HomePage() {
             lead={locationLine}
             align="center"
           />
+
           <MapBlock address={address} locationLine={locationLine} className="mx-auto max-w-4xl" />
 
-          <ul className="mx-auto mt-8 grid max-w-4xl gap-4 sm:grid-cols-3">
-            {phone && tel ? (
-              <li>
-                <a
-                  href={tel}
-                  className="group border-rule bg-paper-raise hover:border-sage flex h-full flex-col items-center rounded border p-5 text-center transition-colors"
-                >
-                  <Phone className="text-sage mb-2 size-6" aria-hidden="true" />
-                  <span className="label text-stone">Call us</span>
-                  <span className="text-ink group-hover:text-sage-deep font-semibold">{phone}</span>
-                </a>
-              </li>
-            ) : null}
-            {email ? (
-              <li>
-                <a
-                  href={`mailto:${email}`}
-                  className="group border-rule bg-paper-raise hover:border-sage flex h-full flex-col items-center rounded border p-5 text-center transition-colors"
-                >
-                  <Mail className="text-sage mb-2 size-6" aria-hidden="true" />
-                  <span className="label text-stone">Email us</span>
-                  <span className="text-ink group-hover:text-sage-deep font-semibold break-all">
-                    {email}
-                  </span>
-                </a>
-              </li>
-            ) : null}
-            <li className="border-rule bg-paper-raise flex h-full flex-col items-center rounded border p-5 text-center">
-              <MapPin className="text-sage mb-2 size-6" aria-hidden="true" />
-              <span className="label text-stone">Visit</span>
-              <address className="text-ink font-semibold not-italic">{address}</address>
-              {hours ? <span className="text-stone mt-1 text-[0.875rem]">Open {hours}</span> : null}
-            </li>
-          </ul>
-
-          {fax ? (
-            <p className="text-stone mt-4 flex items-center justify-center gap-2 text-[0.9375rem]">
-              <Printer className="size-4" aria-hidden="true" />
-              <span>
-                <span className="sr-only">Fax for referrals: </span>Fax {fax}
+          <div className="text-stone mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[0.9375rem]">
+            <span className="inline-flex items-center gap-2">
+              <MapPin className="text-sage size-4 shrink-0" aria-hidden="true" />
+              <address className="not-italic">{address}</address>
+            </span>
+            {hours ? (
+              <span className="inline-flex items-center gap-2">
+                <Clock className="text-sage size-4 shrink-0" aria-hidden="true" />
+                Someone is here {hours}
               </span>
-            </p>
-          ) : null}
+            ) : null}
+            {fax ? (
+              <span className="inline-flex items-center gap-2">
+                <Printer className="text-sage size-4 shrink-0" aria-hidden="true" />
+                <span>
+                  <span className="sr-only">Fax for referrals: </span>Fax {fax}
+                </span>
+              </span>
+            ) : null}
+          </div>
         </AnchorSection>
       ) : null}
 
       {/* ------------------------------------------------------------ contact */}
+      {/*
+        The closing moment, and the one the whole page builds toward.
+
+        Two columns on desktop: the invitation and the direct ways to reach a
+        human on the left, the form raised on a card to the right. Someone who
+        would rather phone should not have to scroll past a form to find the
+        number, and someone ready to write should not have to hunt for the form.
+      */}
       <AnchorSection id="contact" title="Book a house tour" ground="wash">
-        <div className="mx-auto max-w-2xl">
-          <div className="mb-8 text-center">
-            <HeartShield className="mx-auto mb-5 size-12" />
-            <h2 className="text-h1 mb-4">{tourCta ?? "Book a house tour"}</h2>
-            <p className="text-lead text-ink-soft mx-auto max-w-[52ch]">
+        <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)] lg:gap-16">
+          <div className="lg:sticky lg:top-24">
+            <p className="label text-sage-deep mb-3">Book a house tour</p>
+            <h2 className="text-h1 mb-5">Come and see the home</h2>
+
+            <p className="text-lead text-ink-soft mb-6 max-w-[46ch]">
               Tell us a little about your loved one and what they need. There is no pressure and no
-              obligation — most families visit two or three homes before deciding.
+              obligation, and most families visit two or three homes before they decide.
             </p>
+
+            {phone || email ? (
+              <>
+                <p className="label text-stone mb-3">Or reach us directly</p>
+                <ul className="mb-8 grid gap-3 sm:max-w-sm">
+                  {phone && tel ? (
+                    <li>
+                      <a
+                        href={tel}
+                        className="group border-rule bg-paper hover:border-sage flex min-h-16 items-center gap-4 rounded border px-5 transition-colors"
+                      >
+                        <Phone className="text-sage size-5 shrink-0" aria-hidden="true" />
+                        <span className="min-w-0">
+                          <span className="label text-stone block">Call us</span>
+                          <span className="text-ink group-hover:text-sage-deep block font-semibold">
+                            {phone}
+                          </span>
+                        </span>
+                      </a>
+                    </li>
+                  ) : null}
+                  {email ? (
+                    <li>
+                      <a
+                        href={`mailto:${email}`}
+                        className="group border-rule bg-paper hover:border-sage flex min-h-16 items-center gap-4 rounded border px-5 transition-colors"
+                      >
+                        <Mail className="text-sage size-5 shrink-0" aria-hidden="true" />
+                        <span className="min-w-0">
+                          <span className="label text-stone block">Email us</span>
+                          <span className="text-ink group-hover:text-sage-deep block font-semibold break-all">
+                            {email}
+                          </span>
+                        </span>
+                      </a>
+                    </li>
+                  ) : null}
+                </ul>
+              </>
+            ) : null}
+
+            <div className="border-sage/40 flex items-start gap-3 border-t pt-6">
+              <HeartShield className="mt-0.5 size-7 shrink-0" />
+              <p className="text-ink-soft max-w-[38ch]">
+                {tourCta ?? "Contact us to book a house tour."} Ask us anything at all, including
+                the awkward questions.
+              </p>
+            </div>
           </div>
 
-          <TourForm />
-
-          {closingLine ? (
-            <p className="font-script text-sage-deep mt-12 text-center text-3xl sm:text-4xl">
-              {closingLine}
-            </p>
-          ) : null}
+          {/* The form, raised off the band so it reads as the thing to do. */}
+          <Reveal>
+            <div className="border-rule bg-paper-raise rounded-lg border p-6 shadow-lg sm:p-8">
+              <TourForm />
+            </div>
+          </Reveal>
         </div>
       </AnchorSection>
 

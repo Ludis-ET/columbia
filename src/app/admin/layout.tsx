@@ -5,7 +5,7 @@ import type { Metadata } from "next";
  *
  * DELIBERATELY DOES NO AUTH CHECK. The login screen lives at /admin/login, so a
  * layout that redirected unauthenticated visitors would redirect the login page
- * to itself — an infinite loop, which is exactly what happened before this was
+ * to itself in an infinite loop, which is exactly what happened before this was
  * split.
  *
  * The auth check lives one level down in (console)/layout.tsx, a route group
@@ -13,7 +13,7 @@ import type { Metadata } from "next";
  * the paths are unchanged.
  */
 export const metadata: Metadata = {
-  title: { default: "Admin", template: "%s — Columbia Care admin" },
+  title: { default: "Admin", template: "%s, Columbia Care admin" },
   robots: { index: false, follow: false, nocache: true },
 };
 

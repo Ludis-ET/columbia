@@ -6,6 +6,7 @@ import { Header } from "@/components/site/header";
 import { Footer } from "@/components/site/footer";
 import { MobileCallBar } from "@/components/site/mobile-call-bar";
 import { AccessibilityToolbar } from "@/components/site/accessibility-toolbar";
+import { HashScroll } from "@/components/site/hash-scroll";
 import { preferencesScript } from "@/lib/preferences";
 import { identity, published, siteName } from "@/lib/content";
 import { getSiteSettings } from "@/lib/db/queries";
@@ -20,7 +21,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
     default: `${siteName} | Everett, WA`,
-    template: `%s — Columbia Care Adult Family Home | Everett, WA`,
+    template: `%s, Columbia Care Adult Family Home | Everett, WA`,
   },
   description,
   applicationName: siteName,
@@ -58,11 +59,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       <head>
         {/* Applies stored theme and reader preferences before first paint. */}
         <script dangerouslySetInnerHTML={{ __html: preferencesScript }} />
-        {/* Emitted from live data, and only for fields the client has confirmed —
-            a guessed phone number here would be shown as fact in search results. */}
+        {/* Emitted from live data, and only for fields the client has confirmed, a guessed phone number here would be shown as fact in search results. */}
         <OrganisationJsonLd />
       </head>
       <body className={`${fontVariables} flex min-h-dvh flex-col antialiased`}>
+        <HashScroll />
         <SkipLink />
         <Header phone={phone} phoneHref={phoneHref} />
         <main id="main" tabIndex={-1} className="flex-1">

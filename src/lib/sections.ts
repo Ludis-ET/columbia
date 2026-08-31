@@ -5,7 +5,7 @@
  * and the redirects from the old multi-page routes. Adding a section here wires
  * it into all four.
  *
- * `navLabel` is what appears in the header — kept short, because at the largest
+ * `navLabel` is what appears in the header, kept short, because at the largest
  * reader text size a long label set will not fit.
  */
 
@@ -17,7 +17,7 @@ export interface SiteSection {
   /**
    * Shown in the header nav. Contact is excluded: the "Book a house tour"
    * button sits right beside the nav and goes to the same place, so listing it
-   * twice is redundant — and at 1024px the pair overflowed the bar.
+   * twice is redundant, and at 1024px the pair overflowed the bar.
    */
   inHeaderNav?: boolean;
   /** The old route this replaced, redirected to the anchor. */

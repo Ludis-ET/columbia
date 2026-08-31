@@ -7,7 +7,7 @@
  *
  *   pnpm db:types
  *
- * Keep this file and the migration in step — a mismatch here is a runtime bug
+ * Keep this file and the migration in step, a mismatch here is a runtime bug
  * the type checker will happily wave through.
  */
 

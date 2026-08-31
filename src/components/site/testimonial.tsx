@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 export interface TestimonialItem {
   quote: string;
   author: string;
-  /** e.g. "Daughter of a resident" — relationship, never a resident's own name. */
+  /** e.g. "Daughter of a resident", relationship, never a resident's own name. */
   relationship?: string | null;
 }
 

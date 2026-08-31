@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
  * sticky header from covering the heading after a jump.
  *
  * Every section is a labelled landmark, so a screen reader user can move
- * between them directly — which on a long single page matters more than it does
+ * between them directly, which on a long single page matters more than it does
  * on a set of short ones.
  */
 export function AnchorSection({

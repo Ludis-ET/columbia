@@ -8,7 +8,7 @@
  *
  * When the keys are absent, verification is SKIPPED rather than failing closed.
  * Losing a real family's enquiry because a spam check was misconfigured is far
- * worse than letting a spam message through — the honeypot still catches naive
+ * worse than letting a spam message through, the honeypot still catches naive
  * bots, and the owner can delete anything that slips past.
  */
 
@@ -21,7 +21,7 @@ const VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 export async function verifyTurnstile(token: string | undefined): Promise<boolean> {
   if (!SECRET) {
     if (token) console.warn("[turnstile] token received but TURNSTILE_SECRET_KEY is not set.");
-    return true; // Fail open — see the note above.
+    return true; // Fail open, see the note above.
   }
 
   if (!token) return false;

@@ -6,7 +6,7 @@ import { GATED_ROUTES, INTERNAL_ROUTES, PUBLIC_ROUTES } from "./routes";
  *
  * CLAUDE.md forbids publishing any fact the client has not confirmed. This
  * suite checks the actual output rather than trusting that `published()` was
- * called correctly at every call site — a component that hardcodes a phone
+ * called correctly at every call site, a component that hardcodes a phone
  * number or a bed count would sail past the type system.
  *
  * When the client confirms a value, move it to ARTWORK_CONFIRMED in
@@ -49,7 +49,7 @@ test("no unconfirmed facts appear on any public page", async ({ page }) => {
 
     for (const { pattern, why } of FORBIDDEN) {
       if (pattern.test(html)) {
-        failures.push(`${route}: matched ${pattern} — ${why}`);
+        failures.push(`${route}: matched ${pattern} ${why}`);
       }
     }
   }

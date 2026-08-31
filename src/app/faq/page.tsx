@@ -9,7 +9,7 @@ import { identity, published } from "@/lib/content";
 import { getFaqs, getSiteSettings } from "@/lib/db/queries";
 
 /**
- * TIER 2 — shell built, publishing gated.
+ * TIER 2, shell built, publishing gated.
  *
  * Every answer has to come from the client; a care home's FAQ is exactly the
  * wrong place to guess. The route 404s while the list is empty. Add entries to
@@ -47,7 +47,7 @@ export default async function FaqPage() {
 
       <CtaBand
         title="Still have a question?"
-        lead="Ask us directly — we would rather answer honestly than have you guess."
+        lead="Ask us directly, we would rather answer honestly than have you guess."
         script={closingLine}
         phone={phone}
         phoneHref={tel}

@@ -17,7 +17,7 @@ export interface GalleryImage {
 /**
  * Filterable gallery with a lightbox.
  *
- * Renders nothing when there are no images — the Phase 8 photo shoot fills
+ * Renders nothing when there are no images, the Phase 8 photo shoot fills
  * categories that do not exist yet, and an empty "Bedrooms" tab would advertise
  * something we cannot show.
  *

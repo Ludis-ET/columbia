@@ -1,6 +1,6 @@
 /**
  * The laurel sprig that flanks the infographic's title.
- * Used as the section divider. Always decorative — never carries meaning.
+ * Used as the section divider. Always decorative, never carries meaning.
  */
 export function Laurel({ className, flip = false }: { className?: string; flip?: boolean }) {
   return (

@@ -1,10 +1,10 @@
-import Link from "next/link";
 import { CalendarHeart, MessageSquare, Phone } from "lucide-react";
+import { AnchorLink } from "@/components/site/anchor-link";
 
 /**
  * Sticky bottom action bar, small screens only.
  *
- * Call and Text appear only when the client has confirmed a number — see the
+ * Call and Text appear only when the client has confirmed a number, see the
  * rule in CLAUDE.md. "Book a house tour" always works, so the bar is never
  * empty and never shows a placeholder number.
  */
@@ -47,13 +47,13 @@ export function MobileCallBar({
             </a>
           ) : null}
 
-          <Link
-            href="/contact"
+          <AnchorLink
+            sectionId="contact"
             className="bg-ink text-paper flex min-h-16 flex-col items-center justify-center gap-1 font-semibold"
           >
             <CalendarHeart className="size-5" aria-hidden="true" strokeWidth={2} />
             <span className="text-[0.8125rem]">Book a tour</span>
-          </Link>
+          </AnchorLink>
         </div>
       </div>
     </>

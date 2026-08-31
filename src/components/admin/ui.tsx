@@ -9,7 +9,7 @@ import { deleteRow, reorder, togglePublished, type ActionResult } from "@/app/ad
  * Shared admin list primitives.
  *
  * Every screen in the console is some flavour of "list of rows, each of which
- * can be shown/hidden, reordered, edited or deleted" — so that lives here once.
+ * can be shown/hidden, reordered, edited or deleted", so that lives here once.
  *
  * Two rules run through all of it:
  *   - Plain language. "Show on the website", never "published: true".
@@ -65,7 +65,7 @@ export function Toast({ result }: { result: ActionResult | null }) {
  *
  * Deliberately explains what good content looks like rather than just saying
  * "nothing here". For testimonials especially, the empty state is where the
- * owner learns how to ask a family for a quote — which is more useful than a
+ * owner learns how to ask a family for a quote, which is more useful than a
  * shrug, and steers them away from writing one themselves.
  */
 export function EmptyState({ title, children }: { title: string; children: ReactNode }) {

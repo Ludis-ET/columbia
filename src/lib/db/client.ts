@@ -23,7 +23,7 @@ let cached: SupabaseClient | null = null;
 /**
  * Returns a read-only client, or null when Supabase is not configured.
  *
- * Callers must handle null — see the fallback in ./queries.ts. That is what
+ * Callers must handle null, see the fallback in ./queries.ts. That is what
  * keeps the static site building when the database is unreachable.
  */
 export function getSupabase(): SupabaseClient | null {

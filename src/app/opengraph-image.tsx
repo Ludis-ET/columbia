@@ -5,14 +5,14 @@ import { identity, published } from "@/lib/content";
  * The social share card.
  *
  * Generated from the brand rather than shipped as a static PNG, so it stays in
- * step with the tagline in the content file. Uses only confirmed copy — the
+ * step with the tagline in the content file. Uses only confirmed copy, the
  * tagline and the promise, both verbatim from the client's infographic.
  *
  * Colours are literals: this renders in a separate image runtime with no access
  * to the site's CSS custom properties.
  */
 
-export const alt = "Columbia Care Adult Family Home — Everett, Washington";
+export const alt = "Columbia Care Adult Family Home, Everett, Washington";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 

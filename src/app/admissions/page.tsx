@@ -8,7 +8,7 @@ import { admissions, identity, published } from "@/lib/content";
 import { getSiteSettings } from "@/lib/db/queries";
 
 /**
- * TIER 2 — shell built, publishing gated.
+ * TIER 2, shell built, publishing gated.
  *
  * Admissions needs payment types, rates and admission criteria, none of which
  * appear in the client's artwork (docs/client-questions.md q6 and q11). Rather

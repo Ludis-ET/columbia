@@ -5,7 +5,7 @@
    Columbia Care design tokens
 
    Every colour is sampled from the client's "A Day in Our AFH" infographic.
-   Do not add a colour that is not in that artwork — see CLAUDE.md.
+   Do not add a colour that is not in that artwork, see CLAUDE.md.
 
    Theming has THREE states, not two:
      :root                                   → light (also the un-stamped default)
@@ -50,7 +50,7 @@
   --color-sage-deep: var(--sage-deep);
   --color-sage-wash: var(--sage-wash);
 
-  /* time-of-day accents — timeline and its icons ONLY.
+  /* time-of-day accents, timeline and its icons ONLY.
      `-on` variants are the text-safe version for the current ground. */
   --color-dawn: var(--accent-blue);
   --color-dawn-on: var(--accent-blue-on);
@@ -61,7 +61,7 @@
   --color-rest: var(--accent-rose);
   --color-rest-on: var(--accent-rose-on);
 
-  /* semantic — admin status only, never borrows the accents above */
+  /* semantic, admin status only, never borrows the accents above */
   --color-ok: var(--ok);
   --color-warn: var(--warn);
   --color-danger: var(--danger);
@@ -69,7 +69,7 @@
   /* --- shadcn bridge -------------------------------------------------------
      shadcn's generated components reference these semantic names. Mapping them
      onto brand tokens means anything added with `shadcn add` is on-brand by
-     default, and needs no dark-mode block of its own — the brand tokens have
+     default, and needs no dark-mode block of its own, the brand tokens have
      already flipped by the time these resolve. */
   --color-background: var(--paper);
   --color-foreground: var(--ink);
@@ -91,7 +91,7 @@
   --color-input: var(--rule-strong);
   --color-ring: var(--sage);
 
-  /* Admin sidebar (Phase 5) — the console sidebar is ink navy in every theme. */
+  /* Admin sidebar (Phase 5), the console sidebar is ink navy in every theme. */
   --color-sidebar: var(--ink);
   --color-sidebar-foreground: var(--paper);
   --color-sidebar-primary: var(--sage);
@@ -101,7 +101,7 @@
   --color-sidebar-border: var(--rule);
   --color-sidebar-ring: var(--sage);
 
-  /* Radii stay small and squared — see CLAUDE.md. shadcn's 10px default is out. */
+  /* Radii stay small and squared, see CLAUDE.md. shadcn's 10px default is out. */
   --radius: 0.25rem;
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: var(--radius);
@@ -115,7 +115,7 @@
   --font-script: var(--font-parisienne), cursive;
   --font-mono: var(--font-plex-mono), ui-monospace, monospace;
 
-  /* type scale — see CLAUDE.md. Body is 18px, never 16. */
+  /* type scale, see CLAUDE.md. Body is 18px, never 16. */
   --text-hero: clamp(2.6rem, 6vw, 4.2rem);
   --text-hero--line-height: 1.02;
   --text-h1: clamp(2.1rem, 4.4vw, 3rem);
@@ -227,7 +227,7 @@
 }
 
 /* ---------------------------------------------------------------------------
-   Reader preferences — set by the accessibility toolbar, persisted per visitor.
+   Reader preferences, set by the accessibility toolbar, persisted per visitor.
 
    These are a usability feature for this audience, not a compliance checkbox,
    so they are first-class tokens rather than an afterthought bolted on top.
@@ -247,11 +247,11 @@
    THREE STATES, exactly like the main palette above. Getting this wrong is not
    cosmetic: an earlier version used
      :root[data-contrast="high"]:not([data-theme="light"])
-   for the dark values, which also matches the UN-STAMPED default — so anyone on
+   for the dark values, which also matches the UN-STAMPED default, so anyone on
    a light OS who turned high contrast on was flipped to a black background. The
    dark case must sit behind the media query, not outside it. */
 
-/* Light — the default, and the un-stamped light case. */
+/* Light, the default, and the un-stamped light case. */
 :root[data-contrast="high"] {
   --ink: #000000;
   --ink-soft: #1a1a1a;
@@ -266,7 +266,7 @@
   --sage-wash: #eef2e6;
 }
 
-/* Dark — OS is dark and the reader has not forced light. */
+/* Dark, OS is dark and the reader has not forced light. */
 @media (prefers-color-scheme: dark) {
   :root[data-contrast="high"]:not([data-theme="light"]) {
     --ink: #ffffff;
@@ -283,7 +283,7 @@
   }
 }
 
-/* Dark — the reader forced dark. */
+/* Dark, the reader forced dark. */
 :root[data-contrast="high"][data-theme="dark"] {
   --ink: #ffffff;
   --ink-soft: #f0f0f0;
@@ -298,7 +298,7 @@
   --sage-wash: #12200a;
 }
 
-/* Atkinson Hyperlegible — designed by the Braille Institute for low vision.
+/* Atkinson Hyperlegible, designed by the Braille Institute for low vision.
    Chosen over OpenDyslexic because it is better tested and reads as a normal
    typeface rather than a novelty one. */
 :root[data-reading-font="hyperlegible"] {
@@ -315,7 +315,7 @@
   }
 
   html {
-    /* 18px base — the aged-care readability floor. Not 16. */
+    /* 18px base, the aged-care readability floor. Not 16. */
     font-size: 112.5%;
     scroll-behavior: smooth;
   }

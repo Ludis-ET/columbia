@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
  *
  * This screen holds families' phone numbers and details about a relative's
  * care needs, so it is the most sensitive thing in the console. RLS keeps it
- * admin-only; the UI keeps it calm — one row per enquiry, expandable, with
+ * admin-only; the UI keeps it calm, one row per enquiry, expandable, with
  * click-to-call and click-to-email so the owner can respond in one tap.
  */
 

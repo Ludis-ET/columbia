@@ -5,7 +5,7 @@ import { motion, useReducedMotion } from "motion/react";
 
 /**
  * The site's only scroll animation: a 12px rise and fade, 320ms, optionally
- * staggered. Deliberately restrained — CLAUDE.md allows exactly one
+ * staggered. Deliberately restrained, CLAUDE.md allows exactly one
  * orchestrated motion moment (the day timeline) and near-static everywhere else.
  *
  * Motion is suppressed when EITHER the OS asks for reduced motion OR the visitor

@@ -13,7 +13,7 @@ import {
 /**
  * Reader controls: text size, contrast, motion, and an easier-reading font.
  *
- * A signature feature rather than a compliance afterthought — the primary
+ * A signature feature rather than a compliance afterthought, the primary
  * readers are older adults, so putting these in reach is a usability decision.
  * Everything persists per visitor and is re-applied before paint on the next
  * visit (see lib/preferences.ts).

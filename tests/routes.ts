@@ -1,7 +1,7 @@
 /**
  * Shared route lists for the test suite.
  *
- * Not a spec file — Playwright refuses to let spec files import one another,
+ * Not a spec file, Playwright refuses to let spec files import one another,
  * and this needs to be shared by the a11y, responsive and content suites.
  */
 
@@ -26,7 +26,7 @@ export const LEGACY_REDIRECTS: [string, string][] = [
   ["/services/memory-care", "/#care"],
 ];
 
-/** Internal review pages — built, but noindex and excluded from the sitemap. */
+/** Internal review pages, built, but noindex and excluded from the sitemap. */
 export const INTERNAL_ROUTES = ["/specimen", "/kitchen-sink"];
 
 /**

@@ -9,7 +9,7 @@
  *   - Only ARTWORK / ARTWORK_CONFIRMED entries are seeded at all.
  *   - Those rows are inserted with published = true.
  *   - ASK_CLIENT entries are seeded as NULL columns or simply omitted, so the
- *     site renders nothing for them — exactly as it does today.
+ *     site renders nothing for them, exactly as it does today.
  *
  * Re-run after editing the JSON:  pnpm seed:generate
  */
@@ -36,7 +36,7 @@ const out = [];
 const w = (s = "") => out.push(s);
 
 w("-- ============================================================================");
-w("-- Columbia Care — seed data");
+w("-- Columbia Care, seed data");
 w("--");
 w("-- GENERATED FILE. Do not edit by hand.");
 w("--   source: content/source-of-truth.json");
@@ -44,7 +44,7 @@ w("--   regenerate: pnpm seed:generate");
 w("--");
 w("-- Only entries whose provenance is ARTWORK or ARTWORK_CONFIRMED appear here.");
 w("-- Anything still ASK_CLIENT is seeded as NULL or omitted entirely, so the site");
-w("-- renders nothing for it — see the rule in CLAUDE.md.");
+w("-- renders nothing for it, see the rule in CLAUDE.md.");
 w("-- ============================================================================");
 w();
 w("begin;");
@@ -60,7 +60,7 @@ w(`insert into site_settings (
   latitude, longitude, license_number, licensed_capacity, hours, location_line, service_area
 ) values (
   'singleton',
-  ${q(published(c.phonePrimary))},   -- ASK_CLIENT q1 — no number published yet
+  ${q(published(c.phonePrimary))},   -- ASK_CLIENT q1, no number published yet
   ${q(published(c.phonePrimary))},
   ${q(published(c.sms))},
   ${q(published(c.fax))},
@@ -109,7 +109,7 @@ if (care.length) {
 const services = published(raw.services) ?? [];
 if (services.length) {
   w("-- services: the seven verbatim services plus the long-term-care chip.");
-  w("-- `summary` is NULL — the client has not written descriptions (see q4).");
+  w("-- `summary` is NULL, the client has not written descriptions (see q4).");
   w(
     "insert into services (slug, title, summary, icon, position, has_detail_page, related_schedule, published) values",
   );

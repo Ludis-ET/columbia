@@ -2,7 +2,7 @@
  * Footer navigation.
  *
  * The site is one page, so the "explore" links are anchors into it. Legal pages
- * remain separate routes — they are reference material, not part of the
+ * remain separate routes, they are reference material, not part of the
  * narrative a family reads, and nobody wants a privacy policy inlined between
  * the gallery and the tour form.
  *

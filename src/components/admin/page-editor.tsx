@@ -14,7 +14,7 @@ import { saveRow, type ActionResult } from "@/app/admin/actions";
  *
  * Shows a live Google-result preview with a character counter, because the
  * owner has no other way to know that a 300-character description gets cut off.
- * The counter warns rather than blocks — a long description is a shame, not an
+ * The counter warns rather than blocks, a long description is a shame, not an
  * error.
  */
 export function PageEditor({
@@ -108,7 +108,7 @@ export function PageEditor({
               >
                 {desc.length} characters.{" "}
                 {tooLong
-                  ? "Google usually cuts off around 160 — the rest will not be seen."
+                  ? "Google usually cuts off around 160, the rest will not be seen."
                   : "Around 150 works best."}
               </p>
             </div>
@@ -119,7 +119,7 @@ export function PageEditor({
                 columbiacareafh.com{slug === "/" ? "" : slug}
               </p>
               <p className="text-[1.05rem] font-semibold text-[var(--accent-violet-on)]">
-                {heading} — Columbia Care Adult Family Home | Everett, WA
+                {heading} Columbia Care Adult Family Home | Everett, WA
               </p>
               <p className="text-stone text-[0.9375rem]">
                 {desc ? (tooLong ? desc.slice(0, 160) + "…" : desc) : "No description set."}

@@ -14,7 +14,7 @@ export default async function ScheduleAdminPage() {
   const raw = (data ?? []) as Record<string, unknown>[];
   const rows: ContentRow[] = raw.map((r) => ({
     id: r.id as string,
-    title: `${r.time_label as string} — ${r.title as string}`,
+    title: `${r.time_label as string} ${r.title as string}`,
     meta: undefined,
     body: r.body as string,
     published: r.published as boolean,

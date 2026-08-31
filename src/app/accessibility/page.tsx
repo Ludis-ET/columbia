@@ -40,7 +40,7 @@ export default async function AccessibilityPage() {
               spacing.
             </li>
             <li>
-              Text contrast exceeds the AAA standard of 7:1 for body copy — a stricter target than
+              Text contrast exceeds the AAA standard of 7:1 for body copy, a stricter target than
               the AA minimum.
             </li>
             <li>
@@ -62,7 +62,7 @@ export default async function AccessibilityPage() {
           <p>
             The <strong>Reading options</strong> button at the bottom of every page lets you make
             the text larger, increase contrast, turn off animation, and switch to Atkinson
-            Hyperlegible — a typeface designed to keep similar letters distinct for readers with low
+            Hyperlegible, a typeface designed to keep similar letters distinct for readers with low
             vision. Your choices are remembered on your device.
           </p>
 
@@ -75,8 +75,8 @@ export default async function AccessibilityPage() {
 
           <h2 className="text-h3 mt-10 font-sans font-bold">If something does not work</h2>
           <p>
-            If any part of this site is difficult to use, please tell us — we will fix it, and in
-            the meantime we will give you the same information another way, by phone or in person.
+            If any part of this site is difficult to use, please tell us, we will fix it, and in the
+            meantime we will give you the same information another way, by phone or in person.
           </p>
           <ul>
             {phone && tel ? (

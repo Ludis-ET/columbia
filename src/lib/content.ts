@@ -6,7 +6,7 @@ import raw from "@content/source-of-truth.json";
  * THE POINT OF THIS MODULE: `published()` is the only way content reaches a
  * component, and it returns `null` for anything the client has not confirmed.
  * That makes the rule in CLAUDE.md a property of the code rather than a promise
- * in a document — a component physically cannot render an unconfirmed fact.
+ * in a document, a component physically cannot render an unconfirmed fact.
  *
  * When the client confirms a value: set it in the JSON, change provenance to
  * ARTWORK_CONFIRMED, add `confirmedOn`. Nothing else needs to change.
@@ -31,7 +31,7 @@ export interface Entry<T> {
  * Unwrap a content entry for rendering. Returns null unless the value exists
  * AND its provenance permits publication.
  *
- * Callers must handle null by rendering nothing — no placeholder, no
+ * Callers must handle null by rendering nothing, no placeholder, no
  * "Coming soon", no stub heading.
  */
 export function published<T>(entry: Entry<T>): T | null {
@@ -66,7 +66,7 @@ export interface Service {
   hasDetailPage: boolean;
   /**
    * Positions of day-timeline entries that demonstrate this service. An
-   * editorial cross-reference to sentences the client already wrote — it lets a
+   * editorial cross-reference to sentences the client already wrote, it lets a
    * detail page be built entirely from the artwork, with no invented copy.
    */
   relatedSchedule: number[];

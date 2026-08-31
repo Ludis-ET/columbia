@@ -25,7 +25,7 @@ export default async function InquiriesPage() {
       {inquiries.length === 0 ? (
         <EmptyState title="No enquiries yet">
           <p>
-            When someone asks for a house tour or sends a message, it appears here — and you get an
+            When someone asks for a house tour or sends a message, it appears here, and you get an
             email straight away.
           </p>
           <p className="mt-2">

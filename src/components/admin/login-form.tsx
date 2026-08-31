@@ -10,7 +10,7 @@ import { signIn, sendMagicLink, type ActionResult } from "@/app/admin/actions";
 /**
  * Sign-in.
  *
- * Password first, magic link as the "I forgot again" path — realistic for
+ * Password first, magic link as the "I forgot again" path, realistic for
  * someone who signs in twice a month. Both report the same vague outcome on
  * failure so neither can be used to discover whether an account exists.
  */

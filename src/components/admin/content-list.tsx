@@ -18,7 +18,7 @@ export interface ContentRow {
   meta?: string;
   body?: string;
   published: boolean;
-  /** Blocks publishing until true — consent / photo release. */
+  /** Blocks publishing until true, consent / photo release. */
   blocked?: string;
 }
 
@@ -38,7 +38,7 @@ export function ContentList({
 
   function handle(id: string, published: boolean, r: ActionResult) {
     setResult(r);
-    // Only flip locally when the server actually accepted it — the database
+    // Only flip locally when the server actually accepted it, the database
     // rejects publishing an unconsented testimonial or an unreleased photo, and
     // the UI must not pretend otherwise.
     if (r.ok) {

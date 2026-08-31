@@ -1,5 +1,5 @@
 /**
- * The Columbia Care monogram — a "C" enclosing a cottage.
+ * The Columbia Care monogram, a "C" enclosing a cottage.
  *
  * Redrawn from the "A Day in Our AFH" infographic. This is a faithful
  * reconstruction, not the original: question 8 in docs/client-questions.md asks

@@ -45,7 +45,7 @@ if (hits.length === 0) {
 }
 
 const heading = strict
-  ? `✗ ${hits.length} placeholder reference(s) remain — cannot ship.`
+  ? `✗ ${hits.length} placeholder reference(s) remain, cannot ship.`
   : `! ${hits.length} placeholder reference(s) still in use (expected before Phase 8).`;
 
 console.log(heading);

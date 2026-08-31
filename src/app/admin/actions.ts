@@ -9,7 +9,7 @@ import { createClient, getAdminProfile, recordAudit } from "@/lib/db/server";
  *
  * Every one of these runs as the signed-in user, so RLS is what authorises the
  * write. `requireAdmin()` is a guard for clear error messages, not the security
- * boundary — a caller who slips past it still gets nothing back from Postgres.
+ * boundary, a caller who slips past it still gets nothing back from Postgres.
  */
 
 export interface ActionResult {
@@ -89,7 +89,7 @@ export async function sendMagicLink(
 
   await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
 
-  // Always the same answer, whether or not the address exists — otherwise this
+  // Always the same answer, whether or not the address exists, otherwise this
   // becomes a way to discover who has an account.
   return {
     ok: true,
@@ -104,7 +104,7 @@ export async function signOut(): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Availability — the one the owner touches most
+// Availability, the one the owner touches most
 // ---------------------------------------------------------------------------
 
 export async function saveAvailability(
@@ -136,7 +136,7 @@ export async function saveAvailability(
     full: "Currently full",
   };
 
-  return { ok: true, message: `Availability updated — now showing ${LABELS[status]}.` };
+  return { ok: true, message: `Availability updated, now showing ${LABELS[status]}.` };
 }
 
 // ---------------------------------------------------------------------------

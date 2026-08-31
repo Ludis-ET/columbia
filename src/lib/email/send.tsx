@@ -21,7 +21,7 @@ import { FamilyAutoReply, OwnerNotification, type EnquiryEmailProps } from "./te
 const apiKey = process.env.RESEND_API_KEY;
 
 /**
- * Who the mail comes from. Must be a domain verified in Resend — until the
+ * Who the mail comes from. Must be a domain verified in Resend, until the
  * domain is verified, Resend's shared onboarding sender is used, which only
  * delivers to the account owner's own address.
  */
@@ -45,14 +45,14 @@ export async function sendEnquiryEmails(
   const result: SendResult = { ownerNotified: false, familyNotified: false };
 
   if (!resend) {
-    console.warn("[email] RESEND_API_KEY is not set — enquiry saved, no email sent.");
+    console.warn("[email] RESEND_API_KEY is not set, enquiry saved, no email sent.");
     return result;
   }
 
   const ownerTo = OWNER_TO;
   if (!ownerTo) {
     console.warn(
-      "[email] OWNER_NOTIFICATION_EMAIL is not set — nobody will be told about this enquiry.",
+      "[email] OWNER_NOTIFICATION_EMAIL is not set, nobody will be told about this enquiry.",
     );
   }
 
@@ -63,7 +63,7 @@ export async function sendEnquiryEmails(
       const { error } = await resend.emails.send({
         from: FROM,
         to: ownerTo,
-        subject: `New enquiry from ${props.name}${props.phone ? ` — ${props.phone}` : ""}`,
+        subject: `New enquiry from ${props.name}${props.phone ? ` ${props.phone}` : ""}`,
         html,
         // So the owner can hit reply and reach the family directly.
         replyTo: props.email ?? undefined,
@@ -88,7 +88,7 @@ export async function sendEnquiryEmails(
       const { error } = await resend.emails.send({
         from: FROM,
         to: props.email,
-        subject: "We have your message — Columbia Care Adult Family Home",
+        subject: "We have your message, Columbia Care Adult Family Home",
         html,
         replyTo: ownerTo ?? undefined,
       });

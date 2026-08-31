@@ -3,7 +3,7 @@
 Supabase project `wmxvickqaxkuaatftput`. Postgres + Auth + Storage, with row-level
 security doing the access control.
 
-## Apply the schema — one paste
+## Apply the schema in one paste
 
 The publishable key in `.env.local` can read and submit under RLS, but it **cannot create
 tables**. That needs the database password or a secret key, neither of which belongs in this
@@ -13,7 +13,7 @@ repo. So applying the schema is a manual step, made as small as possible:
 2. Paste the whole of [`supabase/apply.sql`](../supabase/apply.sql)
 3. Run it
 
-Safe to re-run — the schema is `IF NOT EXISTS`, the seed is `ON CONFLICT DO UPDATE`.
+Safe to re-run: the schema is `IF NOT EXISTS`, the seed is `ON CONFLICT DO UPDATE`.
 
 Then verify:
 
@@ -28,7 +28,7 @@ it is safe to re-run as often as you like.
 ### One-off cleanup
 
 Verifying RLS by hand during Phase 4 left a single labelled row in `inquiries`. It is
-invisible to the public key — that is the point — but it will appear in the admin inbox in
+invisible to the public key, which is the point, but it will appear in the admin inbox in
 Phase 5. Remove it in the SQL Editor:
 
 ```sql
@@ -48,25 +48,25 @@ pnpm dlx supabase db execute -f supabase/seed.sql
 
 ## What's in it
 
-| Table            | Rows after seeding | Notes                                                   |
-| ---------------- | ------------------ | ------------------------------------------------------- |
-| `site_settings`  | 1                  | Singleton. Phone and licence are **NULL** — unconfirmed |
-| `availability`   | 1                  | Status `unset`, so the badge renders nothing            |
-| `care_types`     | 3                  | The brochure chips                                      |
-| `services`       | 8                  | 7 verbatim services + the long-term-care chip           |
-| `schedule_items` | 13                 | The full day timeline                                   |
-| `every_day`      | 7                  | "Every Day at Columbia Care"                            |
-| `why_families`   | 4                  | Brochure bullets                                        |
-| `pages`          | 7                  | Titles, intros, SEO descriptions                        |
-| `media`          | **0**              | No photographs yet (q9)                                 |
-| `testimonials`   | **0**              | No quotes yet (q14)                                     |
-| `faqs`           | **0**              | No answers yet                                          |
-| `team`           | **0**              | No names or consent yet (q7)                            |
-| `inquiries`      | 0                  | Fills from Phase 6                                      |
-| `audit_log`      | 0                  | Fills from Phase 5                                      |
+| Table            | Rows after seeding | Notes                                                  |
+| ---------------- | ------------------ | ------------------------------------------------------ |
+| `site_settings`  | 1                  | Singleton. Phone and licence are **NULL**, unconfirmed |
+| `availability`   | 1                  | Status `unset`, so the badge renders nothing           |
+| `care_types`     | 3                  | The brochure chips                                     |
+| `services`       | 8                  | 7 verbatim services + the long-term-care chip          |
+| `schedule_items` | 13                 | The full day timeline                                  |
+| `every_day`      | 7                  | "Every Day at Columbia Care"                           |
+| `why_families`   | 4                  | Brochure bullets                                       |
+| `pages`          | 7                  | Titles, intros, SEO descriptions                       |
+| `media`          | **0**              | No photographs yet (q9)                                |
+| `testimonials`   | **0**              | No quotes yet (q14)                                    |
+| `faqs`           | **0**              | No answers yet                                         |
+| `team`           | **0**              | No names or consent yet (q7)                           |
+| `inquiries`      | 0                  | Fills from Phase 6                                     |
+| `audit_log`      | 0                  | Fills from Phase 5                                     |
 
 The four **bold zeros are deliberate**. Their sections render nothing on the site. Never
-insert a sample row into any of them — see the rule at the top of [CLAUDE.md](../CLAUDE.md).
+insert a sample row into any of them. See the rule at the top of [CLAUDE.md](../CLAUDE.md).
 
 ## The content rule, in the schema
 
@@ -83,12 +83,12 @@ Those last two make privacy a database guarantee rather than an admin-UI convent
 
 Deny by default on every table.
 
-- **Content tables** — public `SELECT` where `published = true`; all writes require `is_admin()`.
-- **Singletons** (`site_settings`, `availability`) — public `SELECT` always; columns are
+- **Content tables**: public `SELECT` where `published = true`; all writes require `is_admin()`.
+- **Singletons** (`site_settings`, `availability`): public `SELECT` always; columns are
   nullable instead, and a null renders nothing.
-- **`inquiries`** — anyone may `INSERT`; only admins may read, update or delete. Families'
+- **`inquiries`**: anyone may `INSERT`; only admins may read, update or delete. Families'
   phone numbers and care details never leave the admin console.
-- **`profiles` / `audit_log`** — admins only.
+- **`profiles` / `audit_log`**: admins only.
 
 ## Why the site still works when the database doesn't
 
@@ -100,7 +100,7 @@ one for a care home.
 Two cases that look alike but are not:
 
 - **Seeded-from-artwork tables** (services, care types, schedule, every-day, why-families,
-  settings) should never be empty. Zero rows means the seed didn't run — fall back to the file.
+  settings) should never be empty. Zero rows means the seed didn't run, so fall back to the file.
 - **Deliberately-empty tables** (testimonials, faqs, team, media) are empty because the
   client hasn't supplied that content. Zero rows is the correct answer, and falling back
   would be wrong. They return `[]` and their sections render nothing.
@@ -111,7 +111,7 @@ Only the admin console and the contact form actually require Supabase to be awak
 
 Free projects pause after **7 days of inactivity**. A low-traffic care home site will hit
 that. `.github/workflows/supabase-keepalive.yml` pings the project every three days to keep
-it awake — add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` as
+it awake. Add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` as
 repository secrets for it to run.
 
 That's the cheap mitigation. For a paying client, budget **$25/mo for Supabase Pro** instead.
@@ -137,7 +137,7 @@ applied and you have an access token:
 pnpm db:types
 ```
 
-Keep the types and the migration in step — a mismatch is a runtime bug the type checker will
+Keep the types and the migration in step. A mismatch is a runtime bug the type checker will
 wave straight through.
 
 ## Keys

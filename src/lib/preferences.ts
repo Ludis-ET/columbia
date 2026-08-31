@@ -3,7 +3,7 @@
  * attributes on <html>.
  *
  * For an audience that is mostly older adults, text size and contrast are
- * usability features rather than compliance checkboxes — so they get the same
+ * usability features rather than compliance checkboxes, so they get the same
  * treatment as the theme: applied before first paint, no flash, no layout jump.
  */
 
@@ -58,6 +58,6 @@ export function writePreference(key: PreferenceKey, value: PreferenceValue): voi
  * Applies every stored preference before first paint.
  *
  * Inlined into <head>, so it must stay small and dependency-free. Kept in sync
- * with PREFERENCES above by hand — it cannot import at parse time.
+ * with PREFERENCES above by hand, it cannot import at parse time.
  */
 export const preferencesScript = `(function(){try{var m={theme:"data-theme",textSize:"data-text-size",contrast:"data-contrast",motion:"data-motion",readingFont:"data-reading-font"},e=document.documentElement;for(var k in m){var v=localStorage.getItem("${STORAGE_PREFIX}"+k);if(v)e.setAttribute(m[k],v)}}catch(e){}})();`;

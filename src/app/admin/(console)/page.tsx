@@ -92,7 +92,7 @@ export default async function AdminDashboard() {
           />
           <Stat
             label="Availability updated"
-            value={sinceLabel(avail?.updated_at ?? null) || "—"}
+            value={sinceLabel(avail?.updated_at ?? null) || "-"}
             detail="Shown on the website"
             small
           />

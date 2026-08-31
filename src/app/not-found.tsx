@@ -9,7 +9,7 @@ export default function NotFound() {
       <p className="label text-sage-deep mb-3">Page not found</p>
       <h1 className="text-h1 mb-4">We couldn&rsquo;t find that page</h1>
       <p className="text-ink-soft text-lead mb-8">
-        The link may be out of date. Everything about Columbia Care is on one page — here&rsquo;s
+        The link may be out of date. Everything about Columbia Care is on one page, and here&rsquo;s
         where to go next.
       </p>
 

@@ -12,12 +12,12 @@ import { normalisePhone, tourRequestSchema } from "@/lib/forms/tour-request";
  *
  * ORDER OF OPERATIONS IS DELIBERATE:
  *
- *   1. Honeypot        — free, catches naive bots, no network call.
- *   2. Zod parse       — the same schema the browser used, re-run on the server.
- *   3. Turnstile       — one network call, only for submissions that look real.
- *   4. Rate limit      — cheap DB check against recent identical submissions.
- *   5. INSERT          — the lead is now safe.
- *   6. Email           — best effort. Failure here never loses the lead.
+ *   1. Honeypot, free, catches naive bots, no network call.
+ *   2. Zod parse, the same schema the browser used, re-run on the server.
+ *   3. Turnstile, one network call, only for submissions that look real.
+ *   4. Rate limit, cheap DB check against recent identical submissions.
+ *   5. INSERT, the lead is now safe.
+ *   6. Email, best effort. Failure here never loses the lead.
  *
  * Step 5 before step 6 is the whole point: if Resend is down, the family still
  * sees a confirmation and the owner still finds the enquiry in the inbox.
@@ -31,7 +31,7 @@ export interface TourFormState {
 }
 
 const GENERIC_ERROR =
-  "Something went wrong sending that. Please try again, or call us instead — we would much rather hear from you.";
+  "Something went wrong sending that. Please try again, or call us instead, we would much rather hear from you.";
 
 export async function submitTourRequest(
   _prev: TourFormState,
@@ -40,7 +40,7 @@ export async function submitTourRequest(
   // 1. Honeypot. Real people never see this field.
   if (String(formData.get("company") ?? "") !== "") {
     // Answer as if it worked. Telling a bot it was caught only helps it adapt.
-    return { status: "success", message: "Thank you — we have your message." };
+    return { status: "success", message: "Thank you, we have your message." };
   }
 
   // 2. Validate with the same schema the browser used.
@@ -70,19 +70,19 @@ export async function submitTourRequest(
 
   const data = parsed.data;
 
-  // 3. Spam check. Fails open when unconfigured — see lib/forms/turnstile.ts.
+  // 3. Spam check. Fails open when unconfigured, see lib/forms/turnstile.ts.
   const human = await verifyTurnstile(data.turnstileToken);
   if (!human) {
     return {
       status: "error",
       message:
-        "We couldn't complete the security check. Please try again, or call us — we would rather hear from you than lose your message.",
+        "We couldn't complete the security check. Please try again, or call us, we would rather hear from you than lose your message.",
     };
   }
 
   const supabase = await createClient();
   if (!supabase) {
-    console.error("[tour] Supabase is not configured — enquiry LOST:", data.name);
+    console.error("[tour] Supabase is not configured, enquiry LOST:", data.name);
     return { status: "error", message: GENERIC_ERROR };
   }
 
@@ -94,8 +94,8 @@ export async function submitTourRequest(
   //    naive flood without storing anyone's IP address.
   //
   //    Goes through has_recent_inquiry() rather than a SELECT. Anonymous
-  //    visitors cannot read `inquiries` — correctly, since it holds other
-  //    families' details — so a plain SELECT here would always return empty and
+  //    visitors cannot read `inquiries` correctly, since it holds other
+  //    families' details, so a plain SELECT here would always return empty and
   //    the guard would silently never fire. The function is SECURITY DEFINER and
   //    returns only a boolean. See supabase/migrations/0003_rate_limit.sql.
   const { data: isDuplicate } = await supabase.rpc("has_recent_inquiry", {
@@ -106,14 +106,14 @@ export async function submitTourRequest(
   if (isDuplicate === true) {
     return {
       status: "success",
-      message: "Thank you — we already have your message and will be in touch.",
+      message: "Thank you, we already have your message and will be in touch.",
     };
   }
 
   // 5. Save. From here the lead is safe whatever else fails.
   //
   // NO .select() ON THIS INSERT. A visitor is anonymous, and RLS grants them
-  // INSERT but not SELECT on `inquiries` — deliberately, since the table holds
+  // INSERT but not SELECT on `inquiries` deliberately, since the table holds
   // other families' phone numbers. Postgres needs SELECT permission to satisfy
   // a RETURNING clause, so adding .select() here makes every genuine submission
   // fail with "new row violates row-level security policy". The row is written
@@ -159,7 +159,7 @@ export async function submitTourRequest(
 
   return {
     status: "success",
-    message: "Thank you — we have your message and will be in touch soon.",
+    message: "Thank you, we have your message and will be in touch soon.",
   };
 }
 

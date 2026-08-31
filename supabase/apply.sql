@@ -1,15 +1,15 @@
 -- ============================================================================
--- Columbia Care — ONE-PASTE SETUP
+-- Columbia Care, ONE-PASTE SETUP
 --
 -- Paste this whole file into the Supabase SQL Editor and run it:
 --   https://supabase.com/dashboard/project/wmxvickqaxkuaatftput/sql/new
 --
 -- Safe to re-run. Schema uses IF NOT EXISTS, seed uses ON CONFLICT.
--- GENERATED FILE — regenerate with: pnpm seed:generate && pnpm db:bundle
+-- GENERATED FILE, regenerate with: pnpm seed:generate && pnpm db:bundle
 -- ============================================================================
 
 -- ============================================================================
--- Columbia Care — schema
+-- Columbia Care, schema
 --
 -- Fourteen tables. Public read is granted ONLY where published = true; every
 -- write requires an authenticated admin. Because RLS runs inside the database,
@@ -67,10 +67,10 @@ begin
   return new;
 end $$;
 
--- is_admin() is defined below, after profiles exists — see the note there.
+-- is_admin() is defined below, after profiles exists, see the note there.
 
 -- ---------------------------------------------------------------------------
--- profiles — admin identity
+-- profiles, admin identity
 -- ---------------------------------------------------------------------------
 
 create table if not exists profiles (
@@ -93,7 +93,7 @@ returns boolean language sql stable security definer set search_path = public as
 $$;
 
 -- ---------------------------------------------------------------------------
--- site_settings — the NAP singleton
+-- site_settings, the NAP singleton
 --
 -- Nullable on purpose. A null renders nothing on the site; it never renders a
 -- placeholder. phone/licence stay null until the client confirms them.
@@ -124,7 +124,7 @@ create table if not exists site_settings (
 );
 
 -- ---------------------------------------------------------------------------
--- availability — the highest-converting element on the site
+-- availability, the highest-converting element on the site
 -- ---------------------------------------------------------------------------
 
 create table if not exists availability (
@@ -136,7 +136,7 @@ create table if not exists availability (
 );
 
 -- ---------------------------------------------------------------------------
--- announcements — site-wide banner
+-- announcements, site-wide banner
 -- ---------------------------------------------------------------------------
 
 create table if not exists announcements (
@@ -151,7 +151,7 @@ create table if not exists announcements (
 );
 
 -- ---------------------------------------------------------------------------
--- media — one library, alt text REQUIRED at the database layer
+-- media, one library, alt text REQUIRED at the database layer
 -- ---------------------------------------------------------------------------
 
 create table if not exists media (
@@ -226,7 +226,7 @@ create table if not exists services (
 );
 
 -- ---------------------------------------------------------------------------
--- care_types — the three brochure chips
+-- care_types, the three brochure chips
 -- ---------------------------------------------------------------------------
 
 create table if not exists care_types (
@@ -240,7 +240,7 @@ create table if not exists care_types (
 );
 
 -- ---------------------------------------------------------------------------
--- schedule_items — the 13 day-timeline entries
+-- schedule_items, the 13 day-timeline entries
 -- ---------------------------------------------------------------------------
 
 create table if not exists schedule_items (
@@ -258,7 +258,7 @@ create table if not exists schedule_items (
 );
 
 -- ---------------------------------------------------------------------------
--- every_day — the "Every Day at Columbia Care" list
+-- every_day, the "Every Day at Columbia Care" list
 -- ---------------------------------------------------------------------------
 
 create table if not exists every_day (
@@ -270,7 +270,7 @@ create table if not exists every_day (
 );
 
 -- ---------------------------------------------------------------------------
--- why_families — the four brochure bullets
+-- why_families, the four brochure bullets
 -- ---------------------------------------------------------------------------
 
 create table if not exists why_families (
@@ -281,7 +281,7 @@ create table if not exists why_families (
 );
 
 -- ---------------------------------------------------------------------------
--- testimonials — consent required before publishing
+-- testimonials, consent required before publishing
 -- ---------------------------------------------------------------------------
 
 create table if not exists testimonials (
@@ -328,7 +328,7 @@ create table if not exists team (
 );
 
 -- ---------------------------------------------------------------------------
--- inquiries — every lead, one pipeline. NEVER publicly readable.
+-- inquiries, every lead, one pipeline. NEVER publicly readable.
 -- ---------------------------------------------------------------------------
 
 create table if not exists inquiries (
@@ -399,7 +399,7 @@ end $$;
 -- Row-level security
 --
 -- Deny by default. Public read is granted ONLY to published rows. Inquiries are
--- insert-only for the public and readable only by admins — families' phone
+-- insert-only for the public and readable only by admins, families' phone
 -- numbers and care details never leave the admin console.
 -- ---------------------------------------------------------------------------
 
@@ -456,14 +456,14 @@ create policy "admins read audit" on audit_log for select using (is_admin());
 
 
 -- ============================================================================
--- Columbia Care — storage buckets
+-- Columbia Care, storage buckets
 --
 --   media/     photographs. Public read, admin write.
 --              Sub-paths: gallery/ team/ services/ og/
 --   documents/ the DSHS Disclosure of Services, the family info packet.
 --
 -- 8MB cap. Supabase's transform endpoint re-encodes to WebP/AVIF on the fly,
--- and next/image serves from there — nothing is stored pre-resized.
+-- and next/image serves from there, nothing is stored pre-resized.
 -- ============================================================================
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
@@ -513,7 +513,7 @@ end $$;
 -- Rate limiting for the tour form
 --
 -- THE PROBLEM
--- Anonymous visitors may INSERT into `inquiries` but not SELECT from it — the
+-- Anonymous visitors may INSERT into `inquiries` but not SELECT from it, the
 -- table holds other families' phone numbers and care details. That is correct,
 -- but it means the server action cannot ask "has this person just submitted?",
 -- because the answer always comes back empty and the duplicate check silently
@@ -522,7 +522,7 @@ end $$;
 -- THE FIX
 -- A SECURITY DEFINER function: it runs with the definer's rights, so it can see
 -- the table, but it returns only a BOOLEAN. No row, no name, no phone number
--- ever crosses back to the caller. That is the right shape for this — reaching
+-- ever crosses back to the caller. That is the right shape for this, reaching
 -- for a service-role key here would hand the whole table to the web tier to
 -- answer a yes/no question.
 -- ============================================================================
@@ -550,7 +550,7 @@ comment on function has_recent_inquiry is
 
 
 -- ============================================================================
--- Columbia Care — seed data
+-- Columbia Care, seed data
 --
 -- GENERATED FILE. Do not edit by hand.
 --   source: content/source-of-truth.json
@@ -558,7 +558,7 @@ comment on function has_recent_inquiry is
 --
 -- Only entries whose provenance is ARTWORK or ARTWORK_CONFIRMED appear here.
 -- Anything still ASK_CLIENT is seeded as NULL or omitted entirely, so the site
--- renders nothing for it — see the rule in CLAUDE.md.
+-- renders nothing for it, see the rule in CLAUDE.md.
 -- ============================================================================
 
 begin;
@@ -570,7 +570,7 @@ insert into site_settings (
   latitude, longitude, license_number, licensed_capacity, hours, location_line, service_area
 ) values (
   'singleton',
-  null,   -- ASK_CLIENT q1 — no number published yet
+  null,   -- ASK_CLIENT q1, no number published yet
   null,
   null,
   '425-212-9108',
@@ -605,7 +605,7 @@ on conflict (slug) do update set
   icon = excluded.icon, position = excluded.position, published = excluded.published;
 
 -- services: the seven verbatim services plus the long-term-care chip.
--- `summary` is NULL — the client has not written descriptions (see q4).
+-- `summary` is NULL, the client has not written descriptions (see q4).
 insert into services (slug, title, summary, icon, position, has_detail_page, related_schedule, published) values
   ('long-term-care', 'Long term care', null, 'house', 0, true, array[1, 3, 12, 13]::integer[], true),
   ('24-hour-care', '24-hour compassionate care and supervision', null, 'shield', 1, false, array[1, 12, 13]::integer[], true),

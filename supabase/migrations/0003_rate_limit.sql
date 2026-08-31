@@ -2,8 +2,8 @@
 -- Rate limiting for the tour form
 --
 -- THE PROBLEM
--- Anonymous visitors may INSERT into `inquiries` but not SELECT from it — the
--- table holds other families' phone numbers and care details. That is correct,
+-- Anonymous visitors may INSERT into `inquiries` but not SELECT from it, because
+-- the table holds other families' phone numbers and care details. That is correct,
 -- but it means the server action cannot ask "has this person just submitted?",
 -- because the answer always comes back empty and the duplicate check silently
 -- never fires.
@@ -11,7 +11,7 @@
 -- THE FIX
 -- A SECURITY DEFINER function: it runs with the definer's rights, so it can see
 -- the table, but it returns only a BOOLEAN. No row, no name, no phone number
--- ever crosses back to the caller. That is the right shape for this — reaching
+-- ever crosses back to the caller. That is the right shape for this. Reaching
 -- for a service-role key here would hand the whole table to the web tier to
 -- answer a yes/no question.
 -- ============================================================================

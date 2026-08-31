@@ -1,5 +1,5 @@
-import Link from "next/link";
 import { Phone } from "lucide-react";
+import { AnchorLink } from "@/components/site/anchor-link";
 import { buttonVariants } from "@/components/ui/button";
 import { LaurelDivider } from "@/components/brand/laurel";
 import { cn } from "@/lib/utils";
@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 /**
  * The closing call to action, used at the foot of every page.
  *
- * `script` is the client's "We treat your loved one like family." line — one of
+ * `script` is the client's "We treat your loved one like family." line, one of
  * only two places the Parisienne face appears site-wide.
  */
 export function CtaBand({
@@ -36,15 +36,15 @@ export function CtaBand({
         <LaurelDivider className="my-8 opacity-60" />
 
         <div className="flex flex-wrap justify-center gap-3">
-          <Link
-            href="/contact"
+          <AnchorLink
+            sectionId="contact"
             className={cn(
               buttonVariants({ size: "lg" }),
               "bg-paper text-ink hover:bg-sage hover:text-paper",
             )}
           >
             Book a house tour
-          </Link>
+          </AnchorLink>
 
           {phone && phoneHref ? (
             <a

@@ -6,7 +6,7 @@ import { siteUrl } from "@/lib/site-url";
  *
  * The marketing site is a single page, so there is one entry for it plus the
  * legal routes, which stay separate. The admin console, the two internal review
- * pages and the Tier 2 routes that still 404 are all excluded — submitting URLs
+ * pages and the Tier 2 routes that still 404 are all excluded, submitting URLs
  * that 404 wastes crawl budget and looks broken in Search Console.
  *
  * Section anchors are deliberately NOT listed. Google treats `/#care` as the

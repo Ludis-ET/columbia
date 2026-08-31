@@ -1,6 +1,6 @@
 /**
  * Skip link. Must be the first focusable element in the DOM.
- * Off-screen until focused — see .skip-link in globals.css.
+ * Off-screen until focused, see .skip-link in globals.css.
  */
 export function SkipLink() {
   return (

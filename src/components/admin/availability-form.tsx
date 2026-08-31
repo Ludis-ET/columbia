@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
  * The availability control.
  *
  * Shows a LIVE PREVIEW of the badge exactly as visitors will see it, updating
- * as the owner picks — so there is no gap between the radio they chose and the
+ * as the owner picks, so there is no gap between the radio they chose and the
  * thing that appears on the website. "Not shown" is a first-class option, not
  * an absence: choosing it removes the badge entirely rather than displaying
  * something noncommittal.
@@ -67,8 +67,8 @@ export function AvailabilityForm({
         <fieldset className="min-w-0">
           <legend className="sr-only">Availability status</legend>
           {/* Each option is a grid rather than a nested wrapper span, which keeps
-              the label text a direct child of <label> — what assistive tech (and
-              jsx-a11y) expects — while still aligning the radio to the first line. */}
+              the label text a direct child of <label>, which is what assistive tech
+              (and jsx-a11y) expects, while still aligning the radio to the first line. */}
           <div className="grid gap-2">
             {OPTIONS.map((option) => (
               <label

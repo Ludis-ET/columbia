@@ -3,7 +3,7 @@
  *
  * Ordered by how often the owner actually touches it, not alphabetically or by
  * data model. They log in perhaps twice a month, almost always to change
- * availability or answer an enquiry — so those sit at the top.
+ * availability or answer an enquiry, so those sit at the top.
  *
  * Labels are in the owner's language, not the schema's: "Photos", not "Media
  * assets"; "Show on the website", not "published".

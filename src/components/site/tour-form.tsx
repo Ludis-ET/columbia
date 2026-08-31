@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { HeartShield } from "@/components/brand/heart-shield";
+import { InfoHint } from "@/components/site/info-hint";
 import { submitTourRequest, type TourFormState } from "@/app/actions/tour";
 import { PREFERRED_TIMES, RELATIONSHIPS } from "@/lib/forms/tour-request";
 import { cn } from "@/lib/utils";
@@ -17,7 +17,7 @@ import { cn } from "@/lib/utils";
  *
  * Written for someone anxious, on a phone, late at night:
  *
- *   - Three required-ish fields. Name, then EITHER phone or email — never both.
+ *   - Three required-ish fields. Name, then EITHER phone or email, never both.
  *   - Phone accepts any format. Brackets, dots, spaces all work; the server
  *     normalises. Nobody is rejected over punctuation.
  *   - Errors are attached with aria-describedby and announced in a live region,
@@ -46,15 +46,14 @@ export function TourForm({ className }: { className?: string }) {
 
   if (state.status === "success") {
     return (
-      <div
-        className={cn("border-sage bg-sage-wash rounded border p-8 text-center", className)}
-        role="status"
-      >
-        <CheckCircle2 className="text-sage-deep mx-auto mb-4 size-10" aria-hidden="true" />
-        <h3 className="text-h3 mb-2 font-sans font-bold">{state.message}</h3>
-        <p className="text-ink-soft mx-auto max-w-[46ch]">
-          If you sent us an email address, there is a note in your inbox confirming this. You are
-          welcome to call any time in the meantime.
+      <div className={cn("py-8 text-center", className)} role="status">
+        <span className="bg-sage-wash mx-auto mb-5 flex size-16 items-center justify-center rounded-full">
+          <CheckCircle2 className="text-sage-deep size-8" aria-hidden="true" />
+        </span>
+        <h3 className="text-h3 mb-3 font-sans font-bold">{state.message}</h3>
+        <p className="text-ink-soft mx-auto max-w-[42ch]">
+          If you left an email address, there is a note in your inbox confirming this. You are very
+          welcome to call in the meantime.
         </p>
       </div>
     );
@@ -64,6 +63,13 @@ export function TourForm({ className }: { className?: string }) {
 
   return (
     <form action={action} className={cn("grid gap-5", className)} noValidate>
+      <div className="flex flex-wrap items-center gap-1">
+        <h3 className="text-h3 font-sans font-bold">Send us a message</h3>
+        <InfoHint label="What we ask for">
+          <p>Your name, and one way to reach you. Everything else is optional.</p>
+          <p>Whichever contact method you prefer. Any phone format is fine.</p>
+        </InfoHint>
+      </div>
       {/* Honeypot. Hidden from people, irresistible to naive bots.
           aria-hidden + tabIndex -1 so assistive tech skips it entirely. */}
       <div aria-hidden="true" className="absolute left-[-9999px] h-0 w-0 overflow-hidden">
@@ -93,7 +99,9 @@ export function TourForm({ className }: { className?: string }) {
         required
       />
 
-      <div className="grid gap-5 sm:grid-cols-2">
+      {/* items-start: the phone field has a hint and the email field does not, so
+          the default stretch alignment pushed the email label out of line. */}
+      <div className="grid items-start gap-5 sm:grid-cols-2">
         <Field
           id={`${uid}-phone`}
           name="phone"
@@ -101,7 +109,6 @@ export function TourForm({ className }: { className?: string }) {
           type="tel"
           autoComplete="tel"
           error={err("phone")}
-          hint="Any format is fine."
         />
         <Field
           id={`${uid}-email`}
@@ -112,9 +119,6 @@ export function TourForm({ className }: { className?: string }) {
           error={err("email")}
         />
       </div>
-      <p className="text-stone -mt-3 text-[0.9375rem]">
-        Leave whichever you prefer — we only need one way to reach you.
-      </p>
 
       <div className="grid min-w-0 gap-1.5">
         <Label htmlFor={`${uid}-relationship`}>Who are you asking for?</Label>
@@ -137,8 +141,14 @@ export function TourForm({ className }: { className?: string }) {
       </div>
 
       <fieldset>
-        <legend className="mb-2 font-semibold">When would suit you to visit?</legend>
-        <p className="text-stone mb-3 text-[0.9375rem]">Choose as many as you like, or none.</p>
+        <legend className="mb-3 font-semibold">
+          <span className="inline-flex flex-wrap items-center gap-1">
+            When would suit you to visit?
+            <InfoHint label="Visit times">
+              <p>Choose as many as you like, or none.</p>
+            </InfoHint>
+          </span>
+        </legend>
         <div className="flex flex-wrap gap-2">
           {PREFERRED_TIMES.map((time) => {
             const checked = times.includes(time);
@@ -172,17 +182,16 @@ export function TourForm({ className }: { className?: string }) {
       </fieldset>
 
       <div className="grid gap-1.5">
-        <Label htmlFor={`${uid}-message`}>Anything you&rsquo;d like us to know?</Label>
-        <Textarea
-          id={`${uid}-message`}
-          name="message"
-          rows={4}
-          aria-describedby={`${uid}-message-hint`}
-        />
-        <p id={`${uid}-message-hint`} className="text-stone text-[0.9375rem]">
-          Tell us about your loved one and what they need, or just say hello. Nothing here is
-          required.
-        </p>
+        <div className="flex flex-wrap items-center gap-1">
+          <Label htmlFor={`${uid}-message`}>Anything you&rsquo;d like us to know?</Label>
+          <InfoHint label="About your message">
+            <p>
+              Tell us about your loved one and what they need, or just say hello. Nothing here is
+              required.
+            </p>
+          </InfoHint>
+        </div>
+        <Textarea id={`${uid}-message`} name="message" rows={4} />
       </div>
 
       {siteKey ? (
@@ -195,10 +204,7 @@ export function TourForm({ className }: { className?: string }) {
         </>
       ) : null}
 
-      <div className="flex flex-wrap items-center gap-4">
-        {/* Full width below sm, and whitespace-normal to override the button's
-            default nowrap: at 320px the label cannot fit on one line and was
-            pushing the whole form past the viewport. */}
+      <div className="border-rule flex flex-wrap items-center gap-3 border-t pt-5">
         <Button
           type="submit"
           size="lg"
@@ -208,10 +214,9 @@ export function TourForm({ className }: { className?: string }) {
           {pending ? <Loader2 className="animate-spin" aria-hidden="true" /> : null}
           {pending ? "Sending…" : "Send this to Columbia Care"}
         </Button>
-        <span className="text-stone inline-flex items-center gap-2 text-[0.9375rem]">
-          <HeartShield className="size-5 shrink-0" />
-          No obligation, and we never share your details.
-        </span>
+        <InfoHint label="Privacy">
+          <p>No obligation, and we never share your details.</p>
+        </InfoHint>
       </div>
     </form>
   );

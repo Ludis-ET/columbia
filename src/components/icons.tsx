@@ -36,8 +36,8 @@ import { cn } from "@/lib/utils";
  *
  * Glyphs are lucide rather than hand-traced: the client's set is 23 icons, and
  * lucide covers every one at consistent weight with maintained a11y. The marks
- * that are actually unique to this brand — the monogram, the heart-shield, the
- * laurel, the wave — are hand-drawn in ./brand.
+ * that are actually unique to this brand, the monogram, the heart-shield, the
+ * laurel, the wave, are hand-drawn in ./brand.
  */
 
 const GLYPHS = {
@@ -88,7 +88,7 @@ const ACCENT_BG: Record<Accent, string> = {
   rose: "bg-[var(--accent-rose)]",
 };
 
-/** Text-safe accent for the current ground — used for headings beside a badge. */
+/** Text-safe accent for the current ground, used for headings beside a badge. */
 export const ACCENT_TEXT: Record<Accent, string> = {
   navy: "text-ink",
   sage: "text-sage-deep",
@@ -114,7 +114,7 @@ export function Icon({
 
 /**
  * A glyph in a filled circle, the treatment used throughout the infographic.
- * Always decorative — the adjacent heading carries the meaning.
+ * Always decorative, the adjacent heading carries the meaning.
  */
 export function IconBadge({
   name,

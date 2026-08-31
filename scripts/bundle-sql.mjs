@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Bundles the migrations and the seed into supabase/apply.sql — one file the
+ * Bundles the migrations and the seed into supabase/apply.sql, one file the
  * client (or you) can paste into the Supabase SQL Editor in a single go.
  *
  * Applying schema needs a secret key or the database password, neither of which
@@ -26,13 +26,13 @@ const parts = [
 ];
 
 const header = `-- ============================================================================
--- Columbia Care — ONE-PASTE SETUP
+-- Columbia Care, ONE-PASTE SETUP
 --
 -- Paste this whole file into the Supabase SQL Editor and run it:
 --   https://supabase.com/dashboard/project/${PROJECT_REF}/sql/new
 --
 -- Safe to re-run. Schema uses IF NOT EXISTS, seed uses ON CONFLICT.
--- GENERATED FILE — regenerate with: pnpm seed:generate && pnpm db:bundle
+-- GENERATED FILE, regenerate with: pnpm seed:generate && pnpm db:bundle
 -- ============================================================================
 
 `;

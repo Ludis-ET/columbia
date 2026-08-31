@@ -5,8 +5,7 @@ import { normalisePhone, tourRequestSchema } from "./tour-request";
  * Schema unit tests.
  *
  * Format validation belongs here rather than in an end-to-end test: the schema
- * is a pure function, so this is faster, far more thorough, and — crucially —
- * writes nothing to the client's live enquiry inbox.
+ * is a pure function, so this is faster, far more thorough, and, crucially, * writes nothing to the client's live enquiry inbox.
  */
 
 const base = { name: "Jane Doe", email: "", phone: "", preferredTimes: [] };

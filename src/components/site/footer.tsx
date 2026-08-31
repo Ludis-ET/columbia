@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Mail, Phone, Printer } from "lucide-react";
+import { AnchorLink } from "@/components/site/anchor-link";
 import { Monogram } from "@/components/brand/monogram";
 import { Wave } from "@/components/brand/wave";
 import { legalNav } from "@/lib/nav";
@@ -10,8 +11,7 @@ import { getSiteSettings } from "@/lib/db/queries";
 /**
  * Site footer.
  *
- * Every field goes through published(). Anything the client has not confirmed —
- * phone, licence number — is simply absent. No placeholder, no "TBC".
+ * Every field goes through published(). Anything the client has not confirmed, * phone, licence number, is simply absent. No placeholder, no "TBC".
  */
 export async function Footer() {
   const {
@@ -100,12 +100,12 @@ export async function Footer() {
               <ul className="space-y-2 text-[0.95rem]">
                 {sections.map((section) => (
                   <li key={section.id}>
-                    <Link
-                      href={`/#${section.id}`}
+                    <AnchorLink
+                      sectionId={section.id}
                       className="opacity-90 hover:underline hover:opacity-100"
                     >
                       {section.navLabel}
-                    </Link>
+                    </AnchorLink>
                   </li>
                 ))}
               </ul>

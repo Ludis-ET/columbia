@@ -1,12 +1,12 @@
 -- ============================================================================
--- Columbia Care — storage buckets
+-- Columbia Care, storage buckets
 --
 --   media/     photographs. Public read, admin write.
 --              Sub-paths: gallery/ team/ services/ og/
 --   documents/ the DSHS Disclosure of Services, the family info packet.
 --
 -- 8MB cap. Supabase's transform endpoint re-encodes to WebP/AVIF on the fly,
--- and next/image serves from there — nothing is stored pre-resized.
+-- and next/image serves from there, nothing is stored pre-resized.
 -- ============================================================================
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)

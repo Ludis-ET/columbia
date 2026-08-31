@@ -40,7 +40,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-/** Sample gallery data. Placeholder files — replaced in Phase 8. */
+/** Sample gallery data. Placeholder files, replaced in Phase 8. */
 const GALLERY = [
   {
     src: "/placeholder/living-room.jpg",
@@ -82,7 +82,7 @@ const GALLERY = [
 
 const FAQ_SAMPLE = [
   {
-    question: "Sample question — replaced with the client's own answers",
+    question: "Sample question, replaced with the client's own answers",
     answer:
       "This accordion is wired and styled, but every answer must come from the client. The FAQ page stays unpublished until it can be filled with real answers rather than plausible ones.",
   },
@@ -117,7 +117,7 @@ function Bench({
     <section className="pt-14">
       <div className="border-rule mb-5 flex flex-wrap items-baseline justify-between gap-3 border-b pb-2">
         <h2 className="label text-sage-deep">
-          {n} — {title}
+          {n} {title}
         </h2>
         {note ? <span className="label text-stone">{note}</span> : null}
       </div>
@@ -199,7 +199,7 @@ export default function KitchenSinkPage() {
                 title={service.title}
                 icon={service.icon}
                 href={service.hasDetailPage ? `/services/${service.slug}` : null}
-                summary={service.hasDetailPage ? undefined : "No detail page — informational card."}
+                summary={service.hasDetailPage ? undefined : "No detail page, informational card."}
               />
             ))}
           </div>
@@ -234,7 +234,7 @@ export default function KitchenSinkPage() {
           </div>
         </Bench>
 
-        <Bench n="06" title="Gallery" note="placeholder files — Phase 8 replaces these">
+        <Bench n="06" title="Gallery" note="placeholder files, Phase 8 replaces these">
           <Gallery images={GALLERY} />
           <div className="border-rule mt-5 rounded border border-dashed p-4">
             <p className="label text-stone mb-2">images = [] </p>
@@ -249,7 +249,7 @@ export default function KitchenSinkPage() {
             <p className="label text-stone mb-2">items = [] (the live state today)</p>
             <TestimonialList items={[]} />
             <p className="text-stone text-[0.9375rem]">
-              ↑ Nothing rendered — no heading, no empty grid, no &ldquo;coming soon&rdquo;.
+              ↑ Nothing rendered, no heading, no empty grid, no &ldquo;coming soon&rdquo;.
             </p>
           </div>
         </Bench>
@@ -288,7 +288,7 @@ export default function KitchenSinkPage() {
               <Label htmlFor="ks-phone">Phone</Label>
               <Input id="ks-phone" name="phone" type="tel" autoComplete="tel" />
               <p className="text-stone text-[0.875rem]">
-                Any format is accepted — we tidy it up on our end.
+                Any format is accepted, we tidy it up on our end.
               </p>
             </div>
             <div className="grid gap-1.5">
@@ -297,8 +297,7 @@ export default function KitchenSinkPage() {
             </div>
             {/* Base UI's Switch renders a <button role="switch">, so a plain
                 <Label htmlFor> does not name it the way it would a native
-                checkbox. aria-labelledby is what actually associates them —
-                axe caught this as aria-toggle-field-name. */}
+                checkbox. aria-labelledby is what actually associates them, axe caught this as aria-toggle-field-name. */}
             <div className="flex items-center gap-3">
               <Switch id="ks-switch" aria-labelledby="ks-switch-label" />
               <Label id="ks-switch-label" htmlFor="ks-switch">
@@ -366,7 +365,7 @@ export default function KitchenSinkPage() {
             <div className="border-rule bg-paper-raise rounded border p-6">
               <p>
                 This block rises 12px and fades over 320ms when it scrolls into view. Set
-                &ldquo;Animation: Reduced&rdquo; in Reading options and reload — it renders with no
+                &ldquo;Animation: Reduced&rdquo; in Reading options and reload, it renders with no
                 animation at all, rather than a zero-duration one.
               </p>
             </div>
@@ -391,7 +390,7 @@ export default function KitchenSinkPage() {
         <SectionHeading
           eyebrow="Section shell"
           title="Alternating grounds, not card shadows"
-          lead="Sections separate by ground colour — paper, then sage wash — which is quieter than stacking shadows and holds up in both themes."
+          lead="Sections separate by ground colour (paper, then sage wash), which is quieter than stacking shadows and holds up in both themes."
           align="center"
         />
       </Section>

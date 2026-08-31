@@ -28,8 +28,8 @@ import type { FaqItem } from "@/components/site/faq-accordion";
  * WHY THERE IS A FALLBACK
  *
  * The public site is statically generated. If Supabase is unreachable at build
- * time — most likely because a free-tier project auto-paused after a week of
- * inactivity — a naive build would emit an empty website for a care home.
+ * time, most likely because a free-tier project auto-paused after a week of
+ * inactivity, a naive build would emit an empty website for a care home.
  *
  * So every read falls back to content/source-of-truth.json, which is the same
  * content the database was seeded from. The marketing site therefore cannot go
@@ -57,7 +57,7 @@ import type { FaqItem } from "@/components/site/faq-accordion";
  *
  * These tables hold tens of rows, not thousands, so filtering and sorting in JS
  * keeps the call sites readable and costs nothing. Note the difference between
- * `null` (query failed — fall back) and `[]` (genuinely empty).
+ * `null` (query failed, fall back) and `[]` (genuinely empty).
  */
 async function select<T>(table: string): Promise<T[] | null> {
   const supabase = getSupabase();
@@ -77,7 +77,7 @@ async function select<T>(table: string): Promise<T[] | null> {
 }
 
 // ---------------------------------------------------------------------------
-// Seeded-from-artwork content — falls back to the file when empty or failed
+// Seeded-from-artwork content, falls back to the file when empty or failed
 // ---------------------------------------------------------------------------
 
 export const getServices = cache(async (): Promise<Service[]> => {
@@ -181,7 +181,7 @@ export const getSiteSettings = cache(async (): Promise<SiteSettings> => {
   const row = rows?.[0];
 
   if (!row) {
-    // File fallback — identical content, same provenance gate.
+    // File fallback, identical content, same provenance gate.
     return {
       phone: file.published(file.contact.phonePrimary),
       telHref: file.telHref(),
@@ -218,7 +218,7 @@ export const getSiteSettings = cache(async (): Promise<SiteSettings> => {
 });
 
 // ---------------------------------------------------------------------------
-// Availability — "unset" is a real state and renders nothing
+// Availability, "unset" is a real state and renders nothing
 // ---------------------------------------------------------------------------
 
 export interface Availability {
@@ -237,7 +237,7 @@ export const getAvailability = cache(async (): Promise<Availability> => {
 });
 
 // ---------------------------------------------------------------------------
-// Deliberately-empty content — [] is the correct answer, never a fallback
+// Deliberately-empty content, [] is the correct answer, never a fallback
 // ---------------------------------------------------------------------------
 
 export const getTestimonials = cache(async (): Promise<TestimonialItem[]> => {

@@ -7,7 +7,7 @@ import {
 } from "next/font/google";
 
 /**
- * Fonts are self-hosted by next/font at build time — no render-blocking request
+ * Fonts are self-hosted by next/font at build time, no render-blocking request
  * to fonts.googleapis.com, no layout shift, no third-party connection.
  *
  * Pairing rationale is in CLAUDE.md. Short version: Fraunces' SOFT axis rounds

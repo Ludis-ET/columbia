@@ -1,26 +1,26 @@
-# Columbia Care — what we need from you to build the website
+# Columbia Care, what we need from you to build the website
 
 Everything in your infographic and brochure has been transcribed and is already loaded into
 the project. That covers your tagline, your daily schedule, your services list, your about
 and meals paragraphs, and your contact details.
 
 The list below is everything the artwork **doesn't** tell us. We've started building around
-it — none of this blocks us from starting, but each item blocks the part of the site that
+it, none of this blocks us from starting, but each item blocks the part of the site that
 depends on it. We'd rather leave a section empty than guess and publish something that isn't
 true about your home.
 
 ---
 
-## Start here — two answers unblock most of the list
+## Start here, two answers unblock most of the list
 
 ### 1. Which phone number should we publish?
 
 Your brochure shows **206-499-0849**. Your infographic shows **(425) 212-XXXX** with the last
-digits masked. Your fax is **425-212-9108**, which shares the same 425-212 prefix — so it
+digits masked. Your fax is **425-212-9108**, which shares the same 425-212 prefix, so it
 looks like there may be a second line we don't have in full.
 
 We need to know which one families should call. This number goes on every page, in Google
-Maps, and in every directory listing — and they all have to match exactly, or your search
+Maps, and in every directory listing, and they all have to match exactly, or your search
 ranking suffers.
 
 - Main number to publish: ⬜
@@ -29,7 +29,7 @@ ranking suffers.
 
 ### 2. Please send your current DSHS Disclosure of Services (form 10-508)
 
-This one document answers several questions at once — your licence details, the scope of
+This one document answers several questions at once, your licence details, the scope of
 care you're approved to provide, and your full services list, in your own words as filed
 with the state.
 
@@ -66,7 +66,7 @@ Your brochure lists seven services and three care types:
 
 We want to put a live "availability" badge on the site that you can update yourself in
 seconds. Families and placement agents filter on exactly this, and almost no adult family
-home publishes it — it's likely to be the highest-converting thing on the whole site.
+home publishes it, it's likely to be the highest-converting thing on the whole site.
 
 - What room types do you offer? ⬜
 - What's your availability right now? ⬜
@@ -78,7 +78,7 @@ home publishes it — it's likely to be the highest-converting thing on the whol
 - What's included in that, and what costs extra? ⬜
 
 Homes that publish a starting price get more qualified enquiries than homes that hide it.
-A range is fine — we don't need an exact figure.
+A range is fine, we don't need an exact figure.
 
 ### 7. Who should we introduce?
 
@@ -108,7 +108,7 @@ If those aren't available we'll redraw them, but originals are better and faster
 
 ### 9. Full-resolution photographs
 
-We can already use six photos from your brochure — the living room and kitchen, the table
+We can already use six photos from your brochure, the living room and kitchen, the table
 setting, the patio, the backyard, the flowers, and the map. In the brochure they're
 compressed and cropped, so please send the **original camera files**.
 
@@ -122,7 +122,7 @@ Nothing in your artwork covers these, and families ask about all of them:
 - ⬜ The entryway and hallway
 
 Nice to have: a plated home-cooked meal, an activity in progress, and caregiver hands
-helping (no faces needed — that avoids any consent question entirely).
+helping (no faces needed, that avoids any consent question entirely).
 
 A local photographer for a half-day runs roughly $300–600. It's the single highest-value
 thing you can spend money on for this site.
@@ -133,7 +133,7 @@ thing you can spend money on for this site.
 
 ### 11. Who can you accept?
 
-Any admission criteria we should state plainly — so families don't book a tour that was
+Any admission criteria we should state plainly, so families don't book a tour that was
 never going to work out.
 
 ⬜
@@ -180,8 +180,7 @@ any photos, we'll send you a simple release form to use.
 
 ## What happens next
 
-Once we have answers 1 and 2, we start building. Everything else can arrive as it comes —
-the site is built so that any section without confirmed information simply doesn't appear,
+Once we have answers 1 and 2, we start building. Everything else can arrive as it comes, the site is built so that any section without confirmed information simply doesn't appear,
 and switches on the moment you fill it in.
 
 You'll get a link to a working preview at the end of each stage, so nothing is a surprise

@@ -34,11 +34,11 @@ export default async function TestimonialsAdminPage() {
         <EmptyState title="No testimonials yet">
           <p>
             The testimonials section does not appear on the website at all until there is a real
-            quote here. That is deliberate — never write one yourself.
+            quote here. That is deliberate, never write one yourself.
           </p>
           <p className="mt-3">
             The best time to ask is right after a family says something kind. Ask if you may put it
-            on the website, and how they would like to be described — most prefer &ldquo;daughter of
+            on the website, and how they would like to be described, most prefer &ldquo;daughter of
             a resident&rdquo; to their own name.
           </p>
         </EmptyState>

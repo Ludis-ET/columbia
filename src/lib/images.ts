@@ -4,13 +4,13 @@ import type { GalleryImage } from "@/components/site/gallery";
  * Site imagery.
  *
  * EVERY FILE HERE IS A PLACEHOLDER of a different house. They were chosen to
- * read as a real residential care home — communal sitting rooms, a family
- * dining table, a garden — rather than the generic stock that makes care sites
+ * read as a real residential care home, communal sitting rooms, a family
+ * dining table, a garden, rather than the generic stock that makes care sites
  * look interchangeable. None contains a person, because CLAUDE.md forbids stock
  * humans and because a photo of a stranger implying they live here is exactly
  * the kind of claim the content rule exists to prevent.
  *
- * Source: StockSnap.io, CC0 — free for commercial use, no attribution required.
+ * Source: StockSnap.io, CC0, free for commercial use, no attribution required.
  * Provenance for each file is in public/placeholder/manifest.json.
  *
  * Named by SLOT, so Phase 8 is a straight file swap: drop the real photograph
@@ -19,7 +19,7 @@ import type { GalleryImage } from "@/components/site/gallery";
  * LAUNCH_READY=1.
  *
  * ALT TEXT DESCRIBES THE PLACEHOLDER. Rewrite it when the real photograph
- * lands — alt text describing the wrong image is worse than none.
+ * lands, alt text describing the wrong image is worse than none.
  */
 
 const P = "/placeholder";
@@ -43,7 +43,7 @@ export const aboutImage = {
  * Gallery contents.
  *
  * Categories cover only areas the client's own brochure photographs show, plus
- * a bedroom — the room families ask about most and the biggest gap in the
+ * a bedroom, the room families ask about most and the biggest gap in the
  * supplied artwork (docs/client-questions.md q10).
  */
 export const galleryImages: GalleryImage[] = [

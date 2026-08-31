@@ -14,7 +14,7 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
   const profile = await getAdminProfile();
 
   // Middleware already bounces signed-out visitors. This catches the other
-  // case: a valid Supabase account with no `profiles` row — someone who signed
+  // case: a valid Supabase account with no `profiles` row, someone who signed
   // up but was never made an admin of this site.
   if (!profile) {
     redirect("/admin/login?message=That account does not have admin access.");

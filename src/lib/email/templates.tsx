@@ -15,7 +15,7 @@ import {
  * Transactional email.
  *
  * Two messages per enquiry: one to the owner so they can act, one to the family
- * so they know they were heard. The second matters more than it looks — a
+ * so they know they were heard. The second matters more than it looks, a
  * family who submits a form into silence assumes the home is disorganised, at
  * exactly the moment they are comparing three of them.
  *
@@ -86,7 +86,7 @@ export function OwnerNotification({
   return (
     <Html>
       <Head />
-      <Preview>{`New enquiry from ${name}${phone ? ` — ${phone}` : ""}`}</Preview>
+      <Preview>{`New enquiry from ${name}${phone ? ` ${phone}` : ""}`}</Preview>
       <Body style={base.body}>
         <Container style={base.container}>
           <Section style={base.card}>
@@ -181,7 +181,7 @@ export interface AutoReplyProps {
  *
  * Says only what is true: that the message arrived and someone will reply. It
  * promises no timeframe, because we cannot make a promise on the home's behalf
- * — that is the same rule that governs the website.
+ * that is the same rule that governs the website.
  */
 export function FamilyAutoReply({ name, phone, addressLine, locationLine }: AutoReplyProps) {
   const firstName = name.trim().split(/\s+/)[0] || name;
@@ -189,7 +189,7 @@ export function FamilyAutoReply({ name, phone, addressLine, locationLine }: Auto
   return (
     <Html>
       <Head />
-      <Preview>We have your message — Columbia Care Adult Family Home</Preview>
+      <Preview>We have your message, Columbia Care Adult Family Home</Preview>
       <Body style={base.body}>
         <Container style={base.container}>
           <Section style={base.card}>
@@ -201,7 +201,7 @@ export function FamilyAutoReply({ name, phone, addressLine, locationLine }: Auto
 
             <Text style={base.text}>
               Looking for care for someone you love is hard, and you are welcome to ask us anything
-              at all — including the awkward questions. There is no obligation, and most families
+              at all, including the awkward questions. There is no obligation, and most families
               visit two or three homes before they decide.
             </Text>
 
@@ -227,7 +227,7 @@ export function FamilyAutoReply({ name, phone, addressLine, locationLine }: Auto
             <Hr style={{ borderColor: RULE, margin: "20px 0" }} />
 
             <Text style={{ ...base.meta, fontStyle: "italic" }}>
-              Columbia Care Adult Family Home — a place to feel at home, a place to be cared for.
+              Columbia Care Adult Family Home, a place to feel at home, a place to be cared for.
             </Text>
           </Section>
         </Container>

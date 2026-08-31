@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
  *
  * Deliberately renders NOTHING when the status is unset or missing. The client
  * has not told us their availability (question 5 in docs/client-questions.md),
- * so until they do there is no badge — not "call for availability", not a
+ * so until they do there is no badge, not "call for availability", not a
  * greyed-out placeholder. See the rule in CLAUDE.md.
  */
 
@@ -82,7 +82,7 @@ export function AvailabilityBadge({
         {label}
       </span>
       {/* No opacity utilities on text here. Dimming an already-tuned accent
-          pushed "Updated N days ago" to 4.48:1 in dark mode — axe caught it.
+          pushed "Updated N days ago" to 4.48:1 in dark mode, axe caught it.
           Hierarchy comes from size and weight instead. */}
       {note ? <span className="text-[0.9375rem]">{note}</span> : null}
       {updated ? (

@@ -1,5 +1,5 @@
 -- ============================================================================
--- Columbia Care — schema
+-- Columbia Care, schema
 --
 -- Fourteen tables. Public read is granted ONLY where published = true; every
 -- write requires an authenticated admin. Because RLS runs inside the database,
@@ -57,10 +57,10 @@ begin
   return new;
 end $$;
 
--- is_admin() is defined below, after profiles exists — see the note there.
+-- is_admin() is defined below, after profiles exists, see the note there.
 
 -- ---------------------------------------------------------------------------
--- profiles — admin identity
+-- profiles, admin identity
 -- ---------------------------------------------------------------------------
 
 create table if not exists profiles (
@@ -83,7 +83,7 @@ returns boolean language sql stable security definer set search_path = public as
 $$;
 
 -- ---------------------------------------------------------------------------
--- site_settings — the NAP singleton
+-- site_settings, the NAP singleton
 --
 -- Nullable on purpose. A null renders nothing on the site; it never renders a
 -- placeholder. phone/licence stay null until the client confirms them.
@@ -114,7 +114,7 @@ create table if not exists site_settings (
 );
 
 -- ---------------------------------------------------------------------------
--- availability — the highest-converting element on the site
+-- availability, the highest-converting element on the site
 -- ---------------------------------------------------------------------------
 
 create table if not exists availability (
@@ -126,7 +126,7 @@ create table if not exists availability (
 );
 
 -- ---------------------------------------------------------------------------
--- announcements — site-wide banner
+-- announcements, site-wide banner
 -- ---------------------------------------------------------------------------
 
 create table if not exists announcements (
@@ -141,7 +141,7 @@ create table if not exists announcements (
 );
 
 -- ---------------------------------------------------------------------------
--- media — one library, alt text REQUIRED at the database layer
+-- media, one library, alt text REQUIRED at the database layer
 -- ---------------------------------------------------------------------------
 
 create table if not exists media (
@@ -216,7 +216,7 @@ create table if not exists services (
 );
 
 -- ---------------------------------------------------------------------------
--- care_types — the three brochure chips
+-- care_types, the three brochure chips
 -- ---------------------------------------------------------------------------
 
 create table if not exists care_types (
@@ -230,7 +230,7 @@ create table if not exists care_types (
 );
 
 -- ---------------------------------------------------------------------------
--- schedule_items — the 13 day-timeline entries
+-- schedule_items, the 13 day-timeline entries
 -- ---------------------------------------------------------------------------
 
 create table if not exists schedule_items (
@@ -248,7 +248,7 @@ create table if not exists schedule_items (
 );
 
 -- ---------------------------------------------------------------------------
--- every_day — the "Every Day at Columbia Care" list
+-- every_day, the "Every Day at Columbia Care" list
 -- ---------------------------------------------------------------------------
 
 create table if not exists every_day (
@@ -260,7 +260,7 @@ create table if not exists every_day (
 );
 
 -- ---------------------------------------------------------------------------
--- why_families — the four brochure bullets
+-- why_families, the four brochure bullets
 -- ---------------------------------------------------------------------------
 
 create table if not exists why_families (
@@ -271,7 +271,7 @@ create table if not exists why_families (
 );
 
 -- ---------------------------------------------------------------------------
--- testimonials — consent required before publishing
+-- testimonials, consent required before publishing
 -- ---------------------------------------------------------------------------
 
 create table if not exists testimonials (
@@ -318,7 +318,7 @@ create table if not exists team (
 );
 
 -- ---------------------------------------------------------------------------
--- inquiries — every lead, one pipeline. NEVER publicly readable.
+-- inquiries, every lead, one pipeline. NEVER publicly readable.
 -- ---------------------------------------------------------------------------
 
 create table if not exists inquiries (
@@ -389,7 +389,7 @@ end $$;
 -- Row-level security
 --
 -- Deny by default. Public read is granted ONLY to published rows. Inquiries are
--- insert-only for the public and readable only by admins — families' phone
+-- insert-only for the public and readable only by admins, families' phone
 -- numbers and care details never leave the admin console.
 -- ---------------------------------------------------------------------------
 

@@ -1,5 +1,5 @@
 -- ============================================================================
--- Columbia Care — seed data
+-- Columbia Care, seed data
 --
 -- GENERATED FILE. Do not edit by hand.
 --   source: content/source-of-truth.json
@@ -7,7 +7,7 @@
 --
 -- Only entries whose provenance is ARTWORK or ARTWORK_CONFIRMED appear here.
 -- Anything still ASK_CLIENT is seeded as NULL or omitted entirely, so the site
--- renders nothing for it — see the rule in CLAUDE.md.
+-- renders nothing for it, see the rule in CLAUDE.md.
 -- ============================================================================
 
 begin;
@@ -19,7 +19,7 @@ insert into site_settings (
   latitude, longitude, license_number, licensed_capacity, hours, location_line, service_area
 ) values (
   'singleton',
-  null,   -- ASK_CLIENT q1 — no number published yet
+  null,   -- ASK_CLIENT q1, no number published yet
   null,
   null,
   '425-212-9108',
@@ -54,7 +54,7 @@ on conflict (slug) do update set
   icon = excluded.icon, position = excluded.position, published = excluded.published;
 
 -- services: the seven verbatim services plus the long-term-care chip.
--- `summary` is NULL — the client has not written descriptions (see q4).
+-- `summary` is NULL, the client has not written descriptions (see q4).
 insert into services (slug, title, summary, icon, position, has_detail_page, related_schedule, published) values
   ('long-term-care', 'Long term care', null, 'house', 0, true, array[1, 3, 12, 13]::integer[], true),
   ('24-hour-care', '24-hour compassionate care and supervision', null, 'shield', 1, false, array[1, 12, 13]::integer[], true),

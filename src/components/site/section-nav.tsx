@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { scrollToSection } from "@/lib/anchor-nav";
 import { headerNavSections, sections } from "@/lib/sections";
 import { cn } from "@/lib/utils";
 
@@ -12,8 +13,7 @@ import { cn } from "@/lib/utils";
  *   - Clicking a link MOVES FOCUS to the section, not just the scroll position.
  *     Without that, a keyboard user's next Tab continues from the header and
  *     they never actually reach the content they asked for.
- *   - The active link is marked with aria-current="location" (not "page" —
- *     there is only one page). Screen readers announce it; sighted users get an
+ *   - The active link is marked with aria-current="location" (not "page", *     there is only one page). Screen readers announce it; sighted users get an
  *     underline as well as colour.
  *   - Smooth scrolling is a CSS concern, and globals.css disables it under
  *     prefers-reduced-motion and the toolbar's Reduced setting.
@@ -64,22 +64,12 @@ export function SectionNav({
   }, []);
 
   function handleClick(event: React.MouseEvent<HTMLAnchorElement>, id: string) {
-    const target = document.getElementById(id);
-    if (!target) return; // Let the browser handle it.
+    if (!document.getElementById(id)) return;
 
     event.preventDefault();
     clickedAt.current = Date.now();
     setActive(id);
-
-    target.scrollIntoView({ block: "start" });
-
-    // Move focus so keyboard and screen reader users land in the section.
-    // tabIndex -1 makes it programmatically focusable without adding a tab stop.
-    target.focus({ preventScroll: true });
-
-    // Keep the URL shareable without a second scroll jump.
-    history.replaceState(null, "", `#${id}`);
-
+    scrollToSection(id);
     onNavigate?.();
   }
 

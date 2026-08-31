@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import Link from "next/link";
+import { AnchorLink } from "@/components/site/anchor-link";
 
 export default function Error({
   error,
@@ -32,12 +32,12 @@ export default function Error({
         >
           Try again
         </button>
-        <Link
-          href="/contact"
+        <AnchorLink
+          sectionId="contact"
           className="border-rule hover:border-sage hover:text-sage-deep inline-flex min-h-12 items-center rounded border px-6 font-semibold"
         >
           Contact us
-        </Link>
+        </AnchorLink>
       </div>
 
       {error.digest ? (

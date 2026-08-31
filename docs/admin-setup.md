@@ -5,7 +5,7 @@ below `/admin/login` requires a signed-in admin.
 
 ## Create the first admin account
 
-There is no public sign-up — deliberately. An account is created by you, then
+There is no public sign-up, deliberately. An account is created by you, then
 granted admin access by adding a row to `profiles`.
 
 **1. Create the user** in the Supabase dashboard:
@@ -26,7 +26,7 @@ on conflict (id) do update set role = excluded.role;
 
 Having a Supabase account is _not_ the same as being an admin. Someone who signs
 up through the auth API but has no `profiles` row is bounced back to the login
-screen with an explanation — that separation is intentional.
+screen with an explanation, that separation is intentional.
 
 ## Roles
 
@@ -55,7 +55,7 @@ need one, the answer is almost always a better policy or a security-definer
 function.
 
 > The login page sits **outside** the `(console)` route group. If it were
-> inside, the auth layout would redirect the login page to itself — an infinite
+> inside, the auth layout would redirect the login page to itself, an infinite
 > loop. Do not move it.
 
 ## Screens
@@ -68,7 +68,7 @@ function.
 | Photos              | Media library, show/hide, reorder                                       |
 | Services            | The eight services from the brochure                                    |
 | Daily schedule      | The thirteen timeline entries                                           |
-| Testimonials        | Quotes — blocked from publishing without consent                        |
+| Testimonials        | Quotes, blocked from publishing without consent                         |
 | Questions & answers | FAQ; the public page appears once one exists                            |
 | Team                | Staff, once names and consent exist                                     |
 | Pages               | Headings and search descriptions, with a Google-result preview          |
@@ -85,7 +85,7 @@ plain language, but they hold even if someone writes to the API directly:
 
 ## Publishing
 
-Saving revalidates only the routes that content actually appears on — a photo
+Saving revalidates only the routes that content actually appears on, a photo
 change does not rebuild the whole site. The map is `AFFECTED` in
 `src/app/admin/actions.ts`; add to it when a new content type appears on a new
 page.
@@ -100,7 +100,7 @@ they will.
 
 ## Still to come (Phase 6)
 
-Photo **uploading** is not wired yet — the Photos screen lists and manages what
+Photo **uploading** is not wired yet. The Photos screen lists and manages what
 is in the database, but adding files arrives with the tour form, Resend
 notifications and Turnstile. Until then the site shows the clearly-marked
 placeholder photographs in `public/placeholder/`.

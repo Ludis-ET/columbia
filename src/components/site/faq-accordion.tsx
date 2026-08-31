@@ -13,7 +13,7 @@ export interface FaqItem {
 /**
  * FAQ list.
  *
- * Renders nothing when empty — every answer has to come from the client, and a
+ * Renders nothing when empty, every answer has to come from the client, and a
  * care home's FAQ is exactly the wrong place to guess. The structure and the
  * FAQPage structured data are ready for Phase 8.
  */

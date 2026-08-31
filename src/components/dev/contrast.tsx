@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
  * contrast ratios in the browser, so the numbers reflect whatever theme is
  * actually applied rather than a hardcoded table that can drift from the tokens.
  *
- * Development tooling — not shipped on any public route.
+ * Development tooling, not shipped on any public route.
  */
 
 function parseColor(value: string): [number, number, number] | null {
@@ -148,7 +148,7 @@ export function ContrastTable({ pairs }: { pairs: ContrastPair[] }) {
                   </span>
                 </td>
                 <td className="px-3 py-2 text-right font-mono tabular-nums">
-                  {value === null ? "—" : `${value.toFixed(2)}:1`}
+                  {value === null ? "-" : `${value.toFixed(2)}:1`}
                 </td>
                 <td className="text-stone px-3 py-2 text-right font-mono tabular-nums">
                   {pair.threshold}:1

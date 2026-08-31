@@ -9,7 +9,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  * THERE IS NO SERVICE-ROLE CLIENT ANYWHERE IN THIS CODEBASE, ON PURPOSE.
  *
  * Admin writes run as the logged-in user, so the RLS policies written in
- * migration 0001 are what actually authorise them — `is_admin()` checks
+ * migration 0001 are what actually authorise them, `is_admin()` checks
  * auth.uid() against `profiles`. That means:
  *
  *   - A bug in admin code cannot escalate past what that user may do.
@@ -60,7 +60,7 @@ export interface AdminProfile {
  *
  * Reads `profiles` rather than trusting the session alone: having a Supabase
  * account is not the same as being an admin of this site. Someone could sign up
- * through the auth API and still have no profile row — and so no access.
+ * through the auth API and still have no profile row, and so no access.
  */
 export async function getAdminProfile(): Promise<AdminProfile | null> {
   const supabase = await createClient();
@@ -87,7 +87,7 @@ export async function getAdminProfile(): Promise<AdminProfile | null> {
   };
 }
 
-/** Writes an entry to the audit log. Never throws — logging must not block a save. */
+/** Writes an entry to the audit log. Never throws, logging must not block a save. */
 export async function recordAudit(
   action: string,
   entity: string,

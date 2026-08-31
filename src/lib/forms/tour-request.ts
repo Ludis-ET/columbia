@@ -8,7 +8,7 @@ import { z } from "zod";
  * matters, and they cannot drift because they are literally the same object.
  *
  * Deliberately forgiving. The people filling this in are often anxious, often
- * on a phone, often at night. Every rule here has to earn its place — a form
+ * on a phone, often at night. Every rule here has to earn its place, a form
  * that rejects a valid phone number because of a bracket has cost the home a
  * resident.
  */
@@ -77,7 +77,7 @@ export const tourRequestSchema = z
     /** Cloudflare Turnstile token. Absent when Turnstile is not configured. */
     turnstileToken: z.string().optional(),
   })
-  // A lead we cannot reply to is not a lead — this mirrors the CHECK constraint
+  // A lead we cannot reply to is not a lead, this mirrors the CHECK constraint
   // on the inquiries table, so the database and the form agree.
   .refine((data) => data.email !== "" || data.phone !== "", {
     message: "Please leave either a phone number or an email address so we can reply.",

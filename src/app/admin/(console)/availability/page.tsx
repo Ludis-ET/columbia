@@ -23,7 +23,7 @@ export default async function AvailabilityPage() {
     <>
       <PageHeader
         title="Availability"
-        lead="Whether you have room. This is the single most useful thing on the website for families and placement agents — and almost no adult family home publishes it."
+        lead="Whether you have room. This is the single most useful thing on the website for families and placement agents, and almost no adult family home publishes it."
       />
       <AvailabilityForm
         status={row?.status ?? "unset"}

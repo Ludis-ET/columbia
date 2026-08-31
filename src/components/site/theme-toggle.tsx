@@ -18,7 +18,7 @@ const OPTIONS: { value: Theme; label: string; Icon: typeof Sun }[] = [
  *
  * "System" is the default and stamps nothing on <html>, so the page follows
  * prefers-color-scheme. An explicit choice stamps data-theme, which beats the
- * media query in both directions — see globals.css.
+ * media query in both directions, see globals.css.
  */
 export function ThemeToggle({ className }: { className?: string }) {
   const [theme, setTheme] = useState<Theme>("system");

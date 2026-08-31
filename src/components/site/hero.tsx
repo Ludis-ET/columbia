@@ -1,7 +1,7 @@
 import Image from "next/image";
-import Link from "next/link";
 import type { ReactNode } from "react";
 import { Phone } from "lucide-react";
+import { AnchorLink } from "@/components/site/anchor-link";
 import { buttonVariants } from "@/components/ui/button";
 import { Wave } from "@/components/brand/wave";
 import { cn } from "@/lib/utils";
@@ -19,7 +19,7 @@ export function Hero({
   lead,
   image,
   badge,
-  primaryCta = { href: "/contact", label: "Book a house tour" },
+  primaryCta = { sectionId: "contact", label: "Book a house tour" },
   phone,
   phoneHref,
   size = "page",
@@ -28,7 +28,7 @@ export function Hero({
   lead?: string | null;
   image?: { src: string; alt: string } | null;
   badge?: ReactNode;
-  primaryCta?: { href: string; label: string };
+  primaryCta?: { sectionId: string; label: string };
   phone?: string | null;
   phoneHref?: string | null;
   size?: "page" | "home";
@@ -79,18 +79,18 @@ export function Hero({
 
         {/* Links are real anchors styled with buttonVariants rather than
             <Button render={<a/>}>. Same appearance, but the element carries its
-            own href and children — which keeps it navigable (and lintable) as a
+            own href and children, which keeps it navigable (and lintable) as a
             link rather than a button wearing one. */}
         <div className="mt-9 flex flex-wrap justify-center gap-3">
-          <Link
-            href={primaryCta.href}
+          <AnchorLink
+            sectionId={primaryCta.sectionId}
             className={cn(
               buttonVariants({ size: "lg" }),
               hasImage && "bg-paper text-ink hover:bg-sage hover:text-paper",
             )}
           >
             {primaryCta.label}
-          </Link>
+          </AnchorLink>
 
           {phone && phoneHref ? (
             <a

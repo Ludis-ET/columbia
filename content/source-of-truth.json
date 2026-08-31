@@ -17,7 +17,7 @@
   },
   "meta": {
     "business": "Columbia Care Adult Family Home",
-    "revision": "Phase 0 — initial extraction",
+    "revision": "Phase 0, initial extraction",
     "extractedFrom": "client-supplied artwork only",
     "lastUpdated": "2026-08-30"
   },
@@ -30,13 +30,13 @@
     },
     {
       "id": "A2",
-      "name": "Tri-fold brochure — panel 1",
+      "name": "Tri-fold brochure, panel 1",
       "type": "brochure panel, cyan/navy treatment",
       "contains": "contact block, meals paragraph, care-type chips, tour CTA, 3 photographs"
     },
     {
       "id": "A3",
-      "name": "Tri-fold brochure — panel 2",
+      "name": "Tri-fold brochure, panel 2",
       "type": "brochure panel, cyan/navy treatment",
       "contains": "about paragraph, services list, why-families list, 3 photographs"
     }
@@ -159,7 +159,7 @@
       "value": "24 hours, every day",
       "provenance": "ARTWORK",
       "source": "A1",
-      "note": "Justified by the 'Overnight — 24-Hour Care' schedule entry and the '24-Hour Care & Supervision' line. Maps to opens 00:00 / closes 23:59 in schema."
+      "note": "Justified by the 'Overnight, 24-Hour Care' schedule entry and the '24-Hour Care & Supervision' line. Maps to opens 00:00 / closes 23:59 in schema."
     },
     "licenseNumber": {
       "value": null,
@@ -177,7 +177,7 @@
   "careTypes": {
     "provenance": "ARTWORK",
     "source": "A2",
-    "note": "The brochure chips. These three plus the seven services are the complete published offering. `slug` and `shortTitle` are routing/presentation only — no new claims.",
+    "note": "The brochure chips. These three plus the seven services are the complete published offering. `slug` and `shortTitle` are routing/presentation only, no new claims.",
     "value": [
       {
         "slug": "long-term-care",
@@ -202,7 +202,7 @@
   "services": {
     "provenance": "ARTWORK",
     "source": "A3",
-    "note": "COMPLETE LIST. Respite, hospice-supportive, diabetic, mobility/transfer and incontinence care are common in this category but appear NOWHERE in the artwork. Do not add them. `relatedSchedule` is an editorial cross-reference to schedule entries the client already wrote — it introduces no new claims. `description` is null until the client writes one.",
+    "note": "COMPLETE LIST. Respite, hospice-supportive, diabetic, mobility/transfer and incontinence care are common in this category but appear NOWHERE in the artwork. Do not add them. `relatedSchedule` is an editorial cross-reference to schedule entries the client already wrote, it introduces no new claims. `description` is null until the client writes one.",
     "value": [
       {
         "slug": "long-term-care",
@@ -282,7 +282,7 @@
       "Personalized care for every resident",
       "Conveniently located near Broadway Avenue, Evergreen Way, and Interstate 5"
     ],
-    "note": "The artwork renders the last item as 'Evergreen way' with a lowercase w. Corrected to 'Evergreen Way' here — this is a typo fix, not a content change."
+    "note": "The artwork renders the last item as 'Evergreen way' with a lowercase w. Corrected to 'Evergreen Way' here, this is a typo fix, not a content change."
   },
   "everyDay": {
     "provenance": "ARTWORK",
@@ -458,7 +458,7 @@
       "value": [
         {
           "id": "monogram",
-          "description": "Navy 'C' enclosing an illustrated cottage — shingled roof, stone base, trees, red-orange flowers",
+          "description": "Navy 'C' enclosing an illustrated cottage, shingled roof, stone base, trees, red-orange flowers",
           "usedFor": "header logo, favicon, social icon",
           "haveVector": false
         },
@@ -507,7 +507,7 @@
     "photos": {
       "provenance": "ARTWORK",
       "source": "A2, A3",
-      "note": "Six real photographs of the actual home. Request FULL-RESOLUTION ORIGINALS — the brochure versions are compressed, oddly cropped and partly overlaid with graphics.",
+      "note": "Six real photographs of the actual home. Request FULL-RESOLUTION ORIGINALS, the brochure versions are compressed, oddly cropped and partly overlaid with graphics.",
       "value": [
         {
           "id": "living-room-kitchen",
@@ -553,7 +553,7 @@
           "id": "map",
           "source": "A2",
           "shows": "Street map with the home marked",
-          "usedFor": "reference only — replace with a live embed",
+          "usedFor": "reference only, replace with a live embed",
           "containsPeople": false,
           "haveOriginal": false
         }
@@ -586,7 +586,7 @@
     "value": [],
     "provenance": "ASK_CLIENT",
     "question": "Provider/owner name, and do they want a photo and short bio published? Caregiver first names?",
-    "note": "The artwork contains no person at all — no name, no photo, no role."
+    "note": "The artwork contains no person at all, no name, no photo, no role."
   },
   "availability": {
     "value": null,
@@ -615,7 +615,7 @@
       "value": null,
       "provenance": "ASK_CLIENT",
       "question": "Please send the current DSHS Disclosure of Services (form 10-508).",
-      "note": "Highest-leverage single request — answers licence, scope of care and services in the client's own regulator-filed words, and becomes a download on the Admissions page."
+      "note": "Highest-leverage single request, answers licence, scope of care and services in the client's own regulator-filed words, and becomes a download on the Admissions page."
     }
   },
   "languages": {
@@ -670,7 +670,7 @@
     {
       "id": 8,
       "priority": "medium",
-      "question": "Admission criteria — who can and cannot be accepted.",
+      "question": "Admission criteria, who can and cannot be accepted.",
       "blocks": "FAQ, Admissions, care-fit quiz"
     },
     {
@@ -714,6 +714,6 @@
     "value": [],
     "provenance": "ASK_CLIENT",
     "question": "Which questions do families ask you most, and how would you answer them?",
-    "note": "Empty. /faq returns 404 while this is empty. Never write a sample answer — a care home's FAQ is the worst place to guess. Seed the QUESTIONS from openQuestions: the gaps families ask about are the same gaps we have."
+    "note": "Empty. /faq returns 404 while this is empty. Never write a sample answer, a care home's FAQ is the worst place to guess. Seed the QUESTIONS from openQuestions: the gaps families ask about are the same gaps we have."
   }
 }

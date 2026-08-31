@@ -7,7 +7,7 @@ import { INTERNAL_ROUTES, PUBLIC_ROUTES } from "./routes";
  *
  * CLAUDE.md sets WCAG 2.2 AA as a CI gate rather than an aspiration, so this
  * fails the build on any violation. Body text additionally targets 7:1 (AAA),
- * which is verified visually on /specimen — axe checks the AA floor here.
+ * which is verified visually on /specimen, axe checks the AA floor here.
  */
 
 const ROUTES = [...PUBLIC_ROUTES, ...INTERNAL_ROUTES, "/nope-404"];

@@ -6,12 +6,12 @@
  *   pnpm db:verify
  *
  * Uses only the publishable key, so it exercises exactly what the public site
- * can see — which means it also proves row-level security is doing its job.
+ * can see, which means it also proves row-level security is doing its job.
  */
 
 import { readFile } from "node:fs/promises";
 
-// Minimal .env.local reader — avoids a dependency just for this.
+// Minimal .env.local reader, avoids a dependency just for this.
 async function loadEnv() {
   try {
     const text = await readFile(".env.local", "utf8");
@@ -34,7 +34,7 @@ if (!URL_ || !KEY) {
   process.exit(1);
 }
 
-/** [table, expected row count, note] — null means "any count is fine". */
+/** [table, expected row count, note], null means "any count is fine". */
 const EXPECT = [
   ["site_settings", 1, "singleton"],
   ["availability", 1, "singleton, status unset"],
@@ -44,10 +44,10 @@ const EXPECT = [
   ["every_day", 7, ""],
   ["why_families", 4, ""],
   ["pages", 7, ""],
-  ["media", 0, "deliberately empty — no photographs yet"],
-  ["testimonials", 0, "deliberately empty — no quotes yet"],
-  ["faqs", 0, "deliberately empty — no answers yet"],
-  ["team", 0, "deliberately empty — no names or consent yet"],
+  ["media", 0, "deliberately empty, no photographs yet"],
+  ["testimonials", 0, "deliberately empty, no quotes yet"],
+  ["faqs", 0, "deliberately empty, no answers yet"],
+  ["team", 0, "deliberately empty, no names or consent yet"],
 ];
 
 async function count(table) {
@@ -119,7 +119,7 @@ const probeBody = await probe.text();
 
 console.log();
 if (probe.status === 201) {
-  console.log("  ✗ inquiries are PUBLICLY READABLE — RLS IS WRONG.");
+  console.log("  ✗ inquiries are PUBLICLY READABLE, RLS IS WRONG.");
   console.log("    A probe row was written and returned. Delete it and re-check the policies.");
   failures += 1;
 } else if (probeBody.includes("42501")) {
@@ -128,7 +128,7 @@ if (probe.status === 201) {
   console.log(`  ? inquiries check inconclusive: HTTP ${probe.status} ${probeBody.slice(0, 120)}`);
 }
 
-// The public site must still be able to SUBMIT a lead — that is the whole point
+// The public site must still be able to SUBMIT a lead, that is the whole point
 // of the contact form. Verified without writing anything by checking that the
 // failure above was a SELECT failure (42501 on RETURNING), not an INSERT refusal.
 console.log("  ✓ anonymous submissions are accepted (insert policy present)");
@@ -136,7 +136,7 @@ console.log("  ✓ anonymous submissions are accepted (insert policy present)");
 console.log();
 
 if (missing > 0) {
-  console.log(`${missing} table(s) missing — the schema has not been applied yet.`);
+  console.log(`${missing} table(s) missing, the schema has not been applied yet.`);
   console.log("Paste supabase/apply.sql into the Supabase SQL Editor:");
   console.log("  https://supabase.com/dashboard/project/wmxvickqaxkuaatftput/sql/new");
   process.exit(1);

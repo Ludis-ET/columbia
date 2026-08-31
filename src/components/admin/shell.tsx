@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 /**
  * Admin chrome: ink-navy sidebar, same brand, denser than the public site.
  *
- * The sidebar is navy in every theme — it is a working tool, and a fixed dark
+ * The sidebar is navy in every theme, it is a working tool, and a fixed dark
  * rail keeps the content area unambiguous. Everything inside the content area
  * still themes normally.
  */
@@ -71,7 +71,7 @@ export function AdminShell({
 
   return (
     <div className="bg-paper-sunk flex min-h-dvh flex-col lg:flex-row">
-      {/* Mobile bar — the owner really does update availability from a phone. */}
+      {/* Mobile bar, the owner really does update availability from a phone. */}
       <div className="sticky top-0 z-40 flex items-center gap-3 bg-[#10254A] px-4 py-2 lg:hidden">
         <Monogram className="size-8 shrink-0" decorative />
         <span className="font-display font-semibold text-white">Columbia Care</span>

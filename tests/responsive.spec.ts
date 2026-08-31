@@ -5,7 +5,7 @@ import { PUBLIC_ROUTES } from "./routes";
  * Responsive pass.
  *
  * CLAUDE.md requires the layout to survive 320px width and 200% zoom with no
- * horizontal scroll. 320px is the real floor — an older phone with the system
+ * horizontal scroll. 320px is the real floor, an older phone with the system
  * text size turned up.
  */
 

@@ -6,7 +6,7 @@ import { expect, test } from "@playwright/test";
  *
  * These tests are deliberately NON-MUTATING. A genuine submission writes a row
  * to the client's live enquiry inbox, so the only success path exercised here
- * is the honeypot one — which returns the same confirmation to a bot but never
+ * is the honeypot one, which returns the same confirmation to a bot but never
  * inserts anything. Everything else is validation, which also never inserts.
  *
  * Testing the real insert belongs in a seeded staging project, not against the
@@ -71,7 +71,7 @@ test("the honeypot swallows bots without saving anything", async ({ page }) => {
   await page.getByLabel(/phone number/i).fill("5555555555");
   await page.getByRole("button", { name: /send this to columbia care/i }).click();
 
-  // Answers as if it worked — telling a bot it was caught only helps it adapt.
+  // Answers as if it worked, telling a bot it was caught only helps it adapt.
   await expect(page.getByRole("status")).toContainText(/thank you/i, { timeout: 15000 });
 });
 

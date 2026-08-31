@@ -28,7 +28,7 @@ test("the page has exactly one h1 and an ordered heading outline", async ({ page
 
   await expect(page.locator("h1")).toHaveCount(1);
 
-  // No level may be skipped — h1 to h3 with no h2 between breaks the outline.
+  // No level may be skipped, h1 to h3 with no h2 between breaks the outline.
   const levels = await page.evaluate(() =>
     [...document.querySelectorAll("h1,h2,h3,h4")].map((h) => Number(h.tagName[1])),
   );
@@ -50,12 +50,22 @@ test("clicking a nav link moves focus into the section, not just the scroll", as
   expect(focusedId, "focus should land on the section").toBe("day");
 });
 
+test("the hero CTA scrolls to the contact section", async ({ page }) => {
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await page.setViewportSize({ width: 1440, height: 900 });
+
+  await page.locator("main").getByRole("link", { name: "Book a house tour" }).click();
+
+  const focusedId = await page.evaluate(() => document.activeElement?.id);
+  expect(focusedId, "focus should land on the contact section").toBe("contact");
+});
+
 test("the active section is marked for assistive technology", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/", { waitUntil: "domcontentloaded" });
 
   await page.getByRole("link", { name: "Meals", exact: true }).first().click();
-  // aria-current="location", not "page" — there is only one page.
+  // aria-current="location", not "page", there is only one page.
   await expect(page.locator('a[aria-current="location"]')).toHaveText("Meals");
 });
 

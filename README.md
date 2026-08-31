@@ -1,4 +1,4 @@
-# Columbia Care AFH — website
+# Columbia Care AFH, website
 
 Website for Columbia Care Adult Family Home, Everett, WA.
 
@@ -6,20 +6,20 @@ Next.js 16 (App Router) · React 19 · TypeScript · Tailwind v4 · pnpm.
 
 ## Start here
 
-| File                                                         | What it is                                                    |
-| ------------------------------------------------------------ | ------------------------------------------------------------- |
-| [CLAUDE.md](CLAUDE.md)                                       | Design system, voice, a11y floor — and the do-not-invent rule |
-| [content/source-of-truth.json](content/source-of-truth.json) | The only approved source of published copy, with provenance   |
-| [docs/client-questions.md](docs/client-questions.md)         | What we still need from the client                            |
-| [docs/toolchain-setup.md](docs/toolchain-setup.md)           | MCP servers and Claude Code plugins for this project          |
-| [docs/database.md](docs/database.md)                         | Schema, RLS, seeding, and the file fallback                   |
-| [docs/admin-setup.md](docs/admin-setup.md)                   | The admin console: creating the first account, roles, rules   |
-| [docs/forms-and-seo.md](docs/forms-and-seo.md)               | Tour form, email, structured data — and two RLS traps         |
+| File                                                         | What it is                                                   |
+| ------------------------------------------------------------ | ------------------------------------------------------------ |
+| [CLAUDE.md](CLAUDE.md)                                       | Design system, voice, a11y floor, and the do-not-invent rule |
+| [content/source-of-truth.json](content/source-of-truth.json) | The only approved source of published copy, with provenance  |
+| [docs/client-questions.md](docs/client-questions.md)         | What we still need from the client                           |
+| [docs/toolchain-setup.md](docs/toolchain-setup.md)           | MCP servers and Claude Code plugins for this project         |
+| [docs/database.md](docs/database.md)                         | Schema, RLS, seeding, and the file fallback                  |
+| [docs/admin-setup.md](docs/admin-setup.md)                   | The admin console: creating the first account, roles, rules  |
+| [docs/forms-and-seo.md](docs/forms-and-seo.md)               | Tour form, email, structured data, and two RLS traps         |
 
 **Before writing any copy, read the rule at the top of [CLAUDE.md](CLAUDE.md).** This is a
 licensed care home; nothing gets published that the client hasn't confirmed. Content reaches
 components only through `published()` in [src/lib/content.ts](src/lib/content.ts), which
-returns `null` for anything unconfirmed — so a component cannot render an invented fact.
+returns `null` for anything unconfirmed, so a component cannot render an invented fact.
 
 ## Setup
 
@@ -30,10 +30,10 @@ pnpm dev
 
 Then open [localhost:3000](http://localhost:3000). Two internal pages document the system:
 
-| Route                                               | What it shows                                                               |
-| --------------------------------------------------- | --------------------------------------------------------------------------- |
-| [/specimen](http://localhost:3000/specimen)         | Tokens, type scale, brand marks, icons — with contrast ratios computed live |
-| [/kitchen-sink](http://localhost:3000/kitchen-sink) | Every component, including its empty state                                  |
+| Route                                               | What it shows                                                              |
+| --------------------------------------------------- | -------------------------------------------------------------------------- |
+| [/specimen](http://localhost:3000/specimen)         | Tokens, type scale, brand marks, icons, with contrast ratios computed live |
+| [/kitchen-sink](http://localhost:3000/kitchen-sink) | Every component, including its empty state                                 |
 
 Both are `noindex` and excluded from the sitemap.
 
@@ -58,30 +58,30 @@ Both are `noindex` and excluded from the sitemap.
 ## Layout
 
 ```
-content/          source-of-truth.json — all approved copy, with provenance
+content/          source-of-truth.json, all approved copy, with provenance
 supabase/         migrations, generated seed, one-paste apply.sql
 docs/             client questions, toolchain setup
 scripts/          check-placeholders.mjs (hard gate at launch)
 tests/            axe, responsive and content-integrity suites
-public/placeholder/  scaffolding imagery — replaced in Phase 8
+public/placeholder/  scaffolding imagery, replaced in Phase 8
 src/app/          14 public routes + 2 internal + 2 gated (see below)
 src/components/
   brand/          hand-drawn marks: monogram, heart-shield, laurel, wave
   site/           header, footer, hero, availability, gallery, timeline, CTA…
   ui/             vendored shadcn primitives, restyled to the brand
-  motion/         Reveal — the one scroll animation, reduced-motion aware
+  motion/         Reveal, the one scroll animation, reduced-motion aware
   dev/            contrast auditing for /specimen (never shipped publicly)
   icons.tsx       the client's icon assignments, mapped to lucide glyphs
 src/lib/
   db/             Supabase client, row types, queries with file fallback
-  content.ts      the provenance gate — published() returns null if unconfirmed
+  content.ts      the provenance gate, published() returns null if unconfirmed
   ...             fonts, nav, preferences, images, utils
 ```
 
 ## Routes
 
-**The marketing site is a single page.** Everything a family reads — about, care, the day
-timeline, the gallery, meals, location and the tour form — lives at `/` as anchored sections.
+**The marketing site is a single page.** Everything a family reads, about, care, the day
+timeline, the gallery, meals, location and the tour form, lives at `/` as anchored sections.
 Section ids, nav labels and the redirects from the old routes all come from one place:
 [src/lib/sections.ts](src/lib/sections.ts).
 
@@ -90,13 +90,13 @@ Section ids, nav labels and the redirects from the old routes all come from one 
 The old multi-page URLs (`/about`, `/services`, `/services/:slug`, `/a-day-in-our-home`,
 `/our-home`, `/meals`, `/contact`) permanently redirect to their section, so nothing 404s.
 
-**Still separate pages** — reference material rather than narrative:
+**Still separate pages** reference material rather than narrative:
 
 `/privacy` · `/accessibility` · `/terms`
 
-**Gated** — 404 until their content exists: `/admissions` · `/faq`
+**Gated** 404 until their content exists: `/admissions` · `/faq`
 
-**Admin** — authenticated, noindex: `/admin/*`. **Internal** — noindex: `/specimen` ·
+**Admin** authenticated, noindex: `/admin/*`. **Internal** noindex: `/specimen` ·
 `/kitchen-sink`
 
 ## Git hooks & CI

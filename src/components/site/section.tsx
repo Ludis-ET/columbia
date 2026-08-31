@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * Section shell. Sections are separated by alternating grounds rather than card
- * shadows — see CLAUDE.md.
+ * shadows, see CLAUDE.md.
  */
 export function Section({
   children,
@@ -37,7 +37,7 @@ export function Section({
 /**
  * Section heading with an optional mono eyebrow.
  *
- * `eyebrow` is a label, not a heading — it stays a <p> so the heading outline
+ * `eyebrow` is a label, not a heading, it stays a <p> so the heading outline
  * remains honest for screen readers.
  */
 export function SectionHeading({

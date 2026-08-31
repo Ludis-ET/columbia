@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
  * Restyled from the shadcn default: the scroll container is keyboard-reachable.
  *
  * A bare `overflow-x-auto` div cannot be focused, so on a narrow screen every
- * column past the fold is unreachable without a mouse — axe flags it as
+ * column past the fold is unreachable without a mouse, axe flags it as
  * scrollable-region-focusable. `label` names the region; pass something
  * descriptive on wide admin tables in Phase 5.
  */

@@ -1,14 +1,14 @@
 name: Supabase keep-alive
 
 # Supabase free-tier projects pause after 7 days of inactivity. A paused project
-# means a dead contact form and a dead admin login — the public site survives
+# means a dead contact form and a dead admin login, the public site survives
 # because it falls back to file content (see src/lib/db/queries.ts), but nothing
 # a family submits would reach the owner.
 #
 # This runs a trivial read every three days to keep the project awake.
 #
 # It is the CHEAP mitigation. The proper fix is Supabase Pro at $25/mo, which is
-# what to budget for a paying client — see the build plan, section 19.
+# what to budget for a paying client, see the build plan, section 19.
 
 on:
   schedule:
@@ -37,6 +37,6 @@ jobs:
           cat /tmp/body
 
           if [ "$status" != "200" ]; then
-            echo "::error::Supabase did not respond 200 — the project may be paused or the schema is missing."
+            echo "::error::Supabase did not respond 200, the project may be paused or the schema is missing."
             exit 1
           fi

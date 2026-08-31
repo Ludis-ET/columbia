@@ -39,7 +39,7 @@ const CORE_TOKENS = [
   { name: "ink", token: "--ink", use: "Headings, header, footer, primary buttons" },
   { name: "ink-soft", token: "--ink-soft", use: "Secondary body text" },
   { name: "sage", token: "--sage", use: "Accents, rules, active states" },
-  { name: "sage-deep", token: "--sage-deep", use: "Sage as text — passes 4.5:1" },
+  { name: "sage-deep", token: "--sage-deep", use: "Sage as text, passes 4.5:1" },
   { name: "sage-wash", token: "--sage-wash", use: "Alternating band backgrounds" },
   { name: "paper", token: "--paper", use: "Page ground" },
   { name: "paper-raise", token: "--paper-raise", use: "Cards, raised surfaces" },
@@ -70,7 +70,7 @@ function Section({
     <section className="pt-14">
       <div className="border-rule mb-5 flex items-baseline justify-between gap-4 border-b pb-2">
         <h2 className="label text-sage-deep">
-          {n} — {title}
+          {n} {title}
         </h2>
         {hint ? <span className="label text-stone">{hint}</span> : null}
       </div>
@@ -94,7 +94,7 @@ export default function SpecimenPage() {
         <h1 className="text-hero mb-4">Design specimen</h1>
         <p className="text-ink-soft text-lead max-w-[60ch]">
           Every token, mark and icon in the Columbia Care system, rendered from the live theme.
-          Switch themes with the control in the header — contrast ratios below recompute against
+          Switch themes with the control in the header, contrast ratios below recompute against
           whichever theme is actually applied.
         </p>
       </header>
@@ -117,7 +117,7 @@ export default function SpecimenPage() {
         </div>
       </Section>
 
-      <Section n="02" title="Time-of-day accents" hint="timeline only — never decorative">
+      <Section n="02" title="Time-of-day accents" hint="timeline only, never decorative">
         <div className="border-rule grid grid-cols-2 gap-px border bg-[var(--rule)] lg:grid-cols-4">
           {ACCENTS.map((t) => (
             <div key={t.token} className="bg-paper">
@@ -138,7 +138,7 @@ export default function SpecimenPage() {
           <code className="bg-paper-sunk mx-1 rounded px-1.5 py-0.5 font-mono text-[0.875rem]">
             -on
           </code>
-          variants are the text-safe versions and do shift — verified in section 03.
+          variants are the text-safe versions and do shift, verified in section 03.
         </p>
       </Section>
 
@@ -153,7 +153,7 @@ export default function SpecimenPage() {
       <Section n="04" title="Typography" hint="Fraunces · Source Sans 3 · Parisienne · Plex Mono">
         <div className="border-rule bg-paper-raise divide-rule divide-y border">
           <div className="p-6">
-            <p className="label text-stone mb-3">Display — Fraunces, SOFT 55, 600</p>
+            <p className="label text-stone mb-3">Display, Fraunces, SOFT 55, 600</p>
             <p className="text-hero">A place to feel at home</p>
           </div>
           <div className="p-6">
@@ -163,25 +163,25 @@ export default function SpecimenPage() {
             <p className="text-h3 font-sans font-bold">Medication management</p>
           </div>
           <div className="p-6">
-            <p className="label text-stone mb-3">Script — Parisienne · twice site-wide, maximum</p>
+            <p className="label text-stone mb-3">Script, Parisienne · twice site-wide, maximum</p>
             <p className="font-script text-sage-deep text-4xl">{published(identity.closingLine)}</p>
           </div>
           <div className="p-6">
-            <p className="label text-stone mb-3">Lead — 1.3rem</p>
+            <p className="label text-stone mb-3">Lead, 1.3rem</p>
             <p className="text-lead text-ink-soft max-w-[60ch]">{published(identity.promise)}</p>
           </div>
           <div className="p-6">
-            <p className="label text-stone mb-3">Body — 18px base, 1.65</p>
+            <p className="label text-stone mb-3">Body, 18px base, 1.65</p>
             <p className="max-w-[65ch]">{published(identity.about)}</p>
           </div>
           <div className="p-6">
-            <p className="label text-stone mb-3">Utility — Plex Mono, 0.12em</p>
+            <p className="label text-stone mb-3">Utility, Plex Mono, 0.12em</p>
             <p className="label text-sage-deep">Availability · Updated today</p>
           </div>
         </div>
       </Section>
 
-      <Section n="05" title="Brand marks" hint="hand-drawn — originals requested from client">
+      <Section n="05" title="Brand marks" hint="hand-drawn, originals requested from client">
         <div className="border-rule bg-paper-raise grid gap-px border bg-[var(--rule)] sm:grid-cols-3">
           <div className="bg-paper-raise flex flex-col items-center gap-3 p-8">
             <Monogram className="size-28" decorative />
@@ -203,7 +203,7 @@ export default function SpecimenPage() {
         </div>
 
         <div className="mt-6">
-          <p className="label text-stone mb-2">Wave — header to hero transition</p>
+          <p className="label text-stone mb-2">Wave, header to hero transition</p>
           <Wave className="block h-16 w-full" />
         </div>
       </Section>
@@ -228,7 +228,7 @@ export default function SpecimenPage() {
           ))}
         </div>
 
-        <p className="label text-stone mt-8 mb-3">Services — {serviceItems.length} from artwork</p>
+        <p className="label text-stone mt-8 mb-3">Services, {serviceItems.length} from artwork</p>
         <div className="grid gap-3 sm:grid-cols-2">
           {serviceItems.map((service) => (
             <div
@@ -243,9 +243,7 @@ export default function SpecimenPage() {
           ))}
         </div>
 
-        <p className="label text-stone mt-8 mb-3">
-          Every day — {everyDayItems.length} from artwork
-        </p>
+        <p className="label text-stone mt-8 mb-3">Every day, {everyDayItems.length} from artwork</p>
         <div className="flex flex-wrap gap-2">
           {everyDayItems.map((item) => (
             <span

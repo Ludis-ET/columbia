@@ -39,8 +39,7 @@ jobs:
 
       - name: Build
         # Supabase secrets are optional here. Without them the build falls back
-        # to content/source-of-truth.json and still produces the complete site —
-        # see src/lib/db/queries.ts. That is deliberate, not a workaround.
+        # to content/source-of-truth.json and still produces the complete site, # see src/lib/db/queries.ts. That is deliberate, not a workaround.
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
@@ -68,7 +67,7 @@ jobs:
 
       - name: Lighthouse budgets
         # a11y and SEO must be 100. Performance is a warning until the real
-        # photographs land in Phase 8 — placeholder JPEGs are not representative.
+        # photographs land in Phase 8, placeholder JPEGs are not representative.
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}

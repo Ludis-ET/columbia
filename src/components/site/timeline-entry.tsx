@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
  * One entry in "A Day in Our Home".
  *
  * The 13 entries, their icons and their accent colours all come from the
- * client's infographic — this component just renders what is already assigned
+ * client's infographic, this component just renders what is already assigned
  * in content/source-of-truth.json.
  */
 export function TimelineEntry({

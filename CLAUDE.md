@@ -1,11 +1,11 @@
-# Columbia Care Adult Family Home — website
+# Columbia Care Adult Family Home, website
 
-## THE RULE — read before writing any copy
+## THE RULE, read before writing any copy
 
 **Never invent a fact about this business.**
 
 No capacity, bed count, room type, rate, payment method, service, service area, licence
-number, staff name, language, year founded, or statistic — unless it appears in
+number, staff name, language, year founded, or statistic, unless it appears in
 [content/source-of-truth.json](content/source-of-truth.json) with provenance `ARTWORK` or
 `ARTWORK_CONFIRMED`.
 
@@ -35,7 +35,7 @@ never become copy about Columbia Care.
 Columbia Care Adult Family Home, 2215 Columbia Ave, Everett, WA 98203.
 The site's single job: get a family to book a house tour.
 
-Three audiences on every page — the adult child (researching on a phone, at night), the
+Three audiences on every page, the adult child (researching on a phone, at night), the
 prospective resident (reading over their shoulder), and the referral agent (scanning for
 scope of care and availability).
 
@@ -49,7 +49,7 @@ Sampled from the client's "A Day in Our AFH" infographic. Do not invent new colo
 | ----------- | --------- | ---------------------------------------------- |
 | `ink`       | `#10254A` | Headings, header bar, footer, primary buttons  |
 | `sage`      | `#5E7C3C` | Links, accents, botanical rules, active states |
-| `sage-deep` | `#3F5528` | Sage text on light — passes 4.5:1              |
+| `sage-deep` | `#3F5528` | Sage text on light, passes 4.5:1               |
 | `paper`     | `#F6F5EE` | Page ground. Green-biased, never pure white    |
 | `sage-wash` | `#E7EBDC` | Alternating band backgrounds, quiet cards      |
 | `stone`     | `#6B7266` | Secondary text, captions, metadata             |
@@ -70,10 +70,10 @@ separate semantic set and never borrow these.
 
 ### Typography
 
-- **Display** — Fraunces variable, `SOFT 55`, weight 600. Headings only.
-- **Body** — Source Sans 3, **18px** base, line-height 1.65. Never below 16px.
-- **Script** — Parisienne. At most twice site-wide, never for information.
-- **Utility** — IBM Plex Mono, `.12em` tracking. Labels, badges, admin chrome.
+- **Display** Fraunces variable, `SOFT 55`, weight 600. Headings only.
+- **Body** Source Sans 3, **18px** base, line-height 1.65. Never below 16px.
+- **Script** Parisienne. At most twice site-wide, never for information.
+- **Utility** IBM Plex Mono, `.12em` tracking. Labels, badges, admin chrome.
 - Nothing below weight 400 renders anywhere.
 
 ### Layout & motion
@@ -90,7 +90,7 @@ separate semantic set and never borrow these.
 
 - **The cyan brochure palette.** The tri-fold panels use cyan-on-navy with chevrons and
   circuit motifs. It reads as an IT consultancy and fights the word "home". Retired.
-- Playfair Display — the category default, and Fraunces is the deliberate choice.
+- Playfair Display, the category default, and Fraunces is the deliberate choice.
 - Stock photographs containing people, in production, ever.
 - Carousel heroes, auto-playing media, AI chatbots, cookie-banner trackers.
 
@@ -99,14 +99,14 @@ separate semantic set and never borrow these.
 - **Home**, never _facility_. **Residents**, never _patients_. Match the artwork's vocabulary.
 - Second person, present tense, short sentences. Grade-8 reading level.
 - Gloss "activities of daily living (ADLs)" in plain English on first use, every page.
-- Use the client's own phrase **"book a house tour"** — not "schedule a visit".
+- Use the client's own phrase **"book a house tour"** not "schedule a visit".
 - No superlatives without a confirmed source behind them.
 
-## Accessibility floor — non-negotiable
+## Accessibility floor, non-negotiable
 
 Target WCAG 2.2 AA, adopting AAA where cheap. These are CI gates, not aspirations.
 
-- Contrast ≥ 7:1 body text, ≥ 4.5:1 everything else, both themes — and in high-contrast
+- Contrast ≥ 7:1 body text, ≥ 4.5:1 everything else, both themes, and in high-contrast
   mode, which has its own three-state block. A selector like
   `:root[data-contrast="high"]:not([data-theme="light"])` outside a media query also matches
   the UN-STAMPED default, which once flipped every light-mode reader to a black background.
@@ -115,7 +115,7 @@ Target WCAG 2.2 AA, adopting AAA where cheap. These are CI gates, not aspiration
 - Interactive targets ≥ 48×48px with ≥ 8px spacing.
 - Visible focus ring on every focusable element, 2px, 3:1 against both adjacent colours.
 - Full keyboard operation. No keyboard traps.
-- Meaningful alt text on every image — enforced at the database layer (`alt` is `NOT NULL`).
+- Meaningful alt text on every image, enforced at the database layer (`alt` is `NOT NULL`).
 - Forms: real `<label>`, `autocomplete` tokens, inline errors via `aria-describedby`, live region.
 - Semantic landmarks, one `h1` per page, ordered headings, skip link first in DOM.
 - Phone fields accept any format and normalise server-side.
@@ -136,7 +136,7 @@ Current repo is a bare Vite + React 19 + TS starter. Phase 1 migrates to:
 | Styling    | Tailwind v4 (`@theme`, CSS-first)              |
 | Components | shadcn/ui + Radix                              |
 | Motion     | `motion` (`motion/react`)                      |
-| Data       | Supabase — Postgres + Auth + Storage + RLS     |
+| Data       | Supabase, Postgres + Auth + Storage + RLS      |
 | Forms      | react-hook-form + Zod (same schema both sides) |
 | Email      | Resend + React Email                           |
 | Spam       | Cloudflare Turnstile                           |
@@ -159,12 +159,12 @@ pnpm format         # prettier --write
 - TypeScript strict. No `any`.
 - **Content reaches a component only through `published()`** in `src/lib/content.ts`. It
   returns `null` for anything unconfirmed. Handle null by rendering `null`.
-- **Components own their empty state by rendering `null`** — never a placeholder, never a
+- **Components own their empty state by rendering `null`** never a placeholder, never a
   stub heading. `AvailabilityBadge`, `TestimonialList`, `Gallery`, `FaqAccordion` and
   `MapBlock` all do this; follow the pattern.
 - `src/components/ui/` is vendored shadcn output. It is regenerated by `shadcn add`, so
   keep edits there minimal and comment why. `button.tsx` and `table.tsx` are deliberately
-  modified — read the notes before regenerating them.
+  modified, read the notes before regenerating them.
 - shadcn's semantic tokens (`--color-primary`, `--color-border`, …) are mapped onto brand
   tokens in `globals.css`. That means `shadcn add` produces on-brand components with no
   dark-mode block of their own. Do not reintroduce shadcn's own neutral palette.
@@ -172,10 +172,10 @@ pnpm format         # prettier --write
   `<Button render={<a/>}>`. Keeps them navigable and lintable as links.
 - Any horizontally scrolling container needs `tabIndex={0}`, `role="region"` and an
   `aria-label`, or off-screen content is unreachable by keyboard.
-- No `opacity-*` utilities on text. Dimming an already-tuned token breaks contrast — it
+- No `opacity-*` utilities on text. Dimming an already-tuned token breaks contrast, it
   cost us two axe failures in Phase 2. Use size and weight for hierarchy.
 - Server actions for all mutations; Zod-validate on client and server (Phase 6).
-- Run `/code-review` and `/security-review` before every deploy — the admin panel handles
+- Run `/code-review` and `/security-review` before every deploy, the admin panel handles
   families' personal data.
 
 ## Data
@@ -186,10 +186,9 @@ Content lives in Supabase (project `wmxvickqaxkuaatftput`), seeded from
 - Pages read through `src/lib/db/queries.ts`, never through `supabase` directly.
 - **Every read falls back to the content file** when a query fails or a seeded table comes
   back empty. The public site is static, so a paused or unreachable database cannot take it
-  down — only the admin console and the contact form need Supabase awake.
+  down, only the admin console and the contact form need Supabase awake.
 - **Empty is not always a failure.** Seeded-from-artwork tables (services, care types,
-  schedule, every-day, why-families, settings) falling to zero rows means something broke —
-  fall back. Deliberately-empty tables (testimonials, faqs, team, media) are empty because
+  schedule, every-day, why-families, settings) falling to zero rows means something broke, fall back. Deliberately-empty tables (testimonials, faqs, team, media) are empty because
   the client hasn't supplied that content; `[]` is correct and must NOT fall back.
 - The provenance rule survives into SQL: `published` defaults to `false` everywhere, the seed
   generator only emits ARTWORK / ARTWORK_CONFIRMED entries, and check constraints block
@@ -209,19 +208,19 @@ Lives at `/admin`, documented in [docs/admin-setup.md](docs/admin-setup.md).
 - The login page is **outside** the `(console)` route group. Moving it inside makes the auth
   layout redirect the login page to itself.
 - Consent and photo-release rules are `CHECK` constraints, not UI conventions. Surface those
-  failures in the owner's language — see `togglePublished` in `src/app/admin/actions.ts`.
+  failures in the owner's language, see `togglePublished` in `src/app/admin/actions.ts`.
 - Admin copy uses the owner's words: "Show on the website", never "published: true";
   "Photos", never "Media assets".
 - Empty states teach. The testimonials empty state explains how to ask a family for a quote,
   which is more useful than a shrug and steers the owner away from writing one themselves.
-- Saving revalidates only the affected routes — keep the `AFFECTED` map current.
+- Saving revalidates only the affected routes, keep the `AFFECTED` map current.
 
 ## Forms & email
 
 Documented in [docs/forms-and-seo.md](docs/forms-and-seo.md). Two traps worth remembering:
 
 - **Never add `.select()` to an anonymous insert.** Visitors have INSERT but not SELECT on
-  `inquiries`, and `RETURNING` needs SELECT — so it fails with "new row violates row-level
+  `inquiries`, and `RETURNING` needs SELECT, so it fails with "new row violates row-level
   security policy". Same mechanism makes a plain SELECT rate-limit check silently never fire;
   use the `has_recent_inquiry()` RPC.
 - **Save before you send.** The enquiry is written first, email is best-effort after. Email
@@ -235,16 +234,16 @@ Documented in [docs/forms-and-seo.md](docs/forms-and-seo.md). Two traps worth re
 ## The site is ONE page
 
 All marketing content is anchored sections on `/`. Sections, nav labels and legacy redirects
-come from [src/lib/sections.ts](src/lib/sections.ts) — add a section there and it wires into
+come from [src/lib/sections.ts](src/lib/sections.ts), add a section there and it wires into
 the header nav, the scroll-spy, the footer and the redirects at once.
 
 - Every section is an `AnchorSection`: a labelled landmark with `tabIndex={-1}` and
-  `scroll-mt`. Both matter — the first lets the nav move focus into the section (otherwise a
+  `scroll-mt`. Both matter, the first lets the nav move focus into the section (otherwise a
   keyboard user's next Tab resumes from the header), the second stops the sticky header
   covering the heading after a jump.
 - Exactly one `h1` (the hero). Sections use `h2`. `tests/one-page.spec.ts` asserts the
   heading outline never skips a level.
-- The active nav link uses `aria-current="location"`, not `"page"` — there is only one page.
+- The active nav link uses `aria-current="location"`, not `"page"` there is only one page.
 - Legal pages stay separate routes. They are reference material, not narrative.
 
 ## Building pages
@@ -252,31 +251,31 @@ the header nav, the scroll-spy, the footer and the redirects at once.
 - **Tier 1** pages are fillable entirely from the artwork and are live.
 - **Tier 2** pages (`/admissions`, `/faq`) have their shell built and call `notFound()` while
   their data is unconfirmed, so the route 404s rather than publishing guesses. Filling the
-  matching entry in `source-of-truth.json` makes the page appear — no code change.
+  matching entry in `source-of-truth.json` makes the page appear, no code change.
 - Where a page needs body copy the client has not written, build it from the **day timeline**
   instead. `scheduleFor()` maps a service to the entries that demonstrate it, so the page is
   the client's own sentences rather than plausible filler. `services[].relatedSchedule` holds
   that mapping.
-- Never interpolate a content title into a sentence with `toLowerCase()` — it mangles
+- Never interpolate a content title into a sentence with `toLowerCase()` it mangles
   "Alzheimer's". Let the heading carry the name and write around it.
 
 ## Verification
 
 Three suites, all CI gates, run on desktop and mobile:
 
-- `tests/a11y.spec.ts` — axe/WCAG 2.2 AA on every route, both themes, largest text with high
+- `tests/a11y.spec.ts` axe/WCAG 2.2 AA on every route, both themes, largest text with high
   contrast, one-`h1`-per-page, skip link.
-- `tests/responsive.spec.ts` — no horizontal overflow at 320/375/768/1024/1440/1920, and at
+- `tests/responsive.spec.ts` no horizontal overflow at 320/375/768/1024/1440/1920, and at
   200% zoom.
-- `tests/content-integrity.spec.ts` — greps the **rendered HTML** for unconfirmed facts
+- `tests/content-integrity.spec.ts` greps the **rendered HTML** for unconfirmed facts
   (phone, capacity, payment types, extra cities, filler). This catches a hardcoded value that
   `published()` would never see. When the client confirms something, promote it in
   `source-of-truth.json` **and** delete its line from `FORBIDDEN`.
 
-Run `pnpm test:a11y` after touching anything visual — the contrast table on `/specimen` only
+Run `pnpm test:a11y` after touching anything visual, the contrast table on `/specimen` only
 covers the pairs it is told about, and axe catches the ones it is not.
 
 ## Reference
 
-Full build plan (19 sections — sitemap, data model, admin spec, phases):
+Full build plan (19 sections, sitemap, data model, admin spec, phases):
 https://claude.ai/code/artifact/ebaba159-9209-47a5-b093-a20c5dc0873d

@@ -80,7 +80,7 @@ const GROUPS: { legend: string; fields: Field[] }[] = [
         name: "licensed_capacity",
         label: "Number of residents you are licensed for",
         type: "number",
-        help: "Blank until you provide it — we will not guess a number.",
+        help: "Blank until you provide it, we will not guess a number.",
       },
       { name: "hours", label: "Hours", help: "e.g. “24 hours, every day”." },
     ],

@@ -6,7 +6,7 @@ import { absoluteUrl, siteUrl } from "@/lib/site-url";
  * JSON-LD.
  *
  * ---------------------------------------------------------------------------
- * THE CONTENT RULE APPLIES HERE TOO — arguably more than anywhere.
+ * THE CONTENT RULE APPLIES HERE TOO, arguably more than anywhere.
  *
  * Structured data is read by machines and surfaced in search results as fact.
  * A guessed telephone number or an invented bed count in here can end up shown
@@ -71,7 +71,7 @@ export async function OrganisationJsonLd() {
     // Only Everett is confirmed. Never widen this without written confirmation.
     areaServed: settings.serviceArea.map((name) => ({ "@type": "City", name })),
 
-    // Justified by the "Overnight — 24-Hour Care" schedule entry.
+    // Justified by the "Overnight, 24-Hour Care" schedule entry.
     openingHoursSpecification: settings.hours
       ? [
           {
@@ -152,7 +152,7 @@ function JsonLd({ data }: { data: Record<string, unknown> }) {
   return (
     <script
       type="application/ld+json"
-      // Content is our own, from the database — not user input.
+      // Content is our own, from the database, not user input.
       dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
     />
   );
