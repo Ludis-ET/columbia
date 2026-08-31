@@ -1,24 +1,22 @@
 import type { NextConfig } from "next";
+import { legacyRedirects, legacyServiceRedirect } from "./src/lib/sections";
 
 const nextConfig: NextConfig = {
-  reactStrictMode: true,
-  poweredByHeader: false,
-  images: {
-    formats: ["image/avif", "image/webp"],
-    // Supabase Storage origin is added in Phase 4.
-    remotePatterns: [],
-  },
-  async headers() {
+  async redirects() {
+    // The site was multi-page during development. Anything that linked or
+    // bookmarked those URLs lands on the right section instead of a 404, and
+    // any search equity they picked up transfers.
     return [
-      {
-        source: "/:path*",
-        headers: [
-          { key: "X-Content-Type-Options", value: "nosniff" },
-          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-          { key: "X-Frame-Options", value: "SAMEORIGIN" },
-        ],
-      },
+      ...legacyRedirects.map((r) => ({ ...r, permanent: true })),
+      { ...legacyServiceRedirect, permanent: true },
     ];
+  },
+
+  images: {
+    remotePatterns: [
+      // Photographs served from Supabase Storage once real ones are uploaded.
+      { protocol: "https", hostname: "*.supabase.co", pathname: "/storage/v1/object/public/**" },
+    ],
   },
 };
 

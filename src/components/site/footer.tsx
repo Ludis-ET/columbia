@@ -2,7 +2,8 @@ import Link from "next/link";
 import { Mail, Phone, Printer } from "lucide-react";
 import { Monogram } from "@/components/brand/monogram";
 import { Wave } from "@/components/brand/wave";
-import { legalNav, primaryNav } from "@/lib/nav";
+import { legalNav } from "@/lib/nav";
+import { sections } from "@/lib/sections";
 import { identity, published } from "@/lib/content";
 import { getSiteSettings } from "@/lib/db/queries";
 
@@ -97,10 +98,13 @@ export async function Footer() {
             <div>
               <h2 className="label mb-3 opacity-70">Explore</h2>
               <ul className="space-y-2 text-[0.95rem]">
-                {primaryNav.map((item) => (
-                  <li key={item.href}>
-                    <Link href={item.href} className="opacity-90 hover:underline hover:opacity-100">
-                      {item.label}
+                {sections.map((section) => (
+                  <li key={section.id}>
+                    <Link
+                      href={`/#${section.id}`}
+                      className="opacity-90 hover:underline hover:opacity-100"
+                    >
+                      {section.navLabel}
                     </Link>
                   </li>
                 ))}

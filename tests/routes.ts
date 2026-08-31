@@ -5,22 +5,25 @@
  * and this needs to be shared by the a11y, responsive and content suites.
  */
 
-/** Every publicly reachable, indexable route. */
-export const PUBLIC_ROUTES = [
-  "/",
-  "/about",
-  "/services",
-  "/services/long-term-care",
-  "/services/memory-care",
-  "/services/personal-care",
-  "/services/medication-management",
-  "/a-day-in-our-home",
-  "/our-home",
-  "/meals",
-  "/contact",
-  "/privacy",
-  "/accessibility",
-  "/terms",
+/**
+ * Every publicly reachable, indexable route.
+ *
+ * The marketing site is a single page; the legal pages stay separate because
+ * they are reference material rather than part of the narrative.
+ */
+export const PUBLIC_ROUTES = ["/", "/privacy", "/accessibility", "/terms"];
+
+/** Anchors on the one-pager, and the old routes that now redirect to them. */
+export const SECTION_IDS = ["about", "care", "day", "home", "meals", "visit", "contact"];
+
+export const LEGACY_REDIRECTS: [string, string][] = [
+  ["/about", "/#about"],
+  ["/services", "/#care"],
+  ["/a-day-in-our-home", "/#day"],
+  ["/our-home", "/#home"],
+  ["/meals", "/#meals"],
+  ["/contact", "/#contact"],
+  ["/services/memory-care", "/#care"],
 ];
 
 /** Internal review pages — built, but noindex and excluded from the sitemap. */

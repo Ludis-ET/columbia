@@ -106,7 +106,11 @@ separate semantic set and never borrow these.
 
 Target WCAG 2.2 AA, adopting AAA where cheap. These are CI gates, not aspirations.
 
-- Contrast ≥ 7:1 body text, ≥ 4.5:1 everything else, both themes.
+- Contrast ≥ 7:1 body text, ≥ 4.5:1 everything else, both themes — and in high-contrast
+  mode, which has its own three-state block. A selector like
+  `:root[data-contrast="high"]:not([data-theme="light"])` outside a media query also matches
+  the UN-STAMPED default, which once flipped every light-mode reader to a black background.
+  The dark case belongs behind `@media (prefers-color-scheme: dark)`.
 - Base 18px, all sizing in `rem`. Survives 200% zoom and 320px width with no horizontal scroll.
 - Interactive targets ≥ 48×48px with ≥ 8px spacing.
 - Visible focus ring on every focusable element, 2px, 3:1 against both adjacent colours.
@@ -227,6 +231,21 @@ Documented in [docs/forms-and-seo.md](docs/forms-and-seo.md). Two traps worth re
 - JSON-LD is the strictest application of the content rule: an unconfirmed value there is
   published to Google as fact. Every property is conditional; `tests/seo.spec.ts` asserts the
   omissions.
+
+## The site is ONE page
+
+All marketing content is anchored sections on `/`. Sections, nav labels and legacy redirects
+come from [src/lib/sections.ts](src/lib/sections.ts) — add a section there and it wires into
+the header nav, the scroll-spy, the footer and the redirects at once.
+
+- Every section is an `AnchorSection`: a labelled landmark with `tabIndex={-1}` and
+  `scroll-mt`. Both matter — the first lets the nav move focus into the section (otherwise a
+  keyboard user's next Tab resumes from the header), the second stops the sticky header
+  covering the heading after a jump.
+- Exactly one `h1` (the hero). Sections use `h2`. `tests/one-page.spec.ts` asserts the
+  heading outline never skips a level.
+- The active nav link uses `aria-current="location"`, not `"page"` — there is only one page.
+- Legal pages stay separate routes. They are reference material, not narrative.
 
 ## Building pages
 

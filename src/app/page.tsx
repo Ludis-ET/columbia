@@ -1,21 +1,22 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight } from "lucide-react";
+import { Mail, MapPin, Phone, Printer } from "lucide-react";
 
 import { Hero } from "@/components/site/hero";
-import { Section, SectionHeading, Prose } from "@/components/site/section";
+import { AnchorSection } from "@/components/site/anchor-section";
+import { SectionHeading, Prose } from "@/components/site/section";
 import { AvailabilityBadge } from "@/components/site/availability-badge";
 import { ServiceCard } from "@/components/site/service-card";
+import { TimelineEntry, DayGradient } from "@/components/site/timeline-entry";
 import { Gallery } from "@/components/site/gallery";
 import { TestimonialList } from "@/components/site/testimonial";
 import { MapBlock } from "@/components/site/map-block";
-import { CtaBand } from "@/components/site/cta-band";
+import { TourForm } from "@/components/site/tour-form";
+import { BackToTop } from "@/components/site/back-to-top";
 import { Reveal } from "@/components/motion/reveal";
 import { LaurelDivider } from "@/components/brand/laurel";
 import { HeartShield } from "@/components/brand/heart-shield";
 import { IconBadge, isIconName } from "@/components/icons";
-import { buttonVariants } from "@/components/ui/button";
 import { heroImage, mealsImage } from "@/lib/images";
 import { identity, published } from "@/lib/content";
 import {
@@ -29,18 +30,34 @@ import {
   getTestimonials,
   getWhyFamilies,
 } from "@/lib/db/queries";
+import type { TestimonialItem } from "@/components/site/testimonial";
+
+export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 /** Rebuilds hourly; publishing from the admin console revalidates on demand. */
 export const revalidate = 3600;
 
+/**
+ * The whole public site, on one page.
+ *
+ * Section order follows how a family actually reads: what is this place, what
+ * care do you give, what do the days look like, what does it look like, what do
+ * you eat, where are you, how do I visit. The tour form is last because that is
+ * the decision the page is building toward.
+ *
+ * Exactly one h1 (the hero). Every section is a labelled landmark with an h2, so
+ * a screen reader user can jump between them — which matters more on one long
+ * page than it does across several short ones.
+ */
 export default async function HomePage() {
   const tagline = published(identity.tagline);
   const promise = published(identity.promise);
   const about = published(identity.about);
   const meals = published(identity.meals);
   const closingLine = published(identity.closingLine);
+  const tourCta = published(identity.tourCta);
+  const values = published(identity.values) ?? [];
 
-  // One round trip per table, deduped by React cache() across the render.
   const [settings, availability, services, care, included, reasons, quotes, schedule, gallery] =
     await Promise.all([
       getSiteSettings(),
@@ -54,19 +71,16 @@ export default async function HomePage() {
       getGallery(),
     ]);
 
-  const { phone, telHref: tel, addressLine: address, locationLine } = settings;
-
-  // Four moments that read well out of context — morning, activities, dinner, night.
-  const dayPreview = schedule.filter((item) => [1, 4, 9, 13].includes(item.position));
+  const { phone, telHref: tel, addressLine: address, locationLine, email, fax, hours } = settings;
+  const testimonials = quotes as TestimonialItem[];
 
   return (
     <>
-      {/* 1–2 · Hero, with the availability badge directly under the H1.
-          The badge renders nothing until the client sets a status. */}
+      {/* ---------------------------------------------------------------- hero */}
       <Hero
         size="home"
         title={tagline ?? "Columbia Care Adult Family Home"}
-        lead={`An adult family home in Everett, Washington.`}
+        lead="An adult family home in Everett, Washington."
         image={heroImage}
         badge={
           <AvailabilityBadge
@@ -79,112 +93,172 @@ export default async function HomePage() {
         phoneHref={tel}
       />
 
-      {/* 3 · Promise strip */}
+      {/* ------------------------------------------------------------ promise */}
       {promise ? (
-        <Section ground="wash" className="py-14 sm:py-16">
-          <div className="text-center">
+        <div className="bg-sage-wash py-14 sm:py-16">
+          <div className="mx-auto max-w-6xl px-4 text-center sm:px-6">
             <HeartShield className="mx-auto mb-5 size-12" />
             <p className="text-h2 font-display mx-auto max-w-[24ch]">{promise}</p>
-            <ul className="text-sage-deep mt-7 flex flex-wrap justify-center gap-x-6 gap-y-2">
-              {(published(identity.values) ?? []).map((value) => (
-                <li key={value} className="label">
-                  {value}
-                </li>
-              ))}
-            </ul>
+            {values.length > 0 ? (
+              <ul className="text-sage-deep mt-7 flex flex-wrap justify-center gap-x-6 gap-y-2">
+                {values.map((value) => (
+                  <li key={value} className="label">
+                    {value}
+                  </li>
+                ))}
+              </ul>
+            ) : null}
           </div>
-        </Section>
+        </div>
       ) : null}
 
-      {/* 4 · Services grid */}
-      <Section labelledBy="services-heading">
+      {/* -------------------------------------------------------------- about */}
+      <AnchorSection id="about" title="About our home">
         <SectionHeading
-          id="services-heading"
-          eyebrow="Care & services"
-          title="What we do, every day"
+          eyebrow="Who we are"
+          title="A family-like environment"
           lead={about}
           align="center"
         />
-        <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {services.map((service, index) => (
-            <li key={service.slug}>
-              <Reveal delay={index * 0.06}>
-                <ServiceCard
-                  title={service.title}
-                  icon={service.icon}
-                  href={service.hasDetailPage ? `/services/${service.slug}` : null}
-                  className="h-full"
-                />
-              </Reveal>
-            </li>
-          ))}
-        </ul>
 
-        {care.length > 0 ? (
-          <div className="mt-10 text-center">
-            <Link
-              href="/services"
-              className="text-sage-deep inline-flex min-h-12 items-center gap-2 font-semibold"
-            >
-              See all care and services
-              <ArrowRight className="size-4" aria-hidden="true" />
-            </Link>
-          </div>
-        ) : null}
-      </Section>
-
-      {/* 5 · Day teaser */}
-      {dayPreview.length > 0 ? (
-        <Section ground="wash" labelledBy="day-heading">
-          <SectionHeading
-            id="day-heading"
-            eyebrow="Morning to night"
-            title="A day in our home"
-            lead="Every hour of the day, written out — so you know exactly what life here looks like."
-            align="center"
-          />
-          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {dayPreview.map((item, index) => (
-              <li key={item.position}>
+        {reasons.length > 0 ? (
+          <ul className="mx-auto grid max-w-4xl gap-4 sm:grid-cols-2">
+            {reasons.map((reason, index) => (
+              <li key={reason}>
                 <Reveal delay={index * 0.06}>
-                  <div className="border-rule bg-paper h-full rounded border p-5">
-                    {isIconName(item.icon) ? (
-                      <IconBadge name={item.icon} accent={item.accent} size="sm" className="mb-3" />
-                    ) : null}
-                    <p className="label text-stone tabular-nums">{item.timeLabel}</p>
-                    <h3 className="text-h3 mt-1 font-sans font-bold">{item.title}</h3>
+                  <div className="border-rule bg-paper-raise flex h-full items-start gap-3 rounded border p-5">
+                    <HeartShield className="mt-0.5 size-6 shrink-0" />
+                    <p className="font-semibold">{reason}</p>
                   </div>
                 </Reveal>
               </li>
             ))}
           </ul>
-          <div className="mt-10 text-center">
-            <Link href="/a-day-in-our-home" className={buttonVariants({ variant: "secondary" })}>
-              See a full day in our home
-            </Link>
-          </div>
-        </Section>
-      ) : null}
+        ) : null}
+      </AnchorSection>
 
-      {/* 6 · Gallery strip */}
-      <Section labelledBy="gallery-heading">
+      {/* --------------------------------------------------------------- care */}
+      <AnchorSection id="care" title="Care and services" ground="wash">
         <SectionHeading
-          id="gallery-heading"
-          eyebrow="Our home"
-          title="Come and look around"
+          eyebrow="Care &amp; services"
+          title="What we do, every day"
           align="center"
         />
-        <Gallery images={gallery.slice(0, 6)} />
-        <div className="mt-8 text-center">
-          <Link href="/our-home" className={buttonVariants({ variant: "secondary" })}>
-            See the whole home
-          </Link>
-        </div>
-      </Section>
 
-      {/* 7 · Meals */}
+        {care.length > 0 ? (
+          <ul className="mx-auto mb-12 grid max-w-4xl gap-4 md:grid-cols-3">
+            {care.map((type, index) => (
+              <li key={type.slug}>
+                <Reveal delay={index * 0.06}>
+                  <div className="border-rule bg-paper flex h-full flex-col items-center rounded border p-8 text-center">
+                    {isIconName(type.icon) ? (
+                      <IconBadge name={type.icon} accent="sage" size="lg" className="mb-4" />
+                    ) : null}
+                    <h3 className="text-h3 font-sans font-bold">{type.shortTitle}</h3>
+                  </div>
+                </Reveal>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+
+        {services.length > 0 ? (
+          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {services.map((service, index) => (
+              <li key={service.slug}>
+                <Reveal delay={Math.min(index, 5) * 0.05}>
+                  <ServiceCard
+                    title={service.title}
+                    icon={service.icon}
+                    summary={service.description}
+                    className="bg-paper h-full"
+                  />
+                </Reveal>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+
+        {included.length > 0 ? (
+          <>
+            <LaurelDivider className="py-12" />
+            <h3 className="text-h3 mb-6 text-center font-sans font-bold">
+              Included every single day
+            </h3>
+            <ul className="flex flex-wrap justify-center gap-2">
+              {included.map((item) => (
+                <li
+                  key={item.title}
+                  className="border-rule bg-paper inline-flex items-center gap-2 rounded-full border py-1.5 pr-4 pl-1.5"
+                >
+                  {isIconName(item.icon) ? (
+                    <IconBadge
+                      name={item.icon}
+                      accent="sage"
+                      size="sm"
+                      className="size-8 [&>svg]:size-4"
+                    />
+                  ) : null}
+                  <span className="text-[0.9375rem]">{item.title}</span>
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : null}
+      </AnchorSection>
+
+      {/* ---------------------------------------------------------------- day */}
+      {/* The signature moment: the ground ramps dawn → night behind the 13
+          entries, using the client's own accent colours. Full-bleed, so it
+          reads as a change of place rather than another band. */}
+      <AnchorSection id="day" title="A day in our home" bleed className="relative overflow-hidden">
+        <DayGradient />
+        <div className="relative mx-auto max-w-3xl px-4 sm:px-6">
+          <div className="mb-14 text-center">
+            <p className="label text-sage-deep mb-3">Morning to night</p>
+            <h2 className="text-h1 mb-5">A day in our home</h2>
+            <p className="text-lead text-ink-soft mx-auto max-w-[52ch]">
+              Families always ask what the days actually look like. Here is the whole of one, from
+              the first good morning to the last safety check.
+            </p>
+          </div>
+
+          {schedule.length > 0 ? (
+            <div className="relative">
+              {schedule.map((item, index) => (
+                <Reveal key={item.position} delay={Math.min(index, 6) * 0.04}>
+                  <TimelineEntry
+                    timeLabel={item.timeLabel}
+                    title={item.title}
+                    body={item.body}
+                    bullets={item.bullets}
+                    icon={item.icon}
+                    accent={item.accent}
+                  />
+                </Reveal>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      </AnchorSection>
+
+      {/* --------------------------------------------------------------- home */}
+      <AnchorSection id="home" title="Our home">
+        <SectionHeading
+          eyebrow="Our home"
+          title="Come and look around"
+          lead="A real house on a quiet street — not a facility."
+          align="center"
+        />
+        <Gallery images={gallery} />
+        <p className="text-stone mx-auto mt-8 max-w-[56ch] text-center">
+          Photographs show the shared areas of the home. To see everything, come and visit.
+        </p>
+      </AnchorSection>
+
+      {/* -------------------------------------------------------------- meals */}
       {meals ? (
-        <Section ground="wash" labelledBy="meals-heading">
+        <AnchorSection id="meals" title="Meals and dining" ground="wash">
           <div className="grid items-center gap-10 lg:grid-cols-2">
             <Reveal>
               <div className="relative aspect-4/3 w-full overflow-hidden rounded">
@@ -199,110 +273,111 @@ export default async function HomePage() {
             </Reveal>
             <div>
               <SectionHeading
-                id="meals-heading"
-                eyebrow="Meals & dining"
+                eyebrow="Meals &amp; dining"
                 title="Home-cooked, every day"
                 className="mb-6"
               />
               <Prose>
                 <p className="text-lead text-ink-soft">{meals}</p>
+                <p className="text-stone">
+                  Does your loved one have a special diet, a food they cannot eat, or a favourite
+                  meal? Tell us and we will talk it through.
+                </p>
               </Prose>
-              <Link
-                href="/meals"
-                className="text-sage-deep mt-6 inline-flex min-h-12 items-center gap-2 font-semibold"
-              >
-                More about meals
-                <ArrowRight className="size-4" aria-hidden="true" />
-              </Link>
             </div>
           </div>
-        </Section>
+        </AnchorSection>
       ) : null}
 
-      {/* 8 · Why families choose us + what's included */}
-      {reasons.length > 0 ? (
-        <Section labelledBy="why-heading">
-          <SectionHeading
-            id="why-heading"
-            eyebrow="Why families choose us"
-            title="What families tell us matters"
-            align="center"
-          />
-          <ul className="mx-auto grid max-w-4xl gap-4 sm:grid-cols-2">
-            {reasons.map((reason, index) => (
-              <li key={reason}>
-                <Reveal delay={index * 0.06}>
-                  <div className="border-rule bg-paper-raise flex h-full items-start gap-3 rounded border p-5">
-                    <HeartShield className="mt-0.5 size-6 shrink-0" />
-                    <p className="font-semibold">{reason}</p>
-                  </div>
-                </Reveal>
-              </li>
-            ))}
-          </ul>
-
-          {included.length > 0 ? (
-            <>
-              <LaurelDivider className="py-12" />
-              <h3 className="text-h3 mb-6 text-center font-sans font-bold">
-                Included every single day
-              </h3>
-              <ul className="flex flex-wrap justify-center gap-2">
-                {included.map((item) => (
-                  <li
-                    key={item.title}
-                    className="border-rule bg-paper-raise inline-flex items-center gap-2 rounded-full border py-1.5 pr-4 pl-1.5"
-                  >
-                    {isIconName(item.icon) ? (
-                      <IconBadge
-                        name={item.icon}
-                        accent="sage"
-                        size="sm"
-                        className="size-8 [&>svg]:size-4"
-                      />
-                    ) : null}
-                    <span className="text-[0.9375rem]">{item.title}</span>
-                  </li>
-                ))}
-              </ul>
-            </>
-          ) : null}
-        </Section>
+      {/* ------------------------------------------------------- testimonials */}
+      {testimonials.length > 0 ? (
+        <div className="py-16 sm:py-24">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <TestimonialList items={testimonials} />
+          </div>
+        </div>
       ) : null}
 
-      {/* 9 · Testimonials — renders nothing until real quotes exist */}
-      {quotes.length > 0 ? (
-        <Section ground="wash">
-          <TestimonialList items={quotes} />
-        </Section>
-      ) : null}
-
-      {/* 10 · Location */}
+      {/* -------------------------------------------------------------- visit */}
       {address ? (
-        <Section labelledBy="location-heading">
+        <AnchorSection id="visit" title="Where to find us">
           <SectionHeading
-            id="location-heading"
             eyebrow="Find us"
             title="Close to home, easy to reach"
             lead={locationLine}
             align="center"
           />
           <MapBlock address={address} locationLine={locationLine} className="mx-auto max-w-4xl" />
-        </Section>
+
+          <ul className="mx-auto mt-8 grid max-w-4xl gap-4 sm:grid-cols-3">
+            {phone && tel ? (
+              <li>
+                <a
+                  href={tel}
+                  className="group border-rule bg-paper-raise hover:border-sage flex h-full flex-col items-center rounded border p-5 text-center transition-colors"
+                >
+                  <Phone className="text-sage mb-2 size-6" aria-hidden="true" />
+                  <span className="label text-stone">Call us</span>
+                  <span className="text-ink group-hover:text-sage-deep font-semibold">{phone}</span>
+                </a>
+              </li>
+            ) : null}
+            {email ? (
+              <li>
+                <a
+                  href={`mailto:${email}`}
+                  className="group border-rule bg-paper-raise hover:border-sage flex h-full flex-col items-center rounded border p-5 text-center transition-colors"
+                >
+                  <Mail className="text-sage mb-2 size-6" aria-hidden="true" />
+                  <span className="label text-stone">Email us</span>
+                  <span className="text-ink group-hover:text-sage-deep font-semibold break-all">
+                    {email}
+                  </span>
+                </a>
+              </li>
+            ) : null}
+            <li className="border-rule bg-paper-raise flex h-full flex-col items-center rounded border p-5 text-center">
+              <MapPin className="text-sage mb-2 size-6" aria-hidden="true" />
+              <span className="label text-stone">Visit</span>
+              <address className="text-ink font-semibold not-italic">{address}</address>
+              {hours ? <span className="text-stone mt-1 text-[0.875rem]">Open {hours}</span> : null}
+            </li>
+          </ul>
+
+          {fax ? (
+            <p className="text-stone mt-4 flex items-center justify-center gap-2 text-[0.9375rem]">
+              <Printer className="size-4" aria-hidden="true" />
+              <span>
+                <span className="sr-only">Fax for referrals: </span>Fax {fax}
+              </span>
+            </p>
+          ) : null}
+        </AnchorSection>
       ) : null}
 
-      {/* 11 · Closing CTA */}
-      <CtaBand
-        lead="Come and see the home, meet the caregivers, and ask us anything you like."
-        script={closingLine}
-        phone={phone}
-        phoneHref={tel}
-      />
+      {/* ------------------------------------------------------------ contact */}
+      <AnchorSection id="contact" title="Book a house tour" ground="wash">
+        <div className="mx-auto max-w-2xl">
+          <div className="mb-8 text-center">
+            <HeartShield className="mx-auto mb-5 size-12" />
+            <h2 className="text-h1 mb-4">{tourCta ?? "Book a house tour"}</h2>
+            <p className="text-lead text-ink-soft mx-auto max-w-[52ch]">
+              Tell us a little about your loved one and what they need. There is no pressure and no
+              obligation — most families visit two or three homes before deciding.
+            </p>
+          </div>
+
+          <TourForm />
+
+          {closingLine ? (
+            <p className="font-script text-sage-deep mt-12 text-center text-3xl sm:text-4xl">
+              {closingLine}
+            </p>
+          ) : null}
+        </div>
+      </AnchorSection>
+
+      <BackToTop />
     </>
   );
 }
-
-/** Home keeps the site default title rather than the page-title template. */
-export const metadata: Metadata = {
-  alternates: { canonical: "/" },
-};

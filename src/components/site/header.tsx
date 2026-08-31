@@ -6,21 +6,27 @@ import { useEffect, useState } from "react";
 import { Menu, Phone, X } from "lucide-react";
 import { Monogram } from "@/components/brand/monogram";
 import { ThemeToggle } from "@/components/site/theme-toggle";
-import { primaryNav } from "@/lib/nav";
+import { SectionNav } from "@/components/site/section-nav";
+import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 /**
  * Site header.
  *
- * `phone` and `phoneHref` are passed in from a server component that has
- * already run them through published(). They are null until the client confirms
- * which number to publish, and when they are null the call affordances render
- * nothing at all — no placeholder number, ever.
+ * The site is one page, so the nav is anchors with a scroll-spy rather than
+ * routes. On the legal pages — which are still separate — the anchors would
+ * point nowhere, so they become links back to the home page instead.
+ *
+ * `phone` and `phoneHref` come from a server component that has already run
+ * them through the content gate. They are null until the client confirms which
+ * number to publish, and when null the call affordances render nothing at all.
  */
 export function Header({ phone, phoneHref }: { phone: string | null; phoneHref: string | null }) {
   const [open, setOpen] = useState(false);
   const [condensed, setCondensed] = useState(false);
   const pathname = usePathname();
+
+  const onePager = pathname === "/";
 
   useEffect(() => {
     const onScroll = () => setCondensed(window.scrollY > 24);
@@ -29,7 +35,6 @@ export function Header({ phone, phoneHref }: { phone: string | null; phoneHref: 
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Close the mobile menu on navigation.
   useEffect(() => setOpen(false), [pathname]);
 
   return (
@@ -47,8 +52,7 @@ export function Header({ phone, phoneHref }: { phone: string | null; phoneHref: 
         >
           <Monogram className={cn("transition-all", condensed ? "size-9" : "size-11")} decorative />
           {/* Wordmark hides below md: at the largest reader text size it plus the
-              CTA plus the menu button overflow a 640px viewport. The monogram
-              alone still identifies the home, and the link keeps its aria-label. */}
+              CTA plus the menu button overflow a 640px viewport. */}
           <span className="hidden leading-tight md:block">
             <span className="font-display text-ink block text-[1.05rem] font-semibold">
               Columbia Care
@@ -57,26 +61,14 @@ export function Header({ phone, phoneHref }: { phone: string | null; phoneHref: 
           </span>
         </Link>
 
-        <nav aria-label="Primary" className="ml-auto hidden lg:block">
-          <ul className="flex items-center gap-1">
-            {primaryNav.map((item) => {
-              const active = pathname === item.href || pathname.startsWith(item.href + "/");
-              return (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    aria-current={active ? "page" : undefined}
-                    className={cn(
-                      "hover:text-sage-deep inline-flex items-center rounded px-3 py-2 text-[0.95rem] transition-colors",
-                      active ? "text-sage-deep font-semibold" : "text-ink-soft",
-                    )}
-                  >
-                    {item.label}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+        <nav aria-label="Sections of this page" className="ml-auto hidden lg:block">
+          {onePager ? (
+            <SectionNav />
+          ) : (
+            <Link href="/" className="text-ink-soft hover:text-sage-deep px-3 py-2 text-[0.95rem]">
+              Back to the home page
+            </Link>
+          )}
         </nav>
 
         <div className="ml-auto flex items-center gap-2 lg:ml-0">
@@ -95,8 +87,14 @@ export function Header({ phone, phoneHref }: { phone: string | null; phoneHref: 
           ) : null}
 
           <Link
-            href="/contact"
-            className="bg-ink text-paper hover:bg-sage-deep hidden min-h-12 items-center rounded px-4 font-semibold transition-colors sm:inline-flex"
+            href={onePager ? "#contact" : "/#contact"}
+            // Tighter horizontal padding between lg and xl: the nav, toggle and
+            // this button together were 5px over a 1024px viewport. Height stays
+            // at 48px — the target-size floor is not negotiable, the padding is.
+            className={cn(
+              buttonVariants({ size: "default" }),
+              "hidden px-4 sm:inline-flex xl:px-6",
+            )}
           >
             Book a house tour
           </Link>
@@ -119,31 +117,24 @@ export function Header({ phone, phoneHref }: { phone: string | null; phoneHref: 
       </div>
 
       <div id="mobile-nav" hidden={!open} className="border-rule bg-paper-raise border-t lg:hidden">
-        <nav aria-label="Primary, mobile" className="mx-auto max-w-6xl px-4 py-3 sm:px-6">
-          <ul className="flex flex-col">
-            {primaryNav.map((item) => {
-              const active = pathname === item.href || pathname.startsWith(item.href + "/");
-              return (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    aria-current={active ? "page" : undefined}
-                    className={cn(
-                      "flex min-h-12 items-center rounded px-2 text-[1.05rem]",
-                      active ? "text-sage-deep font-semibold" : "text-ink-soft",
-                    )}
-                  >
-                    {item.label}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+        <nav
+          aria-label="Sections of this page, mobile"
+          className="mx-auto max-w-6xl px-4 py-3 sm:px-6"
+        >
+          {onePager ? (
+            <SectionNav orientation="vertical" onNavigate={() => setOpen(false)} />
+          ) : (
+            <Link href="/" className="text-ink-soft flex min-h-12 items-center px-2 text-[1.05rem]">
+              Back to the home page
+            </Link>
+          )}
+
           <div className="border-rule mt-3 flex items-center justify-between gap-3 border-t pt-3">
             <ThemeToggle />
             <Link
-              href="/contact"
-              className="bg-ink text-paper inline-flex min-h-12 items-center rounded px-4 font-semibold"
+              href={onePager ? "#contact" : "/#contact"}
+              onClick={() => setOpen(false)}
+              className={buttonVariants({ size: "default" })}
             >
               Book a house tour
             </Link>

@@ -80,25 +80,24 @@ src/lib/
 
 ## Routes
 
-**Tier 1 — live, built entirely from the client's artwork**
+**The marketing site is a single page.** Everything a family reads — about, care, the day
+timeline, the gallery, meals, location and the tour form — lives at `/` as anchored sections.
+Section ids, nav labels and the redirects from the old routes all come from one place:
+[src/lib/sections.ts](src/lib/sections.ts).
 
-`/` · `/about` · `/services` · `/services/{long-term-care,memory-care,personal-care,medication-management}` ·
-`/a-day-in-our-home` · `/our-home` · `/meals` · `/contact` · `/privacy` · `/accessibility` · `/terms`
+`#about` · `#care` · `#day` · `#home` · `#meals` · `#visit` · `#contact`
 
-**Tier 2 — shell built, returns 404 until its data exists**
+The old multi-page URLs (`/about`, `/services`, `/services/:slug`, `/a-day-in-our-home`,
+`/our-home`, `/meals`, `/contact`) permanently redirect to their section, so nothing 404s.
 
-`/admissions` needs payment types, rates or admission criteria. `/faq` needs answers. Fill the
-matching entries in [content/source-of-truth.json](content/source-of-truth.json) and the route
-appears with no code change. `tests/content-integrity.spec.ts` asserts they 404 today.
+**Still separate pages** — reference material rather than narrative:
 
-**Admin — authenticated, noindex, never cached**
+`/privacy` · `/accessibility` · `/terms`
 
-`/admin/login` sits outside the `(console)` route group; everything else under
-`/admin` is behind it. See [docs/admin-setup.md](docs/admin-setup.md).
+**Gated** — 404 until their content exists: `/admissions` · `/faq`
 
-**Internal — noindex**
-
-`/specimen` · `/kitchen-sink`
+**Admin** — authenticated, noindex: `/admin/*`. **Internal** — noindex: `/specimen` ·
+`/kitchen-sink`
 
 ## Git hooks & CI
 

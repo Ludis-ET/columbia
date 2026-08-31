@@ -242,7 +242,16 @@
   font-size: 140%;
 }
 
-/* Higher contrast: push text to the extremes and firm up the hairlines. */
+/* Higher contrast: push text to the extremes and firm up the hairlines.
+
+   THREE STATES, exactly like the main palette above. Getting this wrong is not
+   cosmetic: an earlier version used
+     :root[data-contrast="high"]:not([data-theme="light"])
+   for the dark values, which also matches the UN-STAMPED default — so anyone on
+   a light OS who turned high contrast on was flipped to a black background. The
+   dark case must sit behind the media query, not outside it. */
+
+/* Light — the default, and the un-stamped light case. */
 :root[data-contrast="high"] {
   --ink: #000000;
   --ink-soft: #1a1a1a;
@@ -252,11 +261,30 @@
   --stone: #333333;
   --rule: #6b6b6b;
   --rule-strong: #333333;
+  --sage: #3f5528;
   --sage-deep: #234012;
   --sage-wash: #eef2e6;
 }
-:root[data-contrast="high"][data-theme="dark"],
-:root[data-contrast="high"]:not([data-theme="light"]) {
+
+/* Dark — OS is dark and the reader has not forced light. */
+@media (prefers-color-scheme: dark) {
+  :root[data-contrast="high"]:not([data-theme="light"]) {
+    --ink: #ffffff;
+    --ink-soft: #f0f0f0;
+    --paper: #000000;
+    --paper-raise: #0a0a0a;
+    --paper-sunk: #000000;
+    --stone: #d4d4d4;
+    --rule: #8a8a8a;
+    --rule-strong: #c4c4c4;
+    --sage: #cfe6a8;
+    --sage-deep: #cfe6a8;
+    --sage-wash: #12200a;
+  }
+}
+
+/* Dark — the reader forced dark. */
+:root[data-contrast="high"][data-theme="dark"] {
   --ink: #ffffff;
   --ink-soft: #f0f0f0;
   --paper: #000000;
@@ -265,23 +293,9 @@
   --stone: #d4d4d4;
   --rule: #8a8a8a;
   --rule-strong: #c4c4c4;
+  --sage: #cfe6a8;
   --sage-deep: #cfe6a8;
   --sage-wash: #12200a;
-}
-/* A forced light theme must beat the media-query rule above. */
-@media (prefers-color-scheme: dark) {
-  :root[data-contrast="high"][data-theme="light"] {
-    --ink: #000000;
-    --ink-soft: #1a1a1a;
-    --paper: #ffffff;
-    --paper-raise: #ffffff;
-    --paper-sunk: #f0f0f0;
-    --stone: #333333;
-    --rule: #6b6b6b;
-    --rule-strong: #333333;
-    --sage-deep: #234012;
-    --sage-wash: #eef2e6;
-  }
 }
 
 /* Atkinson Hyperlegible — designed by the Braille Institute for low vision.
