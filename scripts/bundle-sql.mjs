@@ -21,6 +21,7 @@ const PROJECT_REF = "wmxvickqaxkuaatftput";
 const parts = [
   "supabase/migrations/0001_schema.sql",
   "supabase/migrations/0002_storage.sql",
+  "supabase/migrations/0003_rate_limit.sql",
   "supabase/seed.sql",
 ];
 

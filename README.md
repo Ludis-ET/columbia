@@ -14,6 +14,7 @@ Next.js 16 (App Router) · React 19 · TypeScript · Tailwind v4 · pnpm.
 | [docs/toolchain-setup.md](docs/toolchain-setup.md)           | MCP servers and Claude Code plugins for this project          |
 | [docs/database.md](docs/database.md)                         | Schema, RLS, seeding, and the file fallback                   |
 | [docs/admin-setup.md](docs/admin-setup.md)                   | The admin console: creating the first account, roles, rules   |
+| [docs/forms-and-seo.md](docs/forms-and-seo.md)               | Tour form, email, structured data — and two RLS traps         |
 
 **Before writing any copy, read the rule at the top of [CLAUDE.md](CLAUDE.md).** This is a
 licensed care home; nothing gets published that the client hasn't confirmed. Content reaches

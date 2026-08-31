@@ -212,6 +212,22 @@ Lives at `/admin`, documented in [docs/admin-setup.md](docs/admin-setup.md).
   which is more useful than a shrug and steers the owner away from writing one themselves.
 - Saving revalidates only the affected routes — keep the `AFFECTED` map current.
 
+## Forms & email
+
+Documented in [docs/forms-and-seo.md](docs/forms-and-seo.md). Two traps worth remembering:
+
+- **Never add `.select()` to an anonymous insert.** Visitors have INSERT but not SELECT on
+  `inquiries`, and `RETURNING` needs SELECT — so it fails with "new row violates row-level
+  security policy". Same mechanism makes a plain SELECT rate-limit check silently never fire;
+  use the `has_recent_inquiry()` RPC.
+- **Save before you send.** The enquiry is written first, email is best-effort after. Email
+  failure must never lose a lead.
+- Spam checks **fail open**. Losing a real family's enquiry to a misconfigured Turnstile is
+  worse than letting spam through.
+- JSON-LD is the strictest application of the content rule: an unconfirmed value there is
+  published to Google as fact. Every property is conditional; `tests/seo.spec.ts` asserts the
+  omissions.
+
 ## Building pages
 
 - **Tier 1** pages are fillable entirely from the artwork and are live.

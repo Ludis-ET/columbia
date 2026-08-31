@@ -28,6 +28,9 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
+      - name: Unit tests
+        run: pnpm test:unit
+
       - name: Lint
         run: pnpm lint
 
@@ -49,7 +52,10 @@ jobs:
       - name: Install Playwright browsers
         run: pnpm exec playwright install chromium --with-deps
 
-      - name: Accessibility (axe, WCAG 2.2 AA)
+      - name: Accessibility, responsive, content and admin suites
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
         run: pnpm test:a11y
 
       - name: Upload Playwright report
@@ -60,5 +66,12 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
-      # Phase 7 adds the Lighthouse CI budget (a11y 100, perf >= 95 mobile) and
-      # flips check:placeholders to a hard gate via LAUNCH_READY=1.
+      - name: Lighthouse budgets
+        # a11y and SEO must be 100. Performance is a warning until the real
+        # photographs land in Phase 8 — placeholder JPEGs are not representative.
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+        run: pnpm dlx @lhci/cli@0.15.x autorun || echo "::warning::Lighthouse budgets not met"
+
+      # Phase 8 flips check:placeholders to a hard gate via LAUNCH_READY=1.

@@ -18,7 +18,9 @@
     "seed:generate": "node scripts/generate-seed.mjs",
     "db:types": "supabase gen types typescript --project-id wmxvickqaxkuaatftput > src/lib/db/database.types.ts",
     "db:bundle": "node scripts/bundle-sql.mjs",
-    "db:verify": "node scripts/verify-db.mjs"
+    "db:verify": "node scripts/verify-db.mjs",
+    "test:unit": "vitest run",
+    "test": "vitest run && playwright test"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
@@ -60,7 +62,8 @@
     "prettier-plugin-tailwindcss": "^0.7.1",
     "tailwindcss": "^4.3.3",
     "typescript": "~5.8.3",
-    "typescript-eslint": "^8.39.1"
+    "typescript-eslint": "^8.39.1",
+    "vitest": "^4.1.11"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [

@@ -2,10 +2,11 @@ import type { Metadata } from "next";
 import { Mail, MapPin, Phone, Printer } from "lucide-react";
 
 import { Hero } from "@/components/site/hero";
-import { Section, SectionHeading, Prose } from "@/components/site/section";
+import { Section, SectionHeading } from "@/components/site/section";
 import { MapBlock } from "@/components/site/map-block";
 import { LaurelDivider } from "@/components/brand/laurel";
 import { HeartShield } from "@/components/brand/heart-shield";
+import { TourForm } from "@/components/site/tour-form";
 import { identity, published } from "@/lib/content";
 import { getSiteSettings } from "@/lib/db/queries";
 
@@ -108,25 +109,26 @@ export default async function ContactPage() {
           ) : null}
         </ul>
 
-        {/*
-          The tour request form lands in Phase 6, together with the database,
-          Resend notifications and Turnstile. Until then the page offers only
-          real, working contact methods — a form that goes nowhere would be
-          worse than no form at all.
-        */}
-
         <LaurelDivider className="py-12" />
 
-        <Prose className="mx-auto text-center">
-          <HeartShield className="mx-auto mb-5 size-10" />
-          <p className="text-lead text-ink-soft">
-            Tell us a little about your loved one and what they need. There is no pressure and no
-            obligation — most families visit two or three homes before deciding.
-          </p>
+        <div className="mx-auto max-w-2xl">
+          <div className="mb-8 text-center">
+            <HeartShield className="mx-auto mb-5 size-10" />
+            <h2 id="form-heading" className="text-h2 mb-3">
+              Ask us anything
+            </h2>
+            <p className="text-lead text-ink-soft mx-auto max-w-[52ch]">
+              Tell us a little about your loved one and what they need. There is no pressure and no
+              obligation — most families visit two or three homes before deciding.
+            </p>
+          </div>
+
+          <TourForm />
+
           {closingLine ? (
-            <p className="font-script text-sage-deep mt-6 text-3xl">{closingLine}</p>
+            <p className="font-script text-sage-deep mt-10 text-center text-3xl">{closingLine}</p>
           ) : null}
-        </Prose>
+        </div>
       </Section>
 
       {address ? (
