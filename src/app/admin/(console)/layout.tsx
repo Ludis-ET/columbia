@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { AdminShell } from "@/components/admin/shell";
 import { createClient, getAdminProfile } from "@/lib/db/server";
+import { getInquiryCounts } from "@/lib/db/inquiry-counts";
 
 /**
  * The authenticated console.
@@ -21,13 +22,14 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
   }
 
   const supabase = await createClient();
-  const { count } = (await supabase
-    ?.from("inquiries")
-    .select("id", { count: "exact", head: true })
-    .eq("status", "new")) ?? { count: 0 };
+  const inquiryCounts = await getInquiryCounts(supabase);
 
   return (
-    <AdminShell role={profile.role} email={profile.email} newInquiries={count ?? 0}>
+    <AdminShell
+      role={profile.role}
+      email={profile.email}
+      inquiryCounts={inquiryCounts}
+    >
       {children}
     </AdminShell>
   );

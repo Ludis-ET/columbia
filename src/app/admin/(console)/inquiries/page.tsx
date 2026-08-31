@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/db/server";
+import { getInquiryCounts, inquiryCountLabel } from "@/lib/db/inquiry-counts";
 import { PageHeader } from "@/components/admin/cards";
 import { EmptyState } from "@/components/admin/ui";
 import { InquiryList } from "@/components/admin/inquiry-list";
@@ -14,24 +15,34 @@ export default async function InquiriesPage() {
     .order("created_at", { ascending: false })) ?? { data: [] };
 
   const inquiries = (data ?? []) as InquiryRow[];
+  const counts = await getInquiryCounts(supabase);
 
   return (
     <>
       <PageHeader
         title="Enquiries"
-        lead="Every message from the website, in one place. Nothing here is visible to the public."
-        count={`${inquiries.length} total`}
+        lead="Messages from families who used the Book a house tour form on your website. Only you can see them here."
+        count={
+          counts.total === 0
+            ? "Empty inbox"
+            : counts.new > 0
+              ? inquiryCountLabel(counts.new, "need-reply")
+              : inquiryCountLabel(counts.total)
+        }
       />
 
       {inquiries.length === 0 ? (
         <EmptyState title="No enquiries yet">
           <p>
-            When someone asks for a house tour or sends a message, it appears here, and you get an
-            email straight away.
+            When someone fills in the <strong className="font-semibold">Book a house tour</strong> form
+            on your homepage, their message lands here and you get an email straight away.
           </p>
           <p className="mt-2">
-            The tour request form goes live in the next phase of the build. Until then the website
-            offers your phone number and email address only.
+            The form lives in the Contact section at the bottom of your homepage. You can{" "}
+            <a href="/#contact" className="text-sage-deep font-semibold underline">
+              open it on your website
+            </a>{" "}
+            to see what families fill in.
           </p>
         </EmptyState>
       ) : (

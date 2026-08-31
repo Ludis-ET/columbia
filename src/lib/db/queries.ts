@@ -5,7 +5,6 @@ import type {
   AvailabilityStatus,
   CareTypeRow,
   EveryDayRow,
-  FaqRow,
   MediaRow,
   ScheduleItemRow,
   ServiceRow,
@@ -27,7 +26,6 @@ import {
 import type { CareType, EveryDayItem, ScheduleItem, Service } from "@/lib/content";
 import type { GalleryImage } from "@/components/site/gallery";
 import type { TestimonialItem } from "@/components/site/testimonial";
-import type { FaqItem } from "@/components/site/faq-accordion";
 
 /**
  * Content reads.
@@ -53,7 +51,7 @@ import type { FaqItem } from "@/components/site/faq-accordion";
  *   why-families, settings) should never be empty. Zero rows means the seed did
  *   not run or the query failed, so we fall back to the file.
  *
- *   Deliberately-empty tables (testimonials, faqs, team, media) are empty
+ *   Deliberately-empty tables (testimonials, media) are empty
  *   because the client has not supplied that content yet. Zero rows is the
  *   CORRECT answer, and falling back would be wrong. These return [] and their
  *   sections render nothing.
@@ -307,16 +305,6 @@ export const getTestimonials = cache(async (): Promise<TestimonialItem[]> => {
     .filter((r) => r.published && r.consent_on_file)
     .sort((a, b) => a.position - b.position)
     .map((r) => ({ quote: r.quote, author: r.author, relationship: r.relationship }));
-});
-
-export const getFaqs = cache(async (): Promise<FaqItem[]> => {
-  const rows = await select<FaqRow>("faqs");
-  if (!rows) return [];
-
-  return rows
-    .filter((r) => r.published)
-    .sort((a, b) => a.position - b.position)
-    .map((r) => ({ question: r.question, answer: r.answer }));
 });
 
 /**

@@ -13,8 +13,8 @@ import { saveRow, type ActionResult } from "@/app/admin/actions";
  * A list of content rows with show/hide, reorder, delete, and optional inline
  * text editing.
  *
- * Services, the daily schedule, testimonials, FAQs and team all have the same
- * shape, so they share this rather than repeating five near-identical screens.
+ * Services, the daily schedule and testimonials share this rather than
+ * repeating near-identical screens.
  * `render` supplies the per-row detail that actually differs.
  *
  * When `editableFields` is supplied, each row gets an "Edit" expand button that
@@ -143,13 +143,12 @@ function InlineEditForm({
   onSaved: (r: ActionResult) => void;
 }) {
   const [state, action, pending] = useActionState<ActionResult | null, FormData>(saveRow, null);
+  const onSavedRef = useRef(onSaved);
+  onSavedRef.current = onSaved;
 
-  // Propagate result to parent on first non-null state
-  const [lastState, setLastState] = useState<ActionResult | null>(null);
-  if (state && state !== lastState) {
-    setLastState(state);
-    onSaved(state);
-  }
+  useEffect(() => {
+    if (state) onSavedRef.current(state);
+  }, [state]);
 
   // Cmd/Ctrl+S saves. Attached to the node rather than as a JSX handler: a
   // keydown prop on a <form> trips jsx-a11y/no-noninteractive-element-interactions,

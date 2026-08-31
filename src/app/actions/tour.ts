@@ -1,6 +1,7 @@
 "use server";
 
 import { headers } from "next/headers";
+import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/db/server";
 import { getSiteSettings } from "@/lib/db/queries";
 import { sendEnquiryEmails } from "@/lib/email/send";
@@ -134,6 +135,10 @@ export async function submitTourRequest(
     console.error("[tour] insert failed:", error.message);
     return { status: "error", message: GENERIC_ERROR };
   }
+
+  revalidatePath("/admin/inquiries");
+  revalidatePath("/admin");
+  revalidatePath("/admin", "layout");
 
   // 6. Email, best effort. Never blocks the confirmation.
   try {

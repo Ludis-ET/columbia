@@ -33,7 +33,7 @@ export const INTERNAL_ROUTES = ["/specimen", "/kitchen-sink"];
  * Tier 2 routes whose shells exist but whose content is still gated on client
  * answers. These must 404 until source-of-truth.json is filled in.
  */
-export const GATED_ROUTES = ["/admissions", "/faq"];
+export const GATED_ROUTES = ["/admissions"];
 
 /**
  * Admin console. Signed-out visitors must be redirected to the login screen,
@@ -51,8 +51,5 @@ export const ADMIN_ROUTES = [
   "/admin/why-families",
   "/admin/schedule",
   "/admin/testimonials",
-  "/admin/faqs",
-  "/admin/team",
-  "/admin/pages",
   "/admin/settings",
 ];

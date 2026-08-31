@@ -158,6 +158,7 @@ export interface InquiryRow {
   relationship: string | null;
   care_needs: Record<string, unknown> | null;
   status: InquiryStatus;
+  starred: boolean;
   owner_notes: string | null;
   source: string | null;
   utm: Record<string, string> | null;

@@ -47,9 +47,6 @@ const AFFECTED: Record<string, string[]> = {
   schedule_items: ["/", "/a-day-in-our-home", "/meals", "/services"],
   media: ["/"],
   testimonials: ["/"],
-  faqs: ["/", "/faq"],
-  team: ["/"],
-  pages: ["/", "/faq", "/admissions"],
   site_copy: ["/"],
   settings: ["/", "/contact", "/about", "/our-home", "/privacy", "/accessibility", "/terms"],
   announcements: ["/"],
@@ -58,6 +55,12 @@ const AFFECTED: Record<string, string[]> = {
 
 function revalidateFor(entity: string) {
   for (const path of AFFECTED[entity] ?? ["/"]) revalidatePath(path);
+}
+
+function revalidateInquiries() {
+  revalidatePath("/admin/inquiries");
+  revalidatePath("/admin");
+  revalidatePath("/admin", "layout");
 }
 
 // ---------------------------------------------------------------------------
@@ -254,18 +257,6 @@ const CREATABLE: Record<string, (formData: FormData) => Record<string, unknown>>
     consent_on_file: formData.get("consent_on_file") === "true",
     published: false,
   }),
-  faqs: (formData) => ({
-    question: String(formData.get("question") ?? "").trim(),
-    answer: String(formData.get("answer") ?? "").trim(),
-    category: String(formData.get("category") ?? "").trim() || null,
-    published: false,
-  }),
-  team: (formData) => ({
-    name: String(formData.get("name") ?? "").trim(),
-    role: String(formData.get("role") ?? "").trim() || null,
-    bio: String(formData.get("bio") ?? "").trim() || null,
-    published: false,
-  }),
 };
 
 /** Adds a row to a table the owner fills in over time. */
@@ -284,12 +275,6 @@ export async function createRow(
   const row = build(formData);
   if (table === "testimonials" && (!row.quote || !row.author)) {
     return { ok: false, message: "A quote and a name are both required." };
-  }
-  if (table === "faqs" && (!row.question || !row.answer)) {
-    return { ok: false, message: "Both the question and the answer are required." };
-  }
-  if (table === "team" && !row.name) {
-    return { ok: false, message: "A name is required." };
   }
 
   const { data: last } = await supabase
@@ -336,7 +321,34 @@ export async function updateInquiry(
   if (error) return { ok: false, message: GENERIC_ERROR };
 
   await recordAudit("update", "inquiries", id, { status });
+  revalidateInquiries();
   return { ok: true, message: "Enquiry updated." };
+}
+
+export async function deleteInquiry(id: string): Promise<ActionResult> {
+  await requireAdmin();
+  const supabase = await createClient();
+  if (!supabase) return { ok: false, message: GENERIC_ERROR };
+
+  const { error } = await supabase.from("inquiries").delete().eq("id", id);
+  if (error) return { ok: false, message: GENERIC_ERROR };
+
+  await recordAudit("delete", "inquiries", id);
+  revalidateInquiries();
+  return { ok: true, message: "Enquiry deleted." };
+}
+
+export async function clearAllInquiries(): Promise<ActionResult> {
+  await requireAdmin();
+  const supabase = await createClient();
+  if (!supabase) return { ok: false, message: GENERIC_ERROR };
+
+  const { error } = await supabase.from("inquiries").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+  if (error) return { ok: false, message: GENERIC_ERROR };
+
+  await recordAudit("delete", "inquiries", "all");
+  revalidateInquiries();
+  return { ok: true, message: "All enquiries cleared." };
 }
 
 // ---------------------------------------------------------------------------
@@ -872,6 +884,7 @@ export async function starInquiry(id: string, starred: boolean): Promise<ActionR
 
   if (error) return { ok: false, message: GENERIC_ERROR };
 
+  revalidateInquiries();
   return { ok: true, message: starred ? "Starred." : "Unstarred." };
 }
 
@@ -938,6 +951,83 @@ export async function bulkPublishPhotos(ids: string[], published: boolean): Prom
     message: published
       ? `${ids.length} photo${ids.length === 1 ? "" : "s"} now showing on the website.`
       : `${ids.length} photo${ids.length === 1 ? "" : "s"} hidden from the website.`,
+  };
+}
+
+export async function bulkDeletePhotos(ids: string[]): Promise<ActionResult> {
+  await requireAdmin();
+  const supabase = await createClient();
+  if (!supabase) return { ok: false, message: GENERIC_ERROR };
+  if (ids.length === 0) return { ok: false, message: "No photos selected." };
+
+  const { data: rows, error: readError } = await supabase
+    .from("media")
+    .select("id, storage_path")
+    .in("id", ids);
+
+  if (readError || !rows?.length) return { ok: false, message: GENERIC_ERROR };
+
+  const { error } = await supabase.from("media").delete().in("id", ids);
+  if (error) return { ok: false, message: GENERIC_ERROR };
+
+  const paths = rows.map((row) => row.storage_path).filter(Boolean);
+  if (paths.length > 0) {
+    await supabase.storage.from("media").remove(paths);
+  }
+
+  await recordAudit("delete", "media", ids.join(","), { count: ids.length });
+  revalidateFor("media");
+
+  return {
+    ok: true,
+    message: `${ids.length} photo${ids.length === 1 ? "" : "s"} deleted.`,
+  };
+}
+
+export async function bulkTagPhotos(
+  ids: string[],
+  tags: string[],
+  mode: "add" | "remove",
+): Promise<ActionResult> {
+  await requireAdmin();
+  const supabase = await createClient();
+  if (!supabase) return { ok: false, message: GENERIC_ERROR };
+  if (ids.length === 0) return { ok: false, message: "No photos selected." };
+  if (tags.length === 0) return { ok: false, message: "Choose at least one tag." };
+
+  const { data: rows, error: readError } = await supabase
+    .from("media")
+    .select("id, placements, category")
+    .in("id", ids);
+
+  if (readError || !rows?.length) return { ok: false, message: GENERIC_ERROR };
+
+  for (const row of rows) {
+    let placements = getPlacements(row);
+    if (mode === "add") {
+      for (const tag of tags) {
+        if (!placements.includes(tag)) placements = [...placements, tag];
+      }
+    } else {
+      placements = placements.filter((p) => !tags.includes(p));
+    }
+
+    const category = syncLegacyCategory(placements);
+    const { error } = await supabase
+      .from("media")
+      .update({ placements, category })
+      .eq("id", row.id);
+
+    if (error) return { ok: false, message: GENERIC_ERROR };
+  }
+
+  await recordAudit("update", "media", ids.join(","), { tags, mode, count: ids.length });
+  revalidateFor("media");
+
+  const verb = mode === "add" ? "Tagged" : "Removed tags from";
+  return {
+    ok: true,
+    message: `${verb} ${ids.length} photo${ids.length === 1 ? "" : "s"}.`,
   };
 }
 

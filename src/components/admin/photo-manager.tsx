@@ -13,13 +13,16 @@ import {
   Pencil,
   Search,
   Square,
+  Tag,
   Trash2,
   Upload,
   UtensilsCrossed,
   X,
 } from "lucide-react";
 import {
+  bulkDeletePhotos,
   bulkPublishPhotos,
+  bulkTagPhotos,
   deletePhoto,
   togglePhotoPlacement,
   togglePublished,
@@ -54,11 +57,15 @@ const FILTER_TABS = [
 // ---------------------------------------------------------------------------
 
 function ConfirmDialog({
+  title = "Delete photo",
   message,
+  confirmLabel = "Delete",
   onConfirm,
   onCancel,
 }: {
+  title?: string;
   message: string;
+  confirmLabel?: string;
   onConfirm: () => void;
   onCancel: () => void;
 }) {
@@ -71,12 +78,12 @@ function ConfirmDialog({
     >
       <div className="bg-paper-raise border-rule w-full max-w-sm rounded-xl border p-6 shadow-xl">
         <h2 id="confirm-title" className="mb-3 font-semibold">
-          Delete photo
+          {title}
         </h2>
         <p className="text-stone mb-5 text-[0.9375rem]">{message}</p>
         <div className="flex gap-3">
           <Button variant="destructive" onClick={onConfirm} className="flex-1">
-            Delete
+            {confirmLabel}
           </Button>
           <Button variant="outline" onClick={onCancel} className="flex-1">
             Cancel
@@ -98,7 +105,8 @@ export function PhotoManager({ initialPhotos }: { initialPhotos: AdminPhoto[] })
   const [activeFilter, setActiveFilter] = useState<string>("all");
   const [query, setQuery] = useState("");
   const [pending, start] = useTransition();
-  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<string | "bulk" | null>(null);
+  const [tagMode, setTagMode] = useState<"add" | "remove">("add");
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
@@ -171,6 +179,66 @@ export function PhotoManager({ initialPhotos }: { initialPhotos: AdminPhoto[] })
     });
   }
 
+  function selectAllVisible() {
+    setSelected(new Set(visiblePhotos.map((p) => p.id)));
+    setSelectMode(true);
+  }
+
+  function clearSelection() {
+    setSelected(new Set());
+    setSelectMode(false);
+  }
+
+  function runBulkDelete() {
+    const ids = Array.from(selected);
+    run(
+      () => bulkDeletePhotos(ids),
+      () => {
+        setPhotos((prev) => prev.filter((p) => !selected.has(p.id)));
+        if (editing && selected.has(editing.id)) setEditing(null);
+        clearSelection();
+      },
+    );
+  }
+
+  function bulkToggleTag(placement: string) {
+    const ids = Array.from(selected);
+
+    run(
+      () => bulkTagPhotos(ids, [placement], tagMode),
+      () => {
+        setPhotos((prev) =>
+          prev.map((p) => {
+            if (!selected.has(p.id)) return p;
+            let placements = getPlacements(p);
+            if (tagMode === "add") {
+              if (!placements.includes(placement)) placements = [...placements, placement];
+            } else {
+              placements = placements.filter((item) => item !== placement);
+            }
+            return { ...p, placements };
+          }),
+        );
+      },
+    );
+  }
+
+  /** Tags shared by every selected photo — shown as active in bulk tag mode. */
+  const sharedTags = useMemo(() => {
+    if (selected.size === 0) return new Set<string>();
+    const ids = Array.from(selected);
+    const first = photos.find((p) => p.id === ids[0]);
+    if (!first) return new Set<string>();
+    return new Set(
+      getPlacements(first).filter((tag) =>
+        ids.every((id) => {
+          const photo = photos.find((p) => p.id === id);
+          return photo && hasPlacement(photo, tag);
+        }),
+      ),
+    );
+  }, [photos, selected]);
+
   function runBulk(publishedVal: boolean) {
     run(
       () => bulkPublishPhotos(Array.from(selected), publishedVal),
@@ -178,8 +246,7 @@ export function PhotoManager({ initialPhotos }: { initialPhotos: AdminPhoto[] })
         setPhotos((prev) =>
           prev.map((p) => (selected.has(p.id) ? { ...p, published: publishedVal } : p)),
         );
-        setSelected(new Set());
-        setSelectMode(false);
+        clearSelection();
       },
     );
   }
@@ -210,8 +277,18 @@ export function PhotoManager({ initialPhotos }: { initialPhotos: AdminPhoto[] })
 
       {confirmDelete ? (
         <ConfirmDialog
-          message="This will permanently delete the photo from your library and storage. This cannot be undone."
+          title={confirmDelete === "bulk" ? "Delete selected photos" : "Delete photo"}
+          message={
+            confirmDelete === "bulk"
+              ? `Delete ${selected.size} photo${selected.size === 1 ? "" : "s"} from your library and storage? This cannot be undone.`
+              : "This will permanently delete the photo from your library and storage. This cannot be undone."
+          }
           onConfirm={() => {
+            if (confirmDelete === "bulk") {
+              setConfirmDelete(null);
+              runBulkDelete();
+              return;
+            }
             const id = confirmDelete;
             setConfirmDelete(null);
             run(
@@ -296,8 +373,8 @@ export function PhotoManager({ initialPhotos }: { initialPhotos: AdminPhoto[] })
           <button
             type="button"
             onClick={() => {
-              setSelectMode((v) => !v);
-              setSelected(new Set());
+              if (selectMode) clearSelection();
+              else setSelectMode(true);
             }}
             className={cn(
               "inline-flex min-h-10 items-center gap-1.5 rounded-lg border px-3 text-[0.875rem] transition-colors",
@@ -311,26 +388,111 @@ export function PhotoManager({ initialPhotos }: { initialPhotos: AdminPhoto[] })
           </button>
         </div>
 
-        {selectMode && selected.size > 0 ? (
-          <div className="bg-sage-wash border-sage mb-5 flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3">
-            <span className="text-sage-deep font-semibold">{selected.size} selected</span>
-            <Button size="dense" onClick={() => runBulk(true)} disabled={pending}>
-              Show on website
-            </Button>
-            <Button size="dense" variant="outline" onClick={() => runBulk(false)} disabled={pending}>
-              Hide
-            </Button>
+        {selectMode ? (
+          <div className="mb-5 flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={() => {
-                setSelected(new Set());
-                setSelectMode(false);
-              }}
-              className="text-stone hover:text-ink ml-auto inline-flex min-h-10 items-center gap-1"
+              onClick={selectAllVisible}
+              disabled={visiblePhotos.length === 0}
+              className="text-sage-deep hover:text-ink inline-flex min-h-10 items-center text-[0.875rem] font-semibold underline disabled:opacity-50"
             >
-              <X className="size-4" aria-hidden="true" />
-              Cancel
+              Select all {activeFilter === "all" ? "" : "visible"} ({visiblePhotos.length})
             </button>
+            {selected.size > 0 ? (
+              <button
+                type="button"
+                onClick={() => setSelected(new Set())}
+                className="text-stone hover:text-ink inline-flex min-h-10 items-center text-[0.875rem] underline"
+              >
+                Clear selection
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+
+        {selectMode && selected.size > 0 ? (
+          <div className="bg-sage-wash border-sage mb-5 grid gap-4 rounded-xl border px-4 py-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-sage-deep font-semibold">{selected.size} selected</span>
+              <Button size="dense" onClick={() => runBulk(true)} disabled={pending}>
+                Show on website
+              </Button>
+              <Button size="dense" variant="outline" onClick={() => runBulk(false)} disabled={pending}>
+                Hide
+              </Button>
+              <Button
+                size="dense"
+                variant="destructive"
+                onClick={() => setConfirmDelete("bulk")}
+                disabled={pending}
+              >
+                <Trash2 className="size-4" aria-hidden="true" />
+                Delete
+              </Button>
+              <button
+                type="button"
+                onClick={clearSelection}
+                className="text-stone hover:text-ink ml-auto inline-flex min-h-10 items-center gap-1"
+              >
+                <X className="size-4" aria-hidden="true" />
+                Done
+              </button>
+            </div>
+
+            <div className="border-sage/40 border-t pt-4">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Tag className="text-sage-deep size-4" aria-hidden="true" />
+                  <p className="font-semibold">Tag selected photos</p>
+                </div>
+                <div
+                  className="border-rule inline-flex rounded-lg border p-0.5"
+                  role="group"
+                  aria-label="Tag mode"
+                >
+                  <button
+                    type="button"
+                    aria-pressed={tagMode === "add"}
+                    onClick={() => setTagMode("add")}
+                    className={cn(
+                      "rounded-md px-3 py-1.5 text-[0.8125rem] font-semibold transition-colors",
+                      tagMode === "add"
+                        ? "bg-paper-raise text-sage-deep shadow-sm"
+                        : "text-stone hover:text-ink",
+                    )}
+                  >
+                    Add tags
+                  </button>
+                  <button
+                    type="button"
+                    aria-pressed={tagMode === "remove"}
+                    onClick={() => setTagMode("remove")}
+                    className={cn(
+                      "rounded-md px-3 py-1.5 text-[0.8125rem] font-semibold transition-colors",
+                      tagMode === "remove"
+                        ? "bg-paper-raise text-sage-deep shadow-sm"
+                        : "text-stone hover:text-ink",
+                    )}
+                  >
+                    Remove tags
+                  </button>
+                </div>
+              </div>
+              <p className="text-stone mb-3 text-[0.8125rem]">
+                {tagMode === "add"
+                  ? "Tap a tag to add it to every selected photo."
+                  : "Tap a tag to remove it from every selected photo."}
+                {sharedTags.size > 0
+                  ? " Tags on all selected photos appear filled in."
+                  : null}
+              </p>
+              <PlacementPicker
+                selected={sharedTags}
+                onToggle={bulkToggleTag}
+                disabled={pending}
+                compact
+              />
+            </div>
           </div>
         ) : null}
 

@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { AlertCircle, ArrowRight, CheckCircle2, ImageIcon, Settings } from "lucide-react";
 import { createClient, getAdminProfile } from "@/lib/db/server";
+import { getInquiryCounts, inquiryCountLabel } from "@/lib/db/inquiry-counts";
 import { AvailabilityForm } from "@/components/admin/availability-form";
 import { AdminCard } from "@/components/admin/cards";
-import type { AvailabilityStatus } from "@/lib/db/database.types";
+import type { AvailabilityStatus, InquiryStatus } from "@/lib/db/database.types";
+import { cn } from "@/lib/utils";
 
 export const metadata = { title: "Dashboard" };
 
@@ -47,15 +49,10 @@ export default async function AdminDashboard() {
   const supabase = await createClient();
   const profile = await getAdminProfile();
 
-  const [availability, newCount, monthCount, pipeline, photoStats, settingsRow, recentActivity] =
+  const [availability, inquiryCounts, photoStats, settingsRow, recentActivity] =
     await Promise.all([
       supabase?.from("availability").select("*").eq("id", "singleton").maybeSingle(),
-      supabase?.from("inquiries").select("id", { count: "exact", head: true }).eq("status", "new"),
-      supabase
-        ?.from("inquiries")
-        .select("id", { count: "exact", head: true })
-        .gte("created_at", new Date(Date.now() - 30 * 86_400_000).toISOString()),
-      supabase?.from("inquiries").select("status"),
+      getInquiryCounts(supabase),
       supabase?.from("media").select("id, published"),
       supabase?.from("site_settings").select("*").eq("id", "singleton").maybeSingle(),
       supabase
@@ -65,11 +62,7 @@ export default async function AdminDashboard() {
         .limit(5),
     ]);
 
-  const statuses = (pipeline?.data ?? []) as { status: string }[];
-  const counts = statuses.reduce<Record<string, number>>((acc, r) => {
-    acc[r.status] = (acc[r.status] ?? 0) + 1;
-    return acc;
-  }, {});
+  const counts = inquiryCounts.byStatus;
 
   const avail = availability?.data as
     { status: AvailabilityStatus; note: string | null; updated_at: string } | null | undefined;
@@ -99,7 +92,7 @@ export default async function AdminDashboard() {
     created_at: string;
   }[];
 
-  const PIPELINE: { key: string; label: string; tone?: "new" | "ok" }[] = [
+  const PIPELINE: { key: InquiryStatus; label: string; tone?: "new" | "ok" }[] = [
     { key: "new", label: "New", tone: "new" },
     { key: "contacted", label: "Contacted" },
     { key: "toured", label: "Toured" },
@@ -116,9 +109,11 @@ export default async function AdminDashboard() {
           {profile?.fullName ? `, ${profile.fullName.split(" ")[0]}` : ""}
         </h1>
         <p className="text-stone mt-2">
-          {newCount?.count
-            ? `${newCount.count} ${newCount.count === 1 ? "enquiry needs" : "enquiries need"} a reply.`
-            : "Nothing needs your attention right now."}
+          {inquiryCounts.new > 0
+            ? `${inquiryCountLabel(inquiryCounts.new, "need-reply")}.`
+            : inquiryCounts.total > 0
+              ? `${inquiryCountLabel(inquiryCounts.total)} in your inbox. Nothing waiting for a reply.`
+              : "Nothing needs your attention right now."}
         </p>
       </header>
 
@@ -200,12 +195,25 @@ export default async function AdminDashboard() {
             href="/admin/inquiries"
             className="border-rule bg-paper-raise hover:border-sage group flex min-h-16 items-center gap-3 rounded-lg border p-4 transition-colors"
           >
-            <span className="bg-sage-wash text-sage-deep flex size-11 items-center justify-center rounded-md font-bold tabular-nums">
-              {newCount?.count ?? 0}
+            <span
+              className={cn(
+                "flex size-11 items-center justify-center rounded-md font-bold tabular-nums",
+                inquiryCounts.new > 0
+                  ? "bg-[#A93659]/12 text-[#8B2D49]"
+                  : "bg-sage-wash text-sage-deep",
+              )}
+            >
+              {inquiryCounts.new > 0 ? inquiryCounts.new : inquiryCounts.total}
             </span>
             <span>
               <span className="group-hover:text-sage-deep block font-semibold">Enquiries</span>
-              <span className="text-stone text-[0.875rem]">Families waiting to hear back</span>
+              <span className="text-stone text-[0.875rem]">
+                {inquiryCounts.new > 0
+                  ? inquiryCountLabel(inquiryCounts.new, "need-reply")
+                  : inquiryCounts.total > 0
+                    ? inquiryCountLabel(inquiryCounts.total)
+                    : "No messages yet"}
+              </span>
             </span>
           </Link>
         </div>
@@ -229,17 +237,20 @@ export default async function AdminDashboard() {
           Last 30 days
         </h2>
         <div className="grid gap-3 sm:grid-cols-3">
-          <Stat label="New enquiries" value={newCount?.count ?? 0} detail="Waiting for a reply" />
           <Stat
-            label="Enquiries received"
-            value={monthCount?.count ?? 0}
-            detail="In the last month"
+            label="Needs a reply"
+            value={inquiryCounts.new}
+            detail={inquiryCountLabel(inquiryCounts.new, "new")}
           />
           <Stat
-            label="Availability updated"
-            value={sinceLabel(avail?.updated_at ?? null) || "-"}
-            detail="Shown on the website"
-            small
+            label="Total enquiries"
+            value={inquiryCounts.total}
+            detail={inquiryCountLabel(inquiryCounts.total)}
+          />
+          <Stat
+            label="Received this month"
+            value={inquiryCounts.last30Days}
+            detail={inquiryCountLabel(inquiryCounts.last30Days)}
           />
         </div>
       </section>
@@ -248,6 +259,11 @@ export default async function AdminDashboard() {
       <section className="mb-10" aria-labelledby="pipeline-heading">
         <h2 id="pipeline-heading" className="label text-stone mb-3">
           Enquiry pipeline
+          {inquiryCounts.total > 0 ? (
+            <span className="text-stone/80 ml-2 font-normal normal-case">
+              · {inquiryCountLabel(inquiryCounts.total)}
+            </span>
+          ) : null}
         </h2>
         <div className="flex flex-wrap gap-2">
           {PIPELINE.map(({ key, label, tone }) => (

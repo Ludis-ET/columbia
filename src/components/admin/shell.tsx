@@ -5,10 +5,8 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   CalendarDays,
-  CircleHelp,
   Clock,
   ExternalLink,
-  FileText,
   Heart,
   ImageIcon,
   Inbox,
@@ -29,6 +27,7 @@ import { AdminFooter } from "@/components/admin/footer";
 import { Monogram } from "@/components/brand/monogram";
 import { HeartShield } from "@/components/brand/heart-shield";
 import { adminNav, navGroupsFor, type AdminNavItem } from "@/lib/admin-nav";
+import { inquiryCountLabel, type InquiryCounts } from "@/lib/db/inquiry-counts";
 import { signOut } from "@/app/admin/actions";
 import { cn } from "@/lib/utils";
 
@@ -44,9 +43,6 @@ const NAV_ICONS: Record<string, LucideIcon> = {
   "/admin/why-families": Heart,
   "/admin/schedule": CalendarDays,
   "/admin/testimonials": Users,
-  "/admin/faqs": CircleHelp,
-  "/admin/team": Users,
-  "/admin/pages": FileText,
   "/admin/announcements": Megaphone,
   "/admin/hours": Clock,
   "/admin/settings": Settings,
@@ -72,14 +68,15 @@ function currentPageTitle(pathname: string): string {
 export function AdminShell({
   role,
   email,
-  newInquiries,
+  inquiryCounts,
   children,
 }: {
   role: "owner" | "editor";
   email: string;
-  newInquiries: number;
+  inquiryCounts: InquiryCounts;
   children: React.ReactNode;
 }) {
+  const { new: newInquiries, total: totalInquiries } = inquiryCounts;
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const groups = navGroupsFor(role);
@@ -138,8 +135,15 @@ export function AdminShell({
                       </span>
                       <span className="flex-1">{item.label}</span>
                       {badge ? (
-                        <span className="label rounded-full bg-[#A93659] px-2 py-0.5 text-[0.625rem] text-white tabular-nums">
+                        <span
+                          className="label rounded-full bg-[#A93659] px-2 py-0.5 text-[0.625rem] text-white tabular-nums"
+                          title={inquiryCountLabel(badge, "new")}
+                        >
                           {badge}
+                        </span>
+                      ) : item.href === "/admin/inquiries" && totalInquiries > 0 ? (
+                        <span className="label text-[0.625rem] text-white/45 tabular-nums">
+                          {totalInquiries}
                         </span>
                       ) : null}
                     </Link>
@@ -212,8 +216,16 @@ export function AdminShell({
           <Link
             href="/admin/inquiries"
             className="label rounded-full bg-[#A93659] px-2.5 py-1 text-[0.6875rem] text-white tabular-nums"
+            title={inquiryCountLabel(newInquiries, "need-reply")}
           >
-            {newInquiries} new
+            {inquiryCountLabel(newInquiries, "new")}
+          </Link>
+        ) : totalInquiries > 0 ? (
+          <Link
+            href="/admin/inquiries"
+            className="label text-sage-deep rounded-full border border-sage/30 bg-sage-wash px-2.5 py-1 text-[0.6875rem] tabular-nums"
+          >
+            {inquiryCountLabel(totalInquiries)}
           </Link>
         ) : null}
       </header>
@@ -270,10 +282,15 @@ export function AdminShell({
               className="mt-4 flex items-center gap-2 rounded-lg border border-[#A93659]/40 bg-[#A93659]/15 px-3 py-2 text-[0.8125rem] text-white transition-colors hover:bg-[#A93659]/25"
             >
               <Inbox className="size-4 shrink-0" aria-hidden="true" />
-              <span>
-                <strong className="tabular-nums">{newInquiries}</strong>{" "}
-                {newInquiries === 1 ? "enquiry needs" : "enquiries need"} a reply
-              </span>
+              <span>{inquiryCountLabel(newInquiries, "need-reply")}</span>
+            </Link>
+          ) : totalInquiries > 0 ? (
+            <Link
+              href="/admin/inquiries"
+              className="mt-4 flex items-center gap-2 rounded-lg border border-white/10 bg-white/6 px-3 py-2 text-[0.8125rem] text-white/85 transition-colors hover:bg-white/10"
+            >
+              <Inbox className="size-4 shrink-0" aria-hidden="true" />
+              <span>{inquiryCountLabel(totalInquiries)} in your inbox</span>
             </Link>
           ) : null}
         </div>
