@@ -3,15 +3,19 @@
 import Image from "next/image";
 import { useActionState, useEffect, useMemo, useState, useTransition } from "react";
 import {
+  CheckSquare,
   ImageIcon,
   Loader2,
   Pencil,
+  Square,
   Trash2,
   Upload,
   UtensilsCrossed,
+  X,
 } from "lucide-react";
 import {
   assignSectionPhoto,
+  bulkPublishPhotos,
   deletePhoto,
   togglePublished,
   updatePhoto,
@@ -23,24 +27,69 @@ import { AdminIconButton, Toast } from "@/components/admin/ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { MediaRow } from "@/lib/db/database.types";
 import {
   GALLERY_CATEGORIES,
   SECTION_SLOT_LABELS,
   SECTION_SLOTS,
   isSectionSlot,
-  mediaPublicUrl,
+  type AdminPhoto,
   type SectionSlot,
 } from "@/lib/media";
 import { cn } from "@/lib/utils";
 
-export type AdminPhoto = MediaRow & { url: string | null };
+// ---------------------------------------------------------------------------
+// Confirm dialog (replaces window.confirm for delete actions)
+// ---------------------------------------------------------------------------
+
+function ConfirmDialog({
+  message,
+  onConfirm,
+  onCancel,
+}: {
+  message: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-ink/50 p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="confirm-title"
+    >
+      <div className="bg-paper-raise border-rule w-full max-w-sm rounded-xl border p-6 shadow-xl">
+        <h2 id="confirm-title" className="mb-3 font-semibold">
+          Delete photo
+        </h2>
+        <p className="text-stone mb-5 text-[0.9375rem]">{message}</p>
+        <div className="flex gap-3">
+          <Button variant="destructive" onClick={onConfirm} className="flex-1">
+            Delete
+          </Button>
+          <Button variant="outline" onClick={onCancel} className="flex-1">
+            Cancel
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Main photo manager
+// ---------------------------------------------------------------------------
 
 export function PhotoManager({ initialPhotos }: { initialPhotos: AdminPhoto[] }) {
   const [photos, setPhotos] = useState(initialPhotos);
   const [toast, setToast] = useState<ActionResult | null>(null);
   const [editing, setEditing] = useState<AdminPhoto | null>(null);
+  const [activeCategory, setActiveCategory] = useState<string>("all");
   const [pending, start] = useTransition();
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+
+  // Bulk selection state
+  const [selectMode, setSelectMode] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const slots = useMemo(() => {
     const map: Record<SectionSlot, AdminPhoto | null> = { hero: null, meals: null };
@@ -56,8 +105,26 @@ export function PhotoManager({ initialPhotos }: { initialPhotos: AdminPhoto[] })
     [photos],
   );
 
+  // Category counts for filter tabs
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = { all: galleryPhotos.length };
+    for (const cat of GALLERY_CATEGORIES) {
+      counts[cat] = galleryPhotos.filter((p) => p.category === cat).length;
+    }
+    counts["uncategorised"] = galleryPhotos.filter((p) => !p.category).length;
+    return counts;
+  }, [galleryPhotos]);
+
+  const visiblePhotos = useMemo(() => {
+    if (activeCategory === "all") return galleryPhotos;
+    if (activeCategory === "uncategorised") return galleryPhotos.filter((p) => !p.category);
+    return galleryPhotos.filter((p) => p.category === activeCategory);
+  }, [galleryPhotos, activeCategory]);
+
   function announce(result: ActionResult) {
     setToast(result);
+    // Auto-dismiss success toasts after 4 s
+    if (result.ok) setTimeout(() => setToast(null), 4000);
   }
 
   function refreshPhoto(id: string, patch: Partial<AdminPhoto>) {
@@ -66,6 +133,7 @@ export function PhotoManager({ initialPhotos }: { initialPhotos: AdminPhoto[] })
 
   function removePhoto(id: string) {
     setPhotos((prev) => prev.filter((p) => p.id !== id));
+    setSelected((prev) => { const s = new Set(prev); s.delete(id); return s; });
   }
 
   function run(fn: () => Promise<ActionResult>, onOk?: () => void) {
@@ -76,10 +144,56 @@ export function PhotoManager({ initialPhotos }: { initialPhotos: AdminPhoto[] })
     });
   }
 
+  function toggleSelect(id: string) {
+    setSelected((prev) => {
+      const s = new Set(prev);
+      if (s.has(id)) s.delete(id);
+      else s.add(id);
+      return s;
+    });
+  }
+
+  function runBulk(publishedVal: boolean) {
+    run(
+      () => bulkPublishPhotos(Array.from(selected), publishedVal),
+      () => {
+        setPhotos((prev) =>
+          prev.map((p) => (selected.has(p.id) ? { ...p, published: publishedVal } : p)),
+        );
+        setSelected(new Set());
+        setSelectMode(false);
+      },
+    );
+  }
+
   return (
     <div className="grid gap-8">
       <Toast result={toast} />
 
+      {confirmDelete ? (
+        <ConfirmDialog
+          message="This will permanently delete the photo from your library and storage. This cannot be undone."
+          onConfirm={() => {
+            const id = confirmDelete;
+            setConfirmDelete(null);
+            run(() => deletePhoto(id), () => {
+              removePhoto(id);
+              if (editing?.id === id) setEditing(null);
+            });
+          }}
+          onCancel={() => setConfirmDelete(null)}
+        />
+      ) : null}
+
+      {/* Upload — top of page, always visible */}
+      <AdminSection
+        title="Upload a photo"
+        lead="JPEG, PNG, WebP or AVIF, up to 8 MB. Every photo needs alt text before it can be saved."
+      >
+        <UploadForm />
+      </AdminSection>
+
+      {/* Section slots */}
       <AdminSection
         title="Section images"
         lead="These two photographs appear outside the gallery — at the top of the home page and beside the meals text."
@@ -115,29 +229,105 @@ export function PhotoManager({ initialPhotos }: { initialPhotos: AdminPhoto[] })
         </div>
       </AdminSection>
 
-      <AdminSection
-        title="Upload a photo"
-        lead="JPEG, PNG, WebP or AVIF, up to 8 MB. Every photo needs alt text before it can be saved."
-      >
-        <UploadForm />
-      </AdminSection>
-
+      {/* Gallery with category tabs */}
       <AdminSection
         title="Gallery"
         lead={`${galleryPhotos.filter((p) => p.published).length} of ${galleryPhotos.length} showing on the website`}
       >
+        {/* Category filter tabs */}
+        {galleryPhotos.length > 0 ? (
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div
+              className="flex flex-wrap gap-1.5"
+              role="group"
+              aria-label="Filter by category"
+            >
+              {[
+                { id: "all", label: "All" },
+                ...GALLERY_CATEGORIES.map((c) => ({ id: c, label: c })),
+                { id: "uncategorised", label: "Uncategorised" },
+              ]
+                .filter(({ id }) => id === "all" || (categoryCounts[id] ?? 0) > 0)
+                .map(({ id, label }) => (
+                  <button
+                    key={id}
+                    type="button"
+                    aria-pressed={activeCategory === id}
+                    onClick={() => setActiveCategory(id)}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[0.875rem] transition-colors",
+                      activeCategory === id
+                        ? "border-sage bg-sage-wash text-sage-deep font-semibold"
+                        : "border-rule text-stone hover:border-sage/60",
+                    )}
+                  >
+                    {label}
+                    <span className="tabular-nums text-[0.75rem]">
+                      ({categoryCounts[id] ?? 0})
+                    </span>
+                  </button>
+                ))}
+            </div>
+
+            {/* Bulk select toggle */}
+            <button
+              type="button"
+              onClick={() => { setSelectMode((v) => !v); setSelected(new Set()); }}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-[0.875rem] transition-colors",
+                selectMode
+                  ? "border-sage bg-sage-wash text-sage-deep font-semibold"
+                  : "border-rule text-stone hover:border-sage/60",
+              )}
+            >
+              {selectMode ? <CheckSquare className="size-4" /> : <Square className="size-4" />}
+              {selectMode ? "Selecting…" : "Select"}
+            </button>
+          </div>
+        ) : null}
+
+        {/* Bulk action bar */}
+        {selectMode && selected.size > 0 ? (
+          <div className="bg-sage-wash border-sage mb-4 flex flex-wrap items-center gap-3 rounded-lg border px-4 py-3">
+            <span className="text-sage-deep font-semibold">
+              {selected.size} selected
+            </span>
+            <Button size="dense" onClick={() => runBulk(true)} disabled={pending}>
+              Publish all
+            </Button>
+            <Button size="dense" variant="outline" onClick={() => runBulk(false)} disabled={pending}>
+              Hide all
+            </Button>
+            <button
+              type="button"
+              onClick={() => { setSelected(new Set()); setSelectMode(false); }}
+              className="text-stone ml-auto hover:text-ink"
+            >
+              <X className="size-4" aria-hidden="true" />
+              <span className="sr-only">Cancel selection</span>
+            </button>
+          </div>
+        ) : null}
+
         {galleryPhotos.length === 0 ? (
           <AdminCard className="border-dashed p-10 text-center">
             <ImageIcon className="text-stone mx-auto mb-3 size-10" aria-hidden="true" />
             <p className="text-stone">Upload photos above to build the gallery.</p>
           </AdminCard>
+        ) : visiblePhotos.length === 0 ? (
+          <AdminCard className="border-dashed p-10 text-center">
+            <p className="text-stone">No photos in this category yet.</p>
+          </AdminCard>
         ) : (
           <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {galleryPhotos.map((photo) => (
+            {visiblePhotos.map((photo) => (
               <li key={photo.id}>
                 <PhotoCard
                   photo={photo}
                   pending={pending}
+                  selectMode={selectMode}
+                  selected={selected.has(photo.id)}
+                  onSelect={() => toggleSelect(photo.id)}
                   onEdit={() => setEditing(photo)}
                   onToggle={() =>
                     run(
@@ -145,12 +335,7 @@ export function PhotoManager({ initialPhotos }: { initialPhotos: AdminPhoto[] })
                       () => refreshPhoto(photo.id, { published: !photo.published }),
                     )
                   }
-                  onDelete={() =>
-                    run(() => deletePhoto(photo.id), () => {
-                      removePhoto(photo.id);
-                      if (editing?.id === photo.id) setEditing(null);
-                    })
-                  }
+                  onDelete={() => setConfirmDelete(photo.id)}
                 />
               </li>
             ))}
@@ -321,12 +506,18 @@ function UploadForm() {
 function PhotoCard({
   photo,
   pending,
+  selectMode,
+  selected,
+  onSelect,
   onEdit,
   onToggle,
   onDelete,
 }: {
   photo: AdminPhoto;
   pending: boolean;
+  selectMode: boolean;
+  selected: boolean;
+  onSelect: () => void;
   onEdit: () => void;
   onToggle: () => void;
   onDelete: () => void;
@@ -334,7 +525,12 @@ function PhotoCard({
   const blocked = photo.contains_people && !photo.release_on_file;
 
   return (
-    <AdminCard className="overflow-hidden p-0">
+    <AdminCard
+      className={cn(
+        "overflow-hidden p-0 transition-all",
+        selected && "ring-2 ring-sage ring-offset-2",
+      )}
+    >
       <div className="relative aspect-[4/3] bg-sage-wash">
         {photo.url ? (
           <Image src={photo.url} alt="" fill className="object-cover" sizes="320px" />
@@ -351,6 +547,25 @@ function PhotoCard({
         >
           {photo.published ? "Live" : "Hidden"}
         </span>
+
+        {/* Bulk select overlay */}
+        {selectMode ? (
+          <button
+            type="button"
+            onClick={onSelect}
+            className="absolute inset-0 flex items-end justify-end p-2"
+            aria-label={selected ? "Deselect photo" : "Select photo"}
+          >
+            <span className={cn(
+              "flex size-6 items-center justify-center rounded border-2 transition-colors",
+              selected
+                ? "border-sage bg-sage text-white"
+                : "border-white bg-white/30 backdrop-blur-sm",
+            )}>
+              {selected ? <CheckSquare className="size-4" /> : null}
+            </span>
+          </button>
+        ) : null}
       </div>
       <div className="grid gap-2 p-4">
         <p className="line-clamp-1 font-semibold">{photo.caption || "Untitled"}</p>
@@ -361,27 +576,29 @@ function PhotoCard({
         {blocked ? (
           <p className="text-[0.8125rem] text-[var(--warn)]">Needs a signed release</p>
         ) : null}
-        <div className="mt-1 flex flex-wrap gap-1">
-          <AdminIconButton label="Edit" onClick={onEdit} disabled={pending}>
-            <Pencil className="size-4" aria-hidden="true" />
-          </AdminIconButton>
-          <button
-            type="button"
-            disabled={pending || blocked}
-            onClick={onToggle}
-            className={cn(
-              "inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded border px-3 text-[0.8125rem] font-semibold",
-              photo.published
-                ? "border-sage bg-sage-wash text-sage-deep"
-                : "border-rule text-stone",
-            )}
-          >
-            {photo.published ? "On site" : "Show on site"}
-          </button>
-          <AdminIconButton label="Delete" onClick={onDelete} disabled={pending} destructive>
-            <Trash2 className="size-4" aria-hidden="true" />
-          </AdminIconButton>
-        </div>
+        {!selectMode ? (
+          <div className="mt-1 flex flex-wrap gap-1">
+            <AdminIconButton label="Edit" onClick={onEdit} disabled={pending}>
+              <Pencil className="size-4" aria-hidden="true" />
+            </AdminIconButton>
+            <button
+              type="button"
+              disabled={pending || blocked}
+              onClick={onToggle}
+              className={cn(
+                "inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded border px-3 text-[0.8125rem] font-semibold",
+                photo.published
+                  ? "border-sage bg-sage-wash text-sage-deep"
+                  : "border-rule text-stone",
+              )}
+            >
+              {photo.published ? "On site" : "Show on site"}
+            </button>
+            <AdminIconButton label="Delete" onClick={onDelete} disabled={pending} destructive>
+              <Trash2 className="size-4" aria-hidden="true" />
+            </AdminIconButton>
+          </div>
+        ) : null}
       </div>
     </AdminCard>
   );
@@ -525,11 +742,4 @@ function PrivacyFields({
       </div>
     </fieldset>
   );
-}
-
-export function mapAdminPhotos(rows: MediaRow[]): AdminPhoto[] {
-  return rows.map((row) => ({
-    ...row,
-    url: mediaPublicUrl(row.storage_path),
-  }));
 }

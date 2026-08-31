@@ -2,25 +2,27 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   CalendarDays,
-  CircleHelp,
+  Clock,
   ExternalLink,
   ImageIcon,
   Inbox,
   LayoutDashboard,
   LogOut,
+  Megaphone,
   Menu,
   Settings,
   Sparkles,
   Stethoscope,
-  Users,
   X,
   type LucideIcon,
 } from "lucide-react";
+import { AdminFooter } from "@/components/admin/footer";
 import { Monogram } from "@/components/brand/monogram";
-import { navFor, type AdminNavItem } from "@/lib/admin-nav";
+import { HeartShield } from "@/components/brand/heart-shield";
+import { adminNav, navGroupsFor, type AdminNavItem } from "@/lib/admin-nav";
 import { signOut } from "@/app/admin/actions";
 import { cn } from "@/lib/utils";
 
@@ -31,15 +33,29 @@ const NAV_ICONS: Record<string, LucideIcon> = {
   "/admin/photos": ImageIcon,
   "/admin/services": Stethoscope,
   "/admin/schedule": CalendarDays,
-  "/admin/testimonials": Users,
-  "/admin/faqs": CircleHelp,
-  "/admin/team": Users,
-  "/admin/pages": LayoutDashboard,
+  "/admin/announcements": Megaphone,
+  "/admin/hours": Clock,
   "/admin/settings": Settings,
 };
 
+/** The 4 most-used actions shown in the mobile bottom tab bar. */
+const MOBILE_TABS: { href: string; label: string; icon: LucideIcon }[] = [
+  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/admin/inquiries", label: "Enquiries", icon: Inbox },
+  { href: "/admin/photos", label: "Gallery", icon: ImageIcon },
+  { href: "/admin/settings", label: "Settings", icon: Settings },
+];
+
+function currentPageTitle(pathname: string): string {
+  if (pathname === "/admin") return "Dashboard";
+  const match = adminNav.find(
+    (item) => item.href !== "/admin" && pathname.startsWith(item.href),
+  );
+  return match?.label ?? "Admin";
+}
+
 /**
- * Admin chrome — ink sidebar, sage accents, room for photo grids.
+ * Admin chrome — fixed sidebar, grouped navigation, warm content canvas.
  */
 export function AdminShell({
   role,
@@ -54,7 +70,17 @@ export function AdminShell({
 }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-  const items = navFor(role);
+  const groups = navGroupsFor(role);
+  const pageTitle = currentPageTitle(pathname);
+
+  useEffect(() => setOpen(false), [pathname]);
+
+  useEffect(() => {
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
 
   const badgeFor = (item: AdminNavItem) =>
     item.badge === "newInquiries" && newInquiries > 0 ? newInquiries : null;
@@ -62,105 +88,240 @@ export function AdminShell({
   const isActive = (href: string) =>
     href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
 
-  const nav = (
-    <ul className="flex flex-col gap-1">
-      {items.map((item) => {
-        const active = isActive(item.href);
-        const badge = badgeFor(item);
-        const Icon = NAV_ICONS[item.href] ?? LayoutDashboard;
-        return (
-          <li key={item.href}>
-            <Link
-              href={item.href}
-              onClick={() => setOpen(false)}
-              aria-current={active ? "page" : undefined}
-              className={cn(
-                "flex min-h-11 items-center gap-3 rounded-md px-3 text-[0.9375rem] transition-colors",
-                active
-                  ? "bg-white/12 font-semibold text-white shadow-[inset_3px_0_0_0_#7E9E52]"
-                  : "text-white/72 hover:bg-white/8 hover:text-white",
-              )}
-            >
-              <Icon className="size-[1.125rem] shrink-0 opacity-90" aria-hidden={true} />
-              <span className="flex-1">{item.label}</span>
-              {badge ? (
-                <span className="label rounded-full bg-[#A93659] px-2 py-0.5 text-[0.625rem] text-white tabular-nums">
-                  {badge}
-                </span>
-              ) : null}
-            </Link>
-          </li>
-        );
-      })}
-    </ul>
-  );
-
-  return (
-    <div className="bg-paper-sunk flex min-h-dvh flex-col lg:flex-row">
-      <div className="sticky top-0 z-40 flex items-center gap-3 border-b border-white/10 bg-ink px-4 py-3 lg:hidden">
-        <Monogram className="size-8 shrink-0" decorative />
-        <span className="font-display font-semibold text-white">Admin</span>
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          aria-expanded={open}
-          aria-controls="admin-nav"
-          className="ml-auto inline-flex size-11 items-center justify-center rounded text-white"
-        >
-          {open ? <X className="size-5" aria-hidden="true" /> : <Menu className="size-5" aria-hidden="true" />}
-          <span className="sr-only">{open ? "Close menu" : "Open menu"}</span>
-        </button>
+  function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
+    return (
+      <div className="flex flex-col gap-6">
+        {groups.map((group) => (
+          <div key={group.id}>
+            <p className="label mb-2 px-3 text-[0.625rem] tracking-[0.14em] text-white/45 uppercase">
+              {group.label}
+            </p>
+            <ul className="flex flex-col gap-0.5">
+              {group.items.map((item) => {
+                const active = isActive(item.href);
+                const badge = badgeFor(item);
+                const Icon = NAV_ICONS[item.href] ?? LayoutDashboard;
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      onClick={onNavigate}
+                      aria-current={active ? "page" : undefined}
+                      className={cn(
+                        "group flex min-h-11 items-center gap-3 rounded-lg px-3 text-[0.9375rem] transition-all",
+                        active
+                          ? "bg-white/14 font-semibold text-white shadow-[inset_3px_0_0_0_#9BBF6A]"
+                          : "text-white/75 hover:bg-white/8 hover:text-white",
+                      )}
+                    >
+                      <span
+                        className={cn(
+                          "flex size-8 shrink-0 items-center justify-center rounded-md transition-colors",
+                          active
+                            ? "bg-[#9BBF6A]/20 text-[#C8E4A0]"
+                            : "bg-white/6 text-white/70 group-hover:bg-white/10",
+                        )}
+                      >
+                        <Icon className="size-4" aria-hidden={true} />
+                      </span>
+                      <span className="flex-1">{item.label}</span>
+                      {badge ? (
+                        <span className="label rounded-full bg-[#A93659] px-2 py-0.5 text-[0.625rem] text-white tabular-nums">
+                          {badge}
+                        </span>
+                      ) : null}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
       </div>
+    );
+  }
 
-      <aside
-        id="admin-nav"
-        hidden={!open}
-        className="border-r border-white/10 bg-ink px-3 pb-6 lg:sticky lg:top-0 lg:!block lg:h-dvh lg:w-64 lg:shrink-0 lg:overflow-y-auto lg:px-4 lg:py-5"
-      >
-        <div className="mb-6 hidden items-center gap-3 px-1 lg:flex">
-          <Monogram className="size-10 shrink-0" decorative />
-          <div className="leading-tight">
-            <span className="font-display block text-[1.05rem] font-semibold text-white">
-              Columbia Care
-            </span>
-            <span className="label block text-[0.625rem] text-white/55">Website admin</span>
+  function SidebarFooter() {
+    return (
+      <div className="mt-auto border-t border-white/10 pt-4">
+        <a
+          href="/"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex min-h-11 items-center gap-3 rounded-lg px-3 text-[0.9375rem] text-white/75 transition-colors hover:bg-white/8 hover:text-white"
+        >
+          <ExternalLink className="size-4 shrink-0" aria-hidden="true" />
+          View the website
+        </a>
+
+        <div className="mt-3 rounded-lg border border-white/10 bg-white/6 p-3">
+          <div className="flex items-start gap-2.5">
+            <HeartShield className="mt-0.5 size-6 shrink-0 text-[#9BBF6A]" />
+            <div className="min-w-0">
+              <p className="label text-[0.625rem] text-white/45">Signed in</p>
+              <p className="mt-0.5 truncate text-[0.8125rem] font-medium text-white/90">{email}</p>
+              <p className="label mt-0.5 text-[0.625rem] text-white/45 capitalize">{role}</p>
+            </div>
           </div>
         </div>
 
-        {nav}
-
-        <div className="mt-8 border-t border-white/12 pt-4">
-          <a
-            href="/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex min-h-11 items-center gap-3 rounded-md px-3 text-[0.9375rem] text-white/70 hover:bg-white/8 hover:text-white"
+        <form action={signOut} className="mt-2">
+          <button
+            type="submit"
+            className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-[0.9375rem] text-white/75 transition-colors hover:bg-white/8 hover:text-white"
           >
-            <ExternalLink className="size-4 shrink-0" aria-hidden="true" />
-            View the website
-          </a>
+            <LogOut className="size-4 shrink-0" aria-hidden="true" />
+            Sign out
+          </button>
+        </form>
+      </div>
+    );
+  }
 
-          <div className="mt-3 rounded-md bg-white/6 px-3 py-3">
-            <p className="label text-[0.625rem] text-white/45">Signed in as</p>
-            <p className="mt-0.5 text-[0.8125rem] break-all text-white/85">{email}</p>
-            <p className="label mt-1 text-[0.625rem] text-white/45 capitalize">{role}</p>
+  return (
+    <div className="bg-paper-sunk min-h-dvh lg:flex">
+      {/* Mobile top bar */}
+      <header className="border-rule bg-paper/95 sticky top-0 z-30 flex items-center gap-3 border-b px-4 py-3 backdrop-blur lg:hidden">
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-expanded={open}
+          aria-controls="admin-drawer"
+          className="text-ink inline-flex size-11 items-center justify-center rounded-lg"
+        >
+          <Menu className="size-5" aria-hidden="true" />
+          <span className="sr-only">Open menu</span>
+        </button>
+        <div className="min-w-0 flex-1">
+          <p className="label text-sage-deep text-[0.625rem]">Columbia Care</p>
+          <p className="text-ink truncate font-semibold">{pageTitle}</p>
+        </div>
+        {newInquiries > 0 ? (
+          <Link
+            href="/admin/inquiries"
+            className="label rounded-full bg-[#A93659] px-2.5 py-1 text-[0.6875rem] text-white tabular-nums"
+          >
+            {newInquiries} new
+          </Link>
+        ) : null}
+      </header>
+
+      {/* Mobile drawer */}
+      {open ? (
+        <div className="fixed inset-0 z-50 lg:hidden" id="admin-drawer">
+          <button
+            type="button"
+            className="absolute inset-0 bg-ink/50 backdrop-blur-[2px]"
+            aria-label="Close menu"
+            onClick={() => setOpen(false)}
+          />
+          <aside className="relative flex h-full w-[min(100%,18rem)] flex-col bg-ink px-4 py-5 shadow-2xl">
+            <div className="mb-6 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <Monogram className="size-9 shrink-0" decorative />
+                <span className="font-display font-semibold text-white">Columbia Care</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                className="inline-flex size-11 items-center justify-center rounded-lg text-white/80"
+              >
+                <X className="size-5" aria-hidden="true" />
+                <span className="sr-only">Close menu</span>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto pr-1">
+              <NavLinks onNavigate={() => setOpen(false)} />
+            </div>
+            <SidebarFooter />
+          </aside>
+        </div>
+      ) : null}
+
+      {/* Desktop sidebar */}
+      <aside className="hidden w-72 shrink-0 flex-col border-r border-white/10 bg-ink lg:sticky lg:top-0 lg:flex lg:h-dvh">
+        <div className="border-b border-white/10 px-5 py-5">
+          <div className="flex items-center gap-3">
+            <Monogram className="size-10 shrink-0" decorative />
+            <div className="leading-tight">
+              <span className="font-display block text-[1.05rem] font-semibold text-white">
+                Columbia Care
+              </span>
+              <span className="label block text-[0.625rem] text-white/50">Website admin</span>
+            </div>
           </div>
-
-          <form action={signOut} className="mt-2">
-            <button
-              type="submit"
-              className="flex min-h-11 w-full items-center gap-3 rounded-md px-3 text-left text-[0.9375rem] text-white/70 hover:bg-white/8 hover:text-white"
+          {newInquiries > 0 ? (
+            <Link
+              href="/admin/inquiries"
+              className="mt-4 flex items-center gap-2 rounded-lg border border-[#A93659]/40 bg-[#A93659]/15 px-3 py-2 text-[0.8125rem] text-white transition-colors hover:bg-[#A93659]/25"
             >
-              <LogOut className="size-4 shrink-0" aria-hidden="true" />
-              Sign out
-            </button>
-          </form>
+              <Inbox className="size-4 shrink-0" aria-hidden="true" />
+              <span>
+                <strong className="tabular-nums">{newInquiries}</strong>{" "}
+                {newInquiries === 1 ? "enquiry needs" : "enquiries need"} a reply
+              </span>
+            </Link>
+          ) : null}
+        </div>
+
+        <div className="flex flex-1 flex-col overflow-hidden px-3 py-4">
+          <div className="flex-1 overflow-y-auto pr-1">
+            <NavLinks />
+          </div>
+          <SidebarFooter />
         </div>
       </aside>
 
-      <main id="main" className="min-w-0 flex-1 px-4 py-6 sm:px-6 lg:max-w-6xl lg:px-10 lg:py-10">
-        {children}
-      </main>
+      {/* Main canvas */}
+      <div className="flex min-w-0 flex-1 flex-col">
+        <div className="border-rule bg-paper/80 hidden border-b px-8 py-4 lg:block">
+          <p className="label text-sage-deep mb-1">You are here</p>
+          <h1 className="text-h3 font-sans font-bold">{pageTitle}</h1>
+        </div>
+        <main
+          id="main"
+          className="relative mx-auto min-h-[calc(100dvh-4rem)] w-full max-w-6xl flex-1 px-4 py-6 pb-24 sm:px-6 lg:min-h-[calc(100dvh-5.5rem)] lg:px-10 lg:py-8 lg:pb-8"
+        >
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-x-0 top-0 h-48 bg-[radial-gradient(ellipse_at_top,color-mix(in_srgb,var(--sage-wash)_85%,transparent),transparent)]"
+          />
+          <div className="relative">{children}</div>
+        </main>
+        <AdminFooter />
+      </div>
+
+      {/* Mobile bottom tab bar */}
+      <nav
+        aria-label="Quick navigation"
+        className="border-rule bg-paper/95 fixed bottom-0 inset-x-0 z-40 flex items-stretch border-t backdrop-blur lg:hidden"
+      >
+        {MOBILE_TABS.map(({ href, label, icon: Icon }) => {
+          const active = isActive(href);
+          const isInquiries = href === "/admin/inquiries";
+          return (
+            <Link
+              key={href}
+              href={href}
+              aria-current={active ? "page" : undefined}
+              className={cn(
+                "relative flex flex-1 flex-col items-center justify-center gap-1 py-2 text-[0.6875rem] font-medium transition-colors",
+                active ? "text-sage-deep" : "text-stone",
+              )}
+            >
+              <span className="relative">
+                <Icon className="size-5" aria-hidden="true" />
+                {isInquiries && newInquiries > 0 ? (
+                  <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-[#A93659] text-[0.5rem] font-bold text-white tabular-nums">
+                    {newInquiries > 9 ? "9+" : newInquiries}
+                  </span>
+                ) : null}
+              </span>
+              {label}
+            </Link>
+          );
+        })}
+      </nav>
     </div>
   );
 }

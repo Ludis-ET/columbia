@@ -42,11 +42,9 @@ const AFFECTED: Record<string, string[]> = {
   services: ["/", "/services"],
   schedule_items: ["/", "/a-day-in-our-home", "/meals", "/services"],
   media: ["/"],
-  testimonials: ["/"],
-  faqs: ["/faq"],
-  team: ["/about"],
   settings: ["/", "/contact", "/about", "/our-home", "/privacy", "/accessibility", "/terms"],
-  pages: ["/"],
+  announcements: ["/"],
+  opening_hours: ["/", "/contact"],
 };
 
 function revalidateFor(entity: string) {
@@ -499,3 +497,220 @@ export async function deletePhoto(id: string): Promise<ActionResult> {
 
   return { ok: true, message: "Photo deleted." };
 }
+
+// ---------------------------------------------------------------------------
+// Settings (handles JSONB + array fields that saveRow cannot)
+// ---------------------------------------------------------------------------
+
+export async function saveSettings(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  await requireAdmin();
+  const supabase = await createClient();
+  if (!supabase) return { ok: false, message: GENERIC_ERROR };
+
+  const flat = [
+    "phone", "sms", "fax", "email",
+    "street_address", "address_locality", "address_region", "postal_code",
+    "location_line", "license_number", "licensed_capacity", "hours",
+  ];
+
+  const patch: Record<string, unknown> = {};
+  for (const field of flat) {
+    const raw = String(formData.get(field) ?? "").trim();
+    patch[field] = raw === "" ? null : raw;
+  }
+
+  // service_area — comma-separated input stored as text[]
+  const serviceAreaRaw = String(formData.get("service_area") ?? "").trim();
+  patch.service_area = serviceAreaRaw
+    ? serviceAreaRaw.split(",").map((s) => s.trim()).filter(Boolean)
+    : [];
+
+  // socials — individual named inputs assembled into JSONB
+  const socialsKeys = ["facebook", "instagram", "google_maps"];
+  const socials: Record<string, string> = {};
+  for (const key of socialsKeys) {
+    const val = String(formData.get(`socials_${key}`) ?? "").trim();
+    if (val) socials[key] = val;
+  }
+  patch.socials = socials;
+  patch.updated_at = new Date().toISOString();
+
+  const { error } = await supabase
+    .from("site_settings")
+    .update(patch)
+    .eq("id", "singleton");
+
+  if (error) return { ok: false, message: GENERIC_ERROR };
+
+  await recordAudit("update", "site_settings", "singleton", { fields: Object.keys(patch) });
+  revalidateFor("settings");
+
+  return { ok: true, message: "Settings saved. The website will update within a minute." };
+}
+
+// ---------------------------------------------------------------------------
+// Announcements
+// ---------------------------------------------------------------------------
+
+export async function saveAnnouncement(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  await requireAdmin();
+  const supabase = await createClient();
+  if (!supabase) return { ok: false, message: GENERIC_ERROR };
+
+  const id = String(formData.get("id") ?? "");
+  const message = String(formData.get("message") ?? "").trim();
+  const ctaText = String(formData.get("cta_text") ?? "").trim() || null;
+  const ctaHref = String(formData.get("cta_href") ?? "").trim() || null;
+  const active = formData.get("active") === "on";
+
+  if (!message) return { ok: false, message: "Enter a message for the announcement." };
+
+  if (id) {
+    const { error } = await supabase
+      .from("announcements")
+      .update({ message, cta_text: ctaText, cta_href: ctaHref, active, updated_at: new Date().toISOString() })
+      .eq("id", id);
+    if (error) return { ok: false, message: GENERIC_ERROR };
+  } else {
+    const { error } = await supabase
+      .from("announcements")
+      .insert({ message, cta_text: ctaText, cta_href: ctaHref, active });
+    if (error) return { ok: false, message: GENERIC_ERROR };
+  }
+
+  revalidateFor("announcements");
+  return { ok: true, message: active ? "Announcement is live on the website." : "Announcement saved (not yet visible)." };
+}
+
+export async function deleteAnnouncement(id: string): Promise<ActionResult> {
+  await requireAdmin();
+  const supabase = await createClient();
+  if (!supabase) return { ok: false, message: GENERIC_ERROR };
+
+  const { error } = await supabase.from("announcements").delete().eq("id", id);
+  if (error) return { ok: false, message: GENERIC_ERROR };
+
+  revalidateFor("announcements");
+  return { ok: true, message: "Announcement deleted." };
+}
+
+// ---------------------------------------------------------------------------
+// Opening hours
+// ---------------------------------------------------------------------------
+
+export async function saveOpeningHours(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  await requireAdmin();
+  const supabase = await createClient();
+  if (!supabase) return { ok: false, message: GENERIC_ERROR };
+
+  const DAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+
+  const rows = DAYS.map((day, i) => ({
+    day_of_week: i + 1,
+    day_name: day,
+    opens: String(formData.get(`${day}_opens`) ?? "").trim() || null,
+    closes: String(formData.get(`${day}_closes`) ?? "").trim() || null,
+    closed: formData.get(`${day}_closed`) === "on",
+    note: String(formData.get(`${day}_note`) ?? "").trim() || null,
+  }));
+
+  // Upsert all 7 rows
+  const { error } = await supabase.from("opening_hours").upsert(
+    rows,
+    { onConflict: "day_of_week" },
+  );
+
+  if (error) return { ok: false, message: GENERIC_ERROR };
+
+  revalidateFor("opening_hours");
+  return { ok: true, message: "Opening hours saved." };
+}
+
+// ---------------------------------------------------------------------------
+// Inquiries — star + CSV export
+// ---------------------------------------------------------------------------
+
+export async function starInquiry(
+  id: string,
+  starred: boolean,
+): Promise<ActionResult> {
+  await requireAdmin();
+  const supabase = await createClient();
+  if (!supabase) return { ok: false, message: GENERIC_ERROR };
+
+  const { error } = await supabase
+    .from("inquiries")
+    .update({ starred, updated_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) return { ok: false, message: GENERIC_ERROR };
+
+  return { ok: true, message: starred ? "Starred." : "Unstarred." };
+}
+
+export async function exportInquiriesCSV(): Promise<{ ok: boolean; csv?: string; message?: string }> {
+  await requireAdmin();
+  const supabase = await createClient();
+  if (!supabase) return { ok: false, message: GENERIC_ERROR };
+
+  const { data, error } = await supabase
+    .from("inquiries")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error || !data) return { ok: false, message: GENERIC_ERROR };
+
+  const headers = ["Name", "Email", "Phone", "Kind", "Status", "Message", "Relationship", "Created"];
+  const rows = data.map((r) => [
+    `"${String(r.name ?? "").replace(/"/g, '""')}"`,
+    `"${String(r.email ?? "").replace(/"/g, '""')}"`,
+    `"${String(r.phone ?? "").replace(/"/g, '""')}"`,
+    `"${String(r.kind ?? "").replace(/"/g, '""')}"`,
+    `"${String(r.status ?? "").replace(/"/g, '""')}"`,
+    `"${String(r.message ?? "").replace(/"/g, '""')}"`,
+    `"${String(r.relationship ?? "").replace(/"/g, '""')}"`,
+    `"${new Date(r.created_at as string).toLocaleDateString("en-US")}"`,
+  ].join(","));
+
+  const csv = [headers.join(","), ...rows].join("\n");
+  return { ok: true, csv };
+}
+
+// ---------------------------------------------------------------------------
+// Bulk photo operations
+// ---------------------------------------------------------------------------
+
+export async function bulkPublishPhotos(
+  ids: string[],
+  published: boolean,
+): Promise<ActionResult> {
+  await requireAdmin();
+  const supabase = await createClient();
+  if (!supabase) return { ok: false, message: GENERIC_ERROR };
+  if (ids.length === 0) return { ok: false, message: "No photos selected." };
+
+  const { error } = await supabase
+    .from("media")
+    .update({ published })
+    .in("id", ids);
+
+  if (error) return { ok: false, message: GENERIC_ERROR };
+
+  revalidateFor("media");
+  return {
+    ok: true,
+    message: published
+      ? `${ids.length} photo${ids.length === 1 ? "" : "s"} now showing on the website.`
+      : `${ids.length} photo${ids.length === 1 ? "" : "s"} hidden from the website.`,
+  };
+}
+

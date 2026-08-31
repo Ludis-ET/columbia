@@ -1,9 +1,15 @@
 import { createClient } from "@/lib/db/server";
 import { PageHeader } from "@/components/admin/cards";
 import { EmptyState } from "@/components/admin/ui";
-import { ContentList, type ContentRow } from "@/components/admin/content-list";
+import { ContentList, type ContentRow, type EditableField } from "@/components/admin/content-list";
 
 export const metadata = { title: "Services" };
+
+const EDITABLE_FIELDS: EditableField[] = [
+  { name: "title", label: "Title" },
+  { name: "summary", label: "One-line summary", placeholder: "Short sentence shown on the homepage card." },
+  { name: "body", label: "Full description", multiline: true, placeholder: "Shown on the service detail page (if it has one)." },
+];
 
 export default async function ServicesAdminPage() {
   const supabase = await createClient();
@@ -19,6 +25,11 @@ export default async function ServicesAdminPage() {
     meta: (r.has_detail_page as boolean) ? "Has its own page" : "Listed only",
     body: (r.summary as string | null) ?? undefined,
     published: r.published as boolean,
+    rawValues: {
+      title: String(r.title ?? ""),
+      summary: String(r.summary ?? ""),
+      body: String(r.body ?? ""),
+    },
   }));
 
   return (
@@ -36,7 +47,12 @@ export default async function ServicesAdminPage() {
           </p>
         </EmptyState>
       ) : (
-        <ContentList table="services" rows={rows} canDelete={false} />
+        <ContentList
+          table="services"
+          rows={rows}
+          canDelete={false}
+          editableFields={EDITABLE_FIELDS}
+        />
       )}
     </>
   );

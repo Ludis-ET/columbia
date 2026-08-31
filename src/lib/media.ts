@@ -37,5 +37,17 @@ export function mediaPublicUrl(storagePath: string): string | null {
   return `${base}/storage/v1/object/public/media/${storagePath}`;
 }
 
+import type { MediaRow } from "@/lib/db/database.types";
+
+export type AdminPhoto = MediaRow & { url: string | null };
+
+/** Map database rows to admin UI shape (server-safe). */
+export function mapAdminPhotos(rows: MediaRow[]): AdminPhoto[] {
+  return rows.map((row) => ({
+    ...row,
+    url: mediaPublicUrl(row.storage_path),
+  }));
+}
+
 export const MEDIA_MAX_BYTES = 8 * 1024 * 1024;
 export const MEDIA_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"] as const;

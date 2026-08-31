@@ -1,12 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { fontVariables } from "@/lib/fonts";
-import { SkipLink } from "@/components/site/skip-link";
-import { Header } from "@/components/site/header";
-import { Footer } from "@/components/site/footer";
-import { MobileCallBar } from "@/components/site/mobile-call-bar";
-import { AccessibilityToolbar } from "@/components/site/accessibility-toolbar";
 import { HashScroll } from "@/components/site/hash-scroll";
+import { SiteChrome } from "@/components/site/site-chrome";
 import { preferencesScript } from "@/lib/preferences";
 import { identity, published, siteName } from "@/lib/content";
 import { getSiteSettings } from "@/lib/db/queries";
@@ -64,14 +60,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body className={`${fontVariables} flex min-h-dvh flex-col antialiased`}>
         <HashScroll />
-        <SkipLink />
-        <Header phone={phone} phoneHref={phoneHref} />
-        <main id="main" tabIndex={-1} className="flex-1">
+        <SiteChrome phone={phone} phoneHref={phoneHref} sms={sms}>
           {children}
-        </main>
-        <Footer />
-        <MobileCallBar phone={phone} phoneHref={phoneHref} sms={sms} />
-        <AccessibilityToolbar />
+        </SiteChrome>
       </body>
     </html>
   );

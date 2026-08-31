@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/db/server";
 import { PageHeader } from "@/components/admin/cards";
-import { mapAdminPhotos, PhotoManager } from "@/components/admin/photo-manager";
+import { PhotoManager } from "@/components/admin/photo-manager";
+import { mapAdminPhotos } from "@/lib/media";
 import type { MediaRow } from "@/lib/db/database.types";
 
 export const metadata = { title: "Photos" };
