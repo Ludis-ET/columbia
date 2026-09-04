@@ -40,43 +40,43 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-/** Sample gallery data. Placeholder files, replaced in Phase 8. */
+/** Sample gallery data using real photos. */
 const GALLERY = [
   {
-    src: "/placeholder/living-room.jpg",
-    alt: "Placeholder for the living room and kitchen photograph",
+    src: "/photos/living-room-1.jpg",
+    alt: "Spacious main living room",
     caption: "Living room",
     category: "Living areas",
   },
   {
-    src: "/placeholder/kitchen.jpg",
-    alt: "Placeholder for the kitchen photograph",
+    src: "/photos/kitchen-2.jpg",
+    alt: "Fully equipped kitchen",
     caption: "Kitchen",
     category: "Dining & kitchen",
   },
   {
-    src: "/placeholder/table-setting.jpg",
-    alt: "Placeholder for the dining table setting photograph",
+    src: "/photos/dining-1.jpg",
+    alt: "Dining table set for lunch",
     caption: "Set for lunch",
     category: "Dining & kitchen",
   },
   {
-    src: "/placeholder/patio.jpg",
-    alt: "Placeholder for the patio photograph",
+    src: "/photos/backyard-2.jpg",
+    alt: "Backyard patio seating",
     caption: "The patio",
     category: "Outdoors",
   },
   {
-    src: "/placeholder/backyard.jpg",
-    alt: "Placeholder for the backyard photograph",
+    src: "/photos/backyard-1.jpg",
+    alt: "Lush green backyard lawn",
     caption: "Backyard",
     category: "Outdoors",
   },
   {
-    src: "/placeholder/flowers.jpg",
-    alt: "Placeholder for the flowers on the table photograph",
-    caption: "Fresh flowers, every week",
-    category: "Living areas",
+    src: "/photos/bedroom-1.jpg",
+    alt: "Resident bedroom with natural light",
+    caption: "Resident room",
+    category: "Bedrooms",
   },
 ];
 
@@ -398,7 +398,7 @@ export default function KitchenSinkPage() {
       <Hero
         title="Hero with a photograph"
         lead="Scrim is heavy enough that white text clears 7:1 over the image. The wave bleeds it into the page ground."
-        image={{ src: "/placeholder/living-room.jpg", alt: "Placeholder for the living room" }}
+        image={{ src: "/photos/living-room-1.jpg", alt: "Columbia Care living room" }}
         badge={<AvailabilityBadge status="accepting" />}
         phone={phone}
         phoneHref={null}

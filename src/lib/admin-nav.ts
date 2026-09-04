@@ -31,6 +31,7 @@ export const adminNav: AdminNavItem[] = [
   { href: "/admin/availability", label: "Availability", group: "today" },
   { href: "/admin/copy", label: "Words on the page", group: "content" },
   { href: "/admin/photos", label: "Photos & gallery", group: "content" },
+  { href: "/admin/photos/categories", label: "Gallery categories", group: "content" },
   { href: "/admin/services", label: "Services", group: "content" },
   { href: "/admin/care-types", label: "Care types", group: "content" },
   { href: "/admin/every-day", label: "Included every day", group: "content" },

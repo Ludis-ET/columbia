@@ -6,24 +6,29 @@ import type { MediaRow } from "@/lib/db/database.types";
  * Photos carry a `placements` list — hero, meals, gallery categories, or any
  * combination. The legacy `category` column is kept in sync with the first
  * gallery category for older queries until everything reads placements.
+ *
+ * Gallery categories are now stored in the `gallery_categories` table instead
+ * of being hardcoded here. The static fallback list below is used only when
+ * the database is unreachable (same pattern as the rest of the content layer).
  */
 
 export const SECTION_SLOTS = ["hero", "meals"] as const;
 export type SectionSlot = (typeof SECTION_SLOTS)[number];
 
-export const GALLERY_CATEGORIES = [
-  "Living areas",
-  "Dining & kitchen",
-  "Bedrooms",
-  "Outdoors",
-] as const;
-
-export type GalleryCategory = (typeof GALLERY_CATEGORIES)[number];
-
 export const SECTION_SLOT_LABELS: Record<SectionSlot, string> = {
   hero: "Homepage hero",
   meals: "Meals section",
 };
+
+/** Static fallback used only when the DB is unreachable. */
+export const FALLBACK_GALLERY_CATEGORIES = [
+  "Living areas",
+  "Dining & kitchen",
+  "Bedrooms",
+  "Outdoors",
+  "Entrance",
+  "Restroom",
+] as const;
 
 export type PlacementGroup = "site" | "gallery";
 
@@ -33,19 +38,30 @@ export interface PlacementOption {
   group: PlacementGroup;
 }
 
-/** Every tag an owner can attach to a photograph. */
-export const PLACEMENT_OPTIONS: PlacementOption[] = [
-  { id: "hero", label: SECTION_SLOT_LABELS.hero, group: "site" },
-  { id: "meals", label: SECTION_SLOT_LABELS.meals, group: "site" },
-  ...GALLERY_CATEGORIES.map((cat) => ({ id: cat, label: cat, group: "gallery" as const })),
-];
+/**
+ * Build the full placement options list from dynamic DB categories.
+ * Falls back to FALLBACK_GALLERY_CATEGORIES when categories is empty.
+ */
+export function buildPlacementOptions(categories: string[]): PlacementOption[] {
+  const cats = categories.length > 0 ? categories : [...FALLBACK_GALLERY_CATEGORIES];
+  return [
+    { id: "hero", label: SECTION_SLOT_LABELS.hero, group: "site" },
+    { id: "meals", label: SECTION_SLOT_LABELS.meals, group: "site" },
+    ...cats.map((cat) => ({ id: cat, label: cat, group: "gallery" as const })),
+  ];
+}
+
+/** Static PLACEMENT_OPTIONS for backward-compat in places that haven't switched to dynamic yet. */
+export const PLACEMENT_OPTIONS: PlacementOption[] = buildPlacementOptions([
+  ...FALLBACK_GALLERY_CATEGORIES,
+]);
 
 export function isSectionSlot(value: string | null | undefined): value is SectionSlot {
   return value === "hero" || value === "meals";
 }
 
-export function isGalleryCategory(value: string): value is GalleryCategory {
-  return (GALLERY_CATEGORIES as readonly string[]).includes(value);
+export function isGalleryCategory(value: string): boolean {
+  return !isSectionSlot(value);
 }
 
 export function isGalleryItem(category: string | null | undefined): boolean {
@@ -117,3 +133,12 @@ export function mapAdminPhotos(rows: MediaRow[]): AdminPhoto[] {
 
 export const MEDIA_MAX_BYTES = 8 * 1024 * 1024;
 export const MEDIA_MIME_TYPES = ["image/jpeg", "image/png", "image/webp", "image/avif"] as const;
+
+// ---------------------------------------------------------------------------
+// Legacy aliases — kept so existing imports compile without changes
+// ---------------------------------------------------------------------------
+
+/** @deprecated Use FALLBACK_GALLERY_CATEGORIES or fetch from DB via getGalleryCategories(). */
+export const GALLERY_CATEGORIES = FALLBACK_GALLERY_CATEGORIES;
+/** @deprecated */
+export type GalleryCategory = string;

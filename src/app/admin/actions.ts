@@ -713,6 +713,159 @@ export async function deletePhoto(id: string): Promise<ActionResult> {
 }
 
 // ---------------------------------------------------------------------------
+// Gallery categories — add, rename, reorder, delete
+// ---------------------------------------------------------------------------
+
+export async function createGalleryCategory(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  await requireAdmin();
+  const supabase = await createClient();
+  if (!supabase) return { ok: false, message: GENERIC_ERROR };
+
+  const name = String(formData.get("name") ?? "").trim();
+  if (!name) return { ok: false, message: "Enter a category name." };
+
+  // Get next position
+  const { data: last } = await supabase
+    .from("gallery_categories")
+    .select("position")
+    .order("position", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const { error } = await supabase
+    .from("gallery_categories")
+    .insert({ name, position: (last?.position ?? -1) + 1, published: true });
+
+  if (error) {
+    if (error.message.includes("unique")) {
+      return { ok: false, message: `A category named "${name}" already exists.` };
+    }
+    return { ok: false, message: GENERIC_ERROR };
+  }
+
+  await recordAudit("create", "gallery_categories", null, { name });
+  revalidateFor("media");
+
+  return { ok: true, message: `Category "${name}" added.` };
+}
+
+export async function renameGalleryCategory(
+  id: string,
+  name: string,
+): Promise<ActionResult> {
+  await requireAdmin();
+  const supabase = await createClient();
+  if (!supabase) return { ok: false, message: GENERIC_ERROR };
+
+  const trimmed = name.trim();
+  if (!trimmed) return { ok: false, message: "Category name cannot be empty." };
+
+  // Get old name for updating photos
+  const { data: existing } = await supabase
+    .from("gallery_categories")
+    .select("name")
+    .eq("id", id)
+    .maybeSingle();
+
+  const oldName = existing?.name;
+
+  const { error } = await supabase
+    .from("gallery_categories")
+    .update({ name: trimmed })
+    .eq("id", id);
+
+  if (error) {
+    if (error.message.includes("unique")) {
+      return { ok: false, message: `A category named "${trimmed}" already exists.` };
+    }
+    return { ok: false, message: GENERIC_ERROR };
+  }
+
+  // Update any photos that reference the old name in placements / category
+  if (oldName && oldName !== trimmed) {
+    const { data: affectedPhotos } = await supabase
+      .from("media")
+      .select("id, placements, category")
+      .contains("placements", [oldName]);
+
+    if (affectedPhotos && affectedPhotos.length > 0) {
+      for (const photo of affectedPhotos) {
+        const newPlacements = (photo.placements as string[]).map((p: string) =>
+          p === oldName ? trimmed : p,
+        );
+        const newCategory = photo.category === oldName ? trimmed : photo.category;
+        await supabase
+          .from("media")
+          .update({ placements: newPlacements, category: newCategory })
+          .eq("id", photo.id);
+      }
+    }
+  }
+
+  await recordAudit("update", "gallery_categories", id, { name: trimmed });
+  revalidateFor("media");
+
+  return { ok: true, message: "Category renamed." };
+}
+
+export async function deleteGalleryCategory(id: string): Promise<ActionResult> {
+  await requireAdmin();
+  const supabase = await createClient();
+  if (!supabase) return { ok: false, message: GENERIC_ERROR };
+
+  // Get the category name first so we can untag photos
+  const { data: cat } = await supabase
+    .from("gallery_categories")
+    .select("name")
+    .eq("id", id)
+    .maybeSingle();
+
+  const catName = cat?.name;
+
+  const { error } = await supabase.from("gallery_categories").delete().eq("id", id);
+  if (error) return { ok: false, message: GENERIC_ERROR };
+
+  // Remove this category from all photos that reference it
+  if (catName) {
+    const { data: affectedPhotos } = await supabase
+      .from("media")
+      .select("id, placements, category")
+      .contains("placements", [catName]);
+
+    if (affectedPhotos && affectedPhotos.length > 0) {
+      for (const photo of affectedPhotos) {
+        const newPlacements = (photo.placements as string[]).filter(
+          (p: string) => p !== catName,
+        );
+        const newCategory =
+          photo.category === catName
+            ? newPlacements.find((p: string) => p !== "hero" && p !== "meals") ?? null
+            : photo.category;
+        await supabase
+          .from("media")
+          .update({ placements: newPlacements, category: newCategory })
+          .eq("id", photo.id);
+      }
+    }
+  }
+
+  await recordAudit("delete", "gallery_categories", id, { name: catName });
+  revalidateFor("media");
+
+  return { ok: true, message: "Category deleted." };
+}
+
+export async function reorderGalleryCategory(
+  id: string,
+  direction: "up" | "down",
+): Promise<ActionResult> {
+  return reorder("gallery_categories", id, direction);
+}
+
+// ---------------------------------------------------------------------------
 // Settings (handles JSONB + array fields that saveRow cannot)
 // ---------------------------------------------------------------------------
 

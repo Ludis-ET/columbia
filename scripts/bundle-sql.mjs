@@ -26,6 +26,7 @@ const parts = [
   "supabase/migrations/0005_site_copy.sql",
   "supabase/migrations/0006_media_placements.sql",
   "supabase/migrations/0007_care_summaries.sql",
+  "supabase/migrations/0008_gallery_categories.sql",
   "supabase/seed.sql",
 ];
 

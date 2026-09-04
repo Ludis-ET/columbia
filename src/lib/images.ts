@@ -1,99 +1,110 @@
 import type { GalleryImage } from "@/components/site/gallery";
 
 /**
- * Site imagery.
+ * Site imagery — authentic photographs of Columbia Care Adult Family Home.
  *
- * EVERY FILE HERE IS A PLACEHOLDER of a different house. They were chosen to
- * read as a real residential care home, communal sitting rooms, a family
- * dining table, a garden, rather than the generic stock that makes care sites
- * look interchangeable. None contains a person, because CLAUDE.md forbids stock
- * humans and because a photo of a stranger implying they live here is exactly
- * the kind of claim the content rule exists to prevent.
- *
- * Source: StockSnap.io, CC0, free for commercial use, no attribution required.
- * Provenance for each file is in public/placeholder/manifest.json.
- *
- * Named by SLOT, so Phase 8 is a straight file swap: drop the real photograph
- * in at the same path and nothing else changes. `pnpm check:placeholders`
- * tracks what is still in use and becomes a hard build failure under
- * LAUNCH_READY=1.
- *
- * ALT TEXT DESCRIBES THE PLACEHOLDER. Rewrite it when the real photograph
- * lands, alt text describing the wrong image is worse than none.
+ * All photos are real photographs of the home located in Everett, WA,
+ * with web-optimized local assets stored in /photos/ and high-resolution
+ * originals managed in Supabase Storage.
  */
 
-const P = "/placeholder";
-
 export const heroImage = {
-  src: `${P}/living-room.jpg`,
-  alt: "Placeholder: a shared sitting room with striped sofas, bookshelves and a fireplace",
+  src: "/photos/living-room-1.jpg",
+  alt: "Columbia Care Adult Family Home spacious living room with comfortable seating and natural daylight",
 };
 
 export const mealsImage = {
-  src: `${P}/table-setting.jpg`,
-  alt: "Placeholder: a table laid with linen, stacked plates and a small autumn arrangement",
+  src: "/photos/dining-1.jpg",
+  alt: "Columbia Care family dining area set for home-cooked meals",
 };
 
 export const aboutImage = {
-  src: `${P}/garden.jpg`,
-  alt: "Placeholder: rose bushes in flower along the front of a house, beside a covered porch",
+  src: "/photos/backyard-1.jpg",
+  alt: "Columbia Care backyard and outdoor patio area",
 };
 
 /**
- * Gallery contents.
- *
- * Categories cover only areas the client's own brochure photographs show, plus
- * a bedroom, the room families ask about most and the biggest gap in the
- * supplied artwork (docs/client-questions.md q10).
+ * Fallback gallery contents for static rendering and offline resilience.
+ * Dynamic gallery items are loaded from the database via queries.ts getGallery().
  */
 export const galleryImages: GalleryImage[] = [
   {
-    src: `${P}/living-room.jpg`,
-    alt: "Placeholder: a shared sitting room with striped sofas, bookshelves and a fireplace",
-    caption: "The sitting room",
+    src: "/photos/living-room-1.jpg",
+    alt: "Spacious main living room with comfortable seating",
+    caption: "The living room",
     category: "Living areas",
   },
   {
-    src: `${P}/sitting-room.jpg`,
-    alt: "Placeholder: a wood-panelled sitting room with large windows onto the garden",
-    caption: "Looking out over the garden",
+    src: "/photos/living-room-2.jpg",
+    alt: "Bright and open living area with comfortable armchairs",
+    caption: "Sitting area",
     category: "Living areas",
   },
   {
-    src: `${P}/quiet-corner.jpg`,
-    alt: "Placeholder: a pale blue loveseat with cushions beside a sunny window",
-    caption: "A quiet corner",
+    src: "/photos/living-room-3.jpg",
+    alt: "Quiet corner in the living room",
+    caption: "Quiet corner",
     category: "Living areas",
   },
   {
-    src: `${P}/dining-room.jpg`,
-    alt: "Placeholder: a wooden dining table and chairs beside French doors onto the garden",
+    src: "/photos/dining-1.jpg",
+    alt: "Dining room set for family meals together",
+    caption: "Family dining table",
+    category: "Dining & kitchen",
+  },
+  {
+    src: "/photos/dining-2.jpg",
+    alt: "Dining area adjacent to kitchen",
     caption: "Where we eat together",
     category: "Dining & kitchen",
   },
   {
-    src: `${P}/table-setting.jpg`,
-    alt: "Placeholder: a table laid with linen, stacked plates and a small autumn arrangement",
-    caption: "Set for a meal",
+    src: "/photos/kitchen-2.jpg",
+    alt: "Fully equipped kitchen for freshly prepared daily meals",
+    caption: "The kitchen",
     category: "Dining & kitchen",
   },
   {
-    src: `${P}/bedroom.jpg`,
-    alt: "Placeholder: a made bed beside an open window with flowers on the balcony rail",
-    caption: "A resident's room",
+    src: "/photos/bedroom-1.jpg",
+    alt: "Private, peaceful resident bedroom with natural light",
+    caption: "Resident bedroom",
     category: "Bedrooms",
   },
   {
-    src: `${P}/patio.jpg`,
-    alt: "Placeholder: two wooden patio chairs on a paved terrace facing a planted border at dusk",
-    caption: "The patio",
+    src: "/photos/bedroom-2.jpg",
+    alt: "Comfortable bedroom with closet space and garden views",
+    caption: "Private room",
+    category: "Bedrooms",
+  },
+  {
+    src: "/photos/bedroom-3.jpg",
+    alt: "Spacious resident bedroom layout",
+    caption: "Resident room",
+    category: "Bedrooms",
+  },
+  {
+    src: "/photos/backyard-1.jpg",
+    alt: "Private fenced backyard with lush green lawn and trees",
+    caption: "The backyard",
     category: "Outdoors",
   },
   {
-    src: `${P}/garden.jpg`,
-    alt: "Placeholder: rose bushes in flower along the front of a house, beside a covered porch",
-    caption: "The garden in summer",
+    src: "/photos/backyard-2.jpg",
+    alt: "Outdoor patio seating area for relaxing in the fresh air",
+    caption: "Backyard patio",
     category: "Outdoors",
+  },
+  {
+    src: "/photos/entrance-1.jpg",
+    alt: "Welcoming entryway to Columbia Care Adult Family Home",
+    caption: "Front entrance",
+    category: "Entrance",
+  },
+  {
+    src: "/photos/restroom-1.jpg",
+    alt: "Clean, accessible restroom designed for safety and ease",
+    caption: "Accessible restroom",
+    category: "Restroom",
   },
 ];
 

@@ -184,3 +184,10 @@ export interface SiteCopyRow {
   published: boolean;
   updated_at: string;
 }
+
+export interface GalleryCategoryRow {
+  id: string;
+  name: string;
+  position: number;
+  published: boolean;
+}

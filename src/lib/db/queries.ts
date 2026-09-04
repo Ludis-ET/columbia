@@ -5,6 +5,7 @@ import type {
   AvailabilityStatus,
   CareTypeRow,
   EveryDayRow,
+  GalleryCategoryRow,
   MediaRow,
   ScheduleItemRow,
   ServiceRow,
@@ -15,9 +16,10 @@ import type {
 } from "./database.types";
 
 import * as file from "@/lib/content";
-import { galleryImages as placeholderGallery, heroImage, mealsImage } from "@/lib/images";
+import { heroImage, mealsImage } from "@/lib/images";
 import {
   appearsInGallery,
+  FALLBACK_GALLERY_CATEGORIES,
   hasPlacement,
   mediaPublicUrl,
   primaryGalleryCategory,
@@ -301,6 +303,27 @@ export const getAvailability = cache(async (): Promise<Availability> => {
 });
 
 // ---------------------------------------------------------------------------
+// Gallery categories — dynamic list managed in the admin
+// ---------------------------------------------------------------------------
+
+/**
+ * Published gallery category names in display order.
+ *
+ * Falls back to the static FALLBACK_GALLERY_CATEGORIES list when the
+ * database is unreachable, so the filter tabs on the gallery never disappear.
+ */
+export const getGalleryCategories = cache(async (): Promise<string[]> => {
+  const rows = await select<GalleryCategoryRow>("gallery_categories");
+
+  if (!rows || rows.length === 0) return [...FALLBACK_GALLERY_CATEGORIES];
+
+  return rows
+    .filter((r) => r.published)
+    .sort((a, b) => a.position - b.position)
+    .map((r) => r.name);
+});
+
+// ---------------------------------------------------------------------------
 // Deliberately-empty content, [] is the correct answer, never a fallback
 // ---------------------------------------------------------------------------
 
@@ -317,21 +340,21 @@ export const getTestimonials = cache(async (): Promise<TestimonialItem[]> => {
 /**
  * Gallery.
  *
- * Falls back to the placeholder set while the media table is empty, because
- * Phase 8 has not happened yet and a gallery page with no photographs would be
- * worse than one with obvious scaffolding. `pnpm check:placeholders` tracks
- * this, and it becomes a hard build failure under LAUNCH_READY=1.
+ * Returns an empty array when the media table has no published photos.
+ * Real photographs are now uploaded via scripts/upload-real-photos.mjs, so
+ * the placeholder fallback is no longer needed.
  */
 export const getGallery = cache(async (): Promise<GalleryImage[]> => {
   const rows = await select<MediaRow>("media");
 
-  if (!rows || rows.length === 0) return placeholderGallery;
+  if (!rows) return [];
 
   const galleryRows = rows.filter(
-    (r) => appearsInGallery(r) && r.published && (!r.contains_people || r.release_on_file),
+    (r) =>
+      appearsInGallery(r) &&
+      r.published &&
+      (!r.contains_people || r.release_on_file),
   );
-
-  if (galleryRows.length === 0) return placeholderGallery;
 
   return galleryRows
     .sort((a, b) => a.position - b.position)

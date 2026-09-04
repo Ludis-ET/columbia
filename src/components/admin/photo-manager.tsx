@@ -36,21 +36,24 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  GALLERY_CATEGORIES,
+  FALLBACK_GALLERY_CATEGORIES,
+  buildPlacementOptions,
   getPlacements,
   hasPlacement,
-  PLACEMENT_OPTIONS,
   type AdminPhoto,
 } from "@/lib/media";
 import { cn } from "@/lib/utils";
 
-const FILTER_TABS = [
-  { id: "all", label: "All photos", icon: LayoutGrid },
-  { id: "hero", label: "Hero", icon: Home },
-  { id: "meals", label: "Meals", icon: UtensilsCrossed },
-  ...GALLERY_CATEGORIES.map((cat) => ({ id: cat, label: cat, icon: ImageIcon })),
-  { id: "uncategorised", label: "Untagged", icon: ImageIcon },
-] as const;
+function buildFilterTabs(categories: string[]) {
+  const cats = categories.length > 0 ? categories : [...FALLBACK_GALLERY_CATEGORIES];
+  return [
+    { id: "all", label: "All photos", icon: LayoutGrid },
+    { id: "hero", label: "Hero", icon: Home },
+    { id: "meals", label: "Meals", icon: UtensilsCrossed },
+    ...cats.map((cat) => ({ id: cat, label: cat, icon: ImageIcon })),
+    { id: "uncategorised", label: "Untagged", icon: ImageIcon },
+  ] as const;
+}
 
 // ---------------------------------------------------------------------------
 // Confirm dialog
@@ -98,7 +101,13 @@ function ConfirmDialog({
 // Main library
 // ---------------------------------------------------------------------------
 
-export function PhotoManager({ initialPhotos }: { initialPhotos: AdminPhoto[] }) {
+export function PhotoManager({
+  initialPhotos,
+  categories = [],
+}: {
+  initialPhotos: AdminPhoto[];
+  categories?: string[];
+}) {
   const [photos, setPhotos] = useState(initialPhotos);
   const [toast, setToast] = useState<ActionResult | null>(null);
   const [editing, setEditing] = useState<AdminPhoto | null>(null);
@@ -109,6 +118,9 @@ export function PhotoManager({ initialPhotos }: { initialPhotos: AdminPhoto[] })
   const [tagMode, setTagMode] = useState<"add" | "remove">("add");
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  const FILTER_TABS = buildFilterTabs(categories);
+  const dynamicPlacementOptions = buildPlacementOptions(categories);
 
   const sortedPhotos = useMemo(
     () => [...photos].sort((a, b) => a.position - b.position),
@@ -303,7 +315,7 @@ export function PhotoManager({ initialPhotos }: { initialPhotos: AdminPhoto[] })
         />
       ) : null}
 
-      <UploadZone />
+      <UploadZone placementOptions={dynamicPlacementOptions} />
 
       <section aria-labelledby="library-heading">
         <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
@@ -491,6 +503,7 @@ export function PhotoManager({ initialPhotos }: { initialPhotos: AdminPhoto[] })
                 onToggle={bulkToggleTag}
                 disabled={pending}
                 compact
+                options={dynamicPlacementOptions}
               />
             </div>
           </div>
@@ -527,6 +540,7 @@ export function PhotoManager({ initialPhotos }: { initialPhotos: AdminPhoto[] })
                   }
                   onDelete={() => setConfirmDelete(photo.id)}
                   onTogglePlacement={togglePlacement}
+                  placementOptions={dynamicPlacementOptions}
                 />
               </li>
             ))}
@@ -534,7 +548,7 @@ export function PhotoManager({ initialPhotos }: { initialPhotos: AdminPhoto[] })
         )}
       </section>
 
-      {editing ? <EditDialog photo={editing} onClose={() => setEditing(null)} /> : null}
+      {editing ? <EditDialog photo={editing} onClose={() => setEditing(null)} placementOptions={dynamicPlacementOptions} /> : null}
     </div>
   );
 }
@@ -560,7 +574,7 @@ function altFromFilename(name: string): string {
   return base.charAt(0).toUpperCase() + base.slice(1);
 }
 
-function UploadZone() {
+function UploadZone({ placementOptions }: { placementOptions: ReturnType<typeof buildPlacementOptions> }) {
   const [toast, setToast] = useState<ActionResult | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [pending, setPending] = useState<PendingUpload[]>([]);
@@ -918,6 +932,7 @@ function UploadZone() {
                     selected={selectedPlacements}
                     onToggle={toggleUploadPlacement}
                     disabled={uploading}
+                    options={placementOptions}
                   />
                 </fieldset>
 
@@ -993,6 +1008,7 @@ function PhotoTile({
   onToggle,
   onDelete,
   onTogglePlacement,
+  placementOptions,
 }: {
   photo: AdminPhoto;
   pending: boolean;
@@ -1003,6 +1019,7 @@ function PhotoTile({
   onToggle: () => void;
   onDelete: () => void;
   onTogglePlacement: (id: string, placement: string, enabled: boolean) => void;
+  placementOptions: ReturnType<typeof buildPlacementOptions>;
 }) {
   const blocked = photo.contains_people && !photo.release_on_file;
   const placements = getPlacements(photo);
@@ -1077,6 +1094,7 @@ function PhotoTile({
           onToggle={(id) => onTogglePlacement(photo.id, id, !placements.includes(id))}
           disabled={pending || selectMode}
           compact
+          options={placementOptions}
         />
 
         {!selectMode ? (
@@ -1122,15 +1140,17 @@ function PlacementPicker({
   disabled,
   compact,
   name,
+  options,
 }: {
   selected: Set<string>;
   onToggle: (id: string) => void;
   disabled?: boolean;
   compact?: boolean;
   name?: string;
+  options: ReturnType<typeof buildPlacementOptions>;
 }) {
-  const site = PLACEMENT_OPTIONS.filter((p) => p.group === "site");
-  const gallery = PLACEMENT_OPTIONS.filter((p) => p.group === "gallery");
+  const site = options.filter((p) => p.group === "site");
+  const gallery = options.filter((p) => p.group === "gallery");
 
   return (
     <div className={cn("grid gap-2", compact ? "gap-1.5" : "gap-3")}>
@@ -1141,7 +1161,7 @@ function PlacementPicker({
         </>
       ) : (
         <div className="flex flex-wrap gap-1">
-          {PLACEMENT_OPTIONS.map((option) => (
+          {options.map((option) => (
             <PlacementChip
               key={option.id}
               option={option}
@@ -1166,7 +1186,7 @@ function PlacementGroup({
   name,
 }: {
   label: string;
-  options: typeof PLACEMENT_OPTIONS;
+  options: ReturnType<typeof buildPlacementOptions>;
   selected: Set<string>;
   onToggle: (id: string) => void;
   disabled?: boolean;
@@ -1198,7 +1218,7 @@ function PlacementChip({
   disabled,
   name,
 }: {
-  option: (typeof PLACEMENT_OPTIONS)[number];
+  option: ReturnType<typeof buildPlacementOptions>[number];
   active: boolean;
   onClick: () => void;
   disabled?: boolean;
@@ -1235,7 +1255,15 @@ function compactSize(id: string): string {
 // Edit dialog
 // ---------------------------------------------------------------------------
 
-function EditDialog({ photo, onClose }: { photo: AdminPhoto; onClose: () => void }) {
+function EditDialog({
+  photo,
+  onClose,
+  placementOptions,
+}: {
+  photo: AdminPhoto;
+  onClose: () => void;
+  placementOptions: ReturnType<typeof buildPlacementOptions>;
+}) {
   const [state, action, saving] = useActionState(updatePhoto, null);
   const [placements, setPlacements] = useState<Set<string>>(new Set(getPlacements(photo)));
 
@@ -1293,6 +1321,7 @@ function EditDialog({ photo, onClose }: { photo: AdminPhoto; onClose: () => void
                 })
               }
               disabled={saving}
+              options={placementOptions}
             />
           </fieldset>
 
