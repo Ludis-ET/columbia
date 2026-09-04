@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { ChevronDown } from "lucide-react";
 import { scrollToSection } from "@/lib/anchor-nav";
 import { headerNavItems, sections, type SiteSection } from "@/lib/sections";
 import { cn } from "@/lib/utils";
+import { houseTransition } from "@/lib/motion";
 
 /**
  * Anchor navigation with scroll-spy.
@@ -222,35 +224,47 @@ function CareDisclosure({
         )}
       >
         {label}
-        <ChevronDown className={cn("size-4 shrink-0", open && "rotate-180")} aria-hidden="true" />
-      </button>
-      {open ? (
-        <ul
-          id={listId}
-          className="border-rule bg-paper absolute top-full left-0 z-50 min-w-44 rounded border py-1 shadow-sm"
+        <motion.span
+          className="inline-flex"
+          animate={{ rotate: open ? 180 : 0 }}
+          transition={houseTransition}
         >
-          {items.map((section) => (
-            <li key={section.id}>
-              <a
-                href={`#${section.id}`}
-                onClick={(e) => {
-                  onGo(e, section.id);
-                  setOpen(false);
-                }}
-                aria-current={activeId === section.id ? "location" : undefined}
-                className={cn(
-                  "flex min-h-12 items-center px-3 text-[0.95rem]",
-                  activeId === section.id
-                    ? "text-sage-deep font-semibold"
-                    : "text-ink-soft hover:text-sage-deep",
-                )}
-              >
-                {section.id === "care" ? section.title : section.navLabel}
-              </a>
-            </li>
-          ))}
-        </ul>
-      ) : null}
+          <ChevronDown className="size-4 shrink-0" aria-hidden="true" />
+        </motion.span>
+      </button>
+      <AnimatePresence>
+        {open ? (
+          <motion.ul
+            id={listId}
+            initial={{ y: 8 }}
+            animate={{ y: 0 }}
+            exit={{ y: 8 }}
+            transition={houseTransition}
+            className="border-rule bg-paper absolute top-full left-0 z-50 min-w-44 rounded border py-1 shadow-sm"
+          >
+            {items.map((section) => (
+              <li key={section.id}>
+                <a
+                  href={`#${section.id}`}
+                  onClick={(e) => {
+                    onGo(e, section.id);
+                    setOpen(false);
+                  }}
+                  aria-current={activeId === section.id ? "location" : undefined}
+                  className={cn(
+                    "flex min-h-12 items-center px-3 text-[0.95rem]",
+                    activeId === section.id
+                      ? "text-sage-deep font-semibold"
+                      : "text-ink-soft hover:text-sage-deep",
+                  )}
+                >
+                  {section.id === "care" ? section.title : section.navLabel}
+                </a>
+              </li>
+            ))}
+          </motion.ul>
+        ) : null}
+      </AnimatePresence>
     </div>
   );
 }

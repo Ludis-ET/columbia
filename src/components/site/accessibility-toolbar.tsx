@@ -1,8 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { Accessibility, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { HouseMotion } from "@/components/motion/house";
+import { houseTransition } from "@/lib/motion";
 import {
   readPreference,
   writePreference,
@@ -119,88 +122,98 @@ export function AccessibilityToolbar() {
   const changed = GROUPS.some((group) => prefs[group.key]);
 
   return (
-    <div className="fixed bottom-20 left-4 z-50 sm:bottom-4 print:hidden">
-      {open ? (
-        <div
-          ref={panelRef}
-          role="dialog"
-          aria-label="Reading options"
-          className="border-rule-strong bg-paper-raise mb-3 w-[min(20rem,calc(100vw-2rem))] rounded border p-4 shadow-lg"
-        >
-          <div className="mb-3 flex items-start justify-between gap-3">
-            <div>
-              <h2 className="text-[1.05rem] font-bold">Reading options</h2>
-              <p className="text-stone text-[0.875rem] leading-snug">
-                These stay set on this device.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={close}
-              className="text-stone hover:text-ink -mt-1 -mr-1 inline-flex size-9 shrink-0 items-center justify-center rounded"
+    <HouseMotion>
+      <div className="fixed bottom-20 left-4 z-50 sm:bottom-4 print:hidden">
+        <AnimatePresence>
+          {open ? (
+            <motion.div
+              ref={panelRef}
+              role="dialog"
+              aria-label="Reading options"
+              initial={{ y: 8 }}
+              animate={{ y: 0 }}
+              exit={{ y: 8 }}
+              transition={houseTransition}
+              className="border-rule-strong bg-paper-raise mb-3 w-[min(20rem,calc(100vw-2rem))] rounded border p-4 shadow-lg"
             >
-              <X className="size-5" aria-hidden="true" />
-              <span className="sr-only">Close reading options</span>
-            </button>
-          </div>
-
-          <div className="flex flex-col gap-4">
-            {GROUPS.map((group) => (
-              <fieldset key={group.key}>
-                <legend className="label text-stone mb-1.5">{group.legend}</legend>
-                <div className="flex flex-wrap gap-1.5">
-                  {group.choices.map((choice) => {
-                    const active = (prefs[group.key] ?? null) === choice.value;
-                    return (
-                      <button
-                        key={choice.label}
-                        type="button"
-                        onClick={() => choose(group.key, choice.value)}
-                        aria-pressed={active}
-                        className={cn(
-                          "min-h-11 rounded border px-3 text-[0.9375rem] transition-colors",
-                          active
-                            ? "border-sage bg-sage-wash text-sage-deep font-semibold"
-                            : "border-rule text-ink-soft hover:border-rule-strong",
-                        )}
-                      >
-                        {choice.label}
-                      </button>
-                    );
-                  })}
+              <div className="mb-3 flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-[1.05rem] font-bold">Reading options</h2>
+                  <p className="text-stone text-[0.875rem] leading-snug">
+                    These stay set on this device.
+                  </p>
                 </div>
-                {group.hint ? (
-                  <p className="text-stone mt-1.5 text-[0.8125rem] leading-snug">{group.hint}</p>
-                ) : null}
-              </fieldset>
-            ))}
-          </div>
+                <button
+                  type="button"
+                  onClick={close}
+                  className="text-stone hover:text-ink -mt-1 -mr-1 inline-flex size-9 shrink-0 items-center justify-center rounded"
+                >
+                  <X className="size-5" aria-hidden="true" />
+                  <span className="sr-only">Close reading options</span>
+                </button>
+              </div>
 
-          {changed ? (
-            <button
-              type="button"
-              onClick={resetAll}
-              className="text-sage-deep mt-4 min-h-11 text-[0.9375rem] font-semibold underline"
-            >
-              Reset to defaults
-            </button>
+              <div className="flex flex-col gap-4">
+                {GROUPS.map((group) => (
+                  <fieldset key={group.key}>
+                    <legend className="label text-stone mb-1.5">{group.legend}</legend>
+                    <div className="flex flex-wrap gap-1.5">
+                      {group.choices.map((choice) => {
+                        const active = (prefs[group.key] ?? null) === choice.value;
+                        return (
+                          <button
+                            key={choice.label}
+                            type="button"
+                            onClick={() => choose(group.key, choice.value)}
+                            aria-pressed={active}
+                            className={cn(
+                              "min-h-11 rounded border px-3 text-[0.9375rem] transition-colors",
+                              active
+                                ? "border-sage bg-sage-wash text-sage-deep font-semibold"
+                                : "border-rule text-ink-soft hover:border-rule-strong",
+                            )}
+                          >
+                            {choice.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {group.hint ? (
+                      <p className="text-stone mt-1.5 text-[0.8125rem] leading-snug">
+                        {group.hint}
+                      </p>
+                    ) : null}
+                  </fieldset>
+                ))}
+              </div>
+
+              {changed ? (
+                <button
+                  type="button"
+                  onClick={resetAll}
+                  className="text-sage-deep mt-4 min-h-11 text-[0.9375rem] font-semibold underline"
+                >
+                  Reset to defaults
+                </button>
+              ) : null}
+            </motion.div>
           ) : null}
-        </div>
-      ) : null}
+        </AnimatePresence>
 
-      <button
-        ref={triggerRef}
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        className={cn(
-          "border-rule-strong bg-paper-raise text-ink inline-flex min-h-12 items-center gap-2 rounded-full border py-2 pr-4 pl-3 font-semibold shadow-md transition-colors",
-          "hover:border-sage hover:text-sage-deep",
-        )}
-      >
-        <Accessibility className="size-5" aria-hidden="true" strokeWidth={2} />
-        <span className="text-[0.9375rem]">Reading options</span>
-      </button>
-    </div>
+        <button
+          ref={triggerRef}
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          className={cn(
+            "border-rule-strong bg-paper-raise text-ink inline-flex min-h-12 items-center gap-2 rounded-full border py-2 pr-4 pl-3 font-semibold shadow-md transition-colors",
+            "hover:border-sage hover:text-sage-deep",
+          )}
+        >
+          <Accessibility className="size-5" aria-hidden="true" strokeWidth={2} />
+          <span className="text-[0.9375rem]">Reading options</span>
+        </button>
+      </div>
+    </HouseMotion>
   );
 }

@@ -23,7 +23,7 @@ import { Hero } from "@/components/site/hero";
 import { Section, SectionHeading, Prose } from "@/components/site/section";
 import { AvailabilityBadge } from "@/components/site/availability-badge";
 import { ServiceCard } from "@/components/site/service-card";
-import { TimelineEntry, DayGradient } from "@/components/site/timeline-entry";
+import { TimelineEntry } from "@/components/site/timeline-entry";
 import { Gallery } from "@/components/site/gallery";
 import { TestimonialList } from "@/components/site/testimonial";
 import { FaqAccordion } from "@/components/site/faq-accordion";
@@ -373,18 +373,12 @@ export default function KitchenSinkPage() {
         </Bench>
       </div>
 
-      <Bench n="14" title="Day gradient" note="the signature moment">
-        <div />
+      <Bench n="14" title="Day timeline" note="sage-wash ground, accents on icons only">
+        <p className="text-ink-soft max-w-[62ch]">
+          Time-of-day accents stay on the timeline icons. The section ground is sage-wash, the same
+          band used for Care and Meals.
+        </p>
       </Bench>
-      <div className="relative isolate overflow-hidden py-20">
-        <DayGradient />
-        <div className="mx-auto max-w-5xl px-4 sm:px-6">
-          <p className="text-ink-soft max-w-[62ch]">
-            The full page ramps dawn → night as the reader moves through the 13 entries. Here it is
-            compressed into one block so both ends are visible at once.
-          </p>
-        </div>
-      </div>
 
       <Section ground="wash">
         <SectionHeading

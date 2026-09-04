@@ -1,40 +1,62 @@
-import type { ReactNode } from "react";
+"use client";
+
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { motion, useInView } from "motion/react";
+import { cn } from "@/lib/utils";
+import { houseTransition } from "@/lib/motion";
+import { useHouseReducedMotion } from "@/components/motion/house";
 import { REVEAL_STAGGER } from "@/lib/reveal";
 
 /**
- * The site's one scroll animation: a 12px rise and fade, 320ms, optionally
- * staggered.
+ * Section scroll reveal, in `motion`, without the failure mode.
  *
- * This is a SERVER component and ships no JavaScript. It only marks the element
- * with `data-reveal`; the hidden state, the transition and the observer all live
- * in CSS plus one small inlined script (src/lib/reveal.ts), so a React problem
- * can never leave content invisible again. See the note in that file.
- *
- * Reduced motion is handled at the source: the script does not arm the hidden
- * state at all when the OS or the Reading options panel asks for less motion,
- * so the content is simply there with no transition.
+ * Server HTML is visible (`initial={false}`, armed only after mount). If React
+ * never hydrates, the section stays on screen. Reduced motion and a 3s rescue
+ * timeout both force the visible state, so a family can never lose Care, the
+ * day timeline, or the tour form to a stuck animation.
  */
 export function Reveal({
   children,
   delay = 0,
   className,
-  as: Component = "div",
 }: {
   children: ReactNode;
   /** Seconds. Stagger siblings with `index * REVEAL_STAGGER`. */
   delay?: number;
   className?: string;
-  as?: "div" | "section" | "li" | "article";
 }) {
+  const reduce = useHouseReducedMotion();
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "0px 0px -8% 0px" });
+  const [armed, setArmed] = useState(false);
+  const [rescue, setRescue] = useState(false);
+
+  useEffect(() => {
+    if (reduce) return;
+    let raf2 = 0;
+    const raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => setArmed(true));
+    });
+    const timer = window.setTimeout(() => setRescue(true), 3000);
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+      window.clearTimeout(timer);
+    };
+  }, [reduce]);
+
+  const hidden = armed && !reduce && !inView && !rescue;
+
   return (
-    <Component
-      data-reveal=""
-      suppressHydrationWarning
-      className={className}
-      style={delay ? ({ "--reveal-delay": `${delay}s` } as React.CSSProperties) : undefined}
+    <motion.div
+      ref={ref}
+      className={cn(className)}
+      initial={false}
+      animate={hidden ? { opacity: 0, y: 12 } : { opacity: 1, y: 0 }}
+      transition={{ ...houseTransition, delay: hidden ? 0 : delay }}
     >
       {children}
-    </Component>
+    </motion.div>
   );
 }
 

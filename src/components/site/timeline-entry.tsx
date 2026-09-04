@@ -60,28 +60,3 @@ export function TimelineEntry({
     </article>
   );
 }
-
-/**
- * The signature moment: the page ground shifts dawn → night as the reader moves
- * through the day. Pure CSS gradient, so it costs nothing and needs no JS.
- *
- * Colours are the client's own accent badges, read as a time-of-day ramp.
- */
-export function DayGradient({ className }: { className?: string }) {
-  return (
-    <div
-      aria-hidden="true"
-      className={cn("pointer-events-none absolute inset-0 -z-10", className)}
-      style={{
-        background:
-          "linear-gradient(to bottom," +
-          " color-mix(in srgb, var(--accent-amber) 10%, var(--paper)) 0%," +
-          " var(--paper) 18%," +
-          " color-mix(in srgb, var(--accent-blue) 7%, var(--paper)) 38%," +
-          " color-mix(in srgb, var(--accent-amber) 12%, var(--paper)) 58%," +
-          " color-mix(in srgb, var(--accent-violet) 12%, var(--paper)) 76%," +
-          " color-mix(in srgb, var(--ink) 22%, var(--paper)) 100%)",
-      }}
-    />
-  );
-}

@@ -91,4 +91,20 @@ for (let i = 1; i < offsets.length; i += 1) {
 pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefAt}\n%%EOF\n`;
 
 await writeFile("public/columbia-care-afh-everett.pdf", pdf, "utf8");
+
+const vcf = [
+  "BEGIN:VCARD",
+  "VERSION:3.0",
+  "FN:Columbia Care Adult Family Home",
+  "ORG:Columbia Care Adult Family Home",
+  `TEL;TYPE=WORK,VOICE:${phone}`,
+  `TEL;TYPE=FAX:${fax}`,
+  `EMAIL;TYPE=INTERNET:${email}`,
+  `ADR;TYPE=WORK:;;${addr.streetAddress};${addr.addressLocality};${addr.addressRegion};${addr.postalCode};${addr.addressCountry}`,
+  "END:VCARD",
+  "",
+].join("\r\n");
+
+await writeFile("public/columbia-care-afh-everett.vcf", vcf, "utf8");
 console.log("Wrote public/columbia-care-afh-everett.pdf");
+console.log("Wrote public/columbia-care-afh-everett.vcf");

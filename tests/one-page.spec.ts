@@ -109,7 +109,7 @@ test("all the content is present on the one page", async ({ page }) => {
     "home-cooked meals", // meals
     "2215 Columbia Ave", // visit
     "Send this to Columbia Care", // contact form
-    "Download our card", // footer business card
+    "Download our card", // business card
   ]) {
     expect(text, `"${needle}" is missing from the one-pager`).toContain(needle);
   }

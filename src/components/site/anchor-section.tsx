@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { Reveal } from "@/components/motion/reveal";
 
 /**
  * A section of the one-page site.
@@ -43,7 +44,13 @@ export function AnchorSection({
         className,
       )}
     >
-      {bleed ? children : <div className="mx-auto max-w-6xl px-4 sm:px-6">{children}</div>}
+      {bleed ? (
+        <Reveal>{children}</Reveal>
+      ) : (
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <Reveal>{children}</Reveal>
+        </div>
+      )}
     </section>
   );
 }

@@ -1,19 +1,21 @@
 import type { Metadata } from "next";
 import Image from "next/image";
-import { Clock, Mail, MapPin, Phone, Printer } from "lucide-react";
+import { Clock, MapPin, Printer } from "lucide-react";
 
 import { Hero } from "@/components/site/hero";
 import { AnchorSection } from "@/components/site/anchor-section";
 import { SectionHeading, Prose } from "@/components/site/section";
 import { AvailabilityBadge } from "@/components/site/availability-badge";
 import { ServiceCard } from "@/components/site/service-card";
-import { TimelineEntry, DayGradient } from "@/components/site/timeline-entry";
+import { TimelineEntry } from "@/components/site/timeline-entry";
 import { Gallery } from "@/components/site/gallery";
 import { TestimonialList } from "@/components/site/testimonial";
 import { MapBlock } from "@/components/site/map-block";
+import { BusinessCard } from "@/components/site/business-card";
 import { TourForm } from "@/components/site/tour-form";
 import { BackToTop } from "@/components/site/back-to-top";
 import { Reveal } from "@/components/motion/reveal";
+import { MotionLift } from "@/components/motion/lift";
 import { HeartShield } from "@/components/brand/heart-shield";
 import { IconBadge, isIconName } from "@/components/icons";
 import { identity, published } from "@/lib/content";
@@ -113,19 +115,21 @@ export default async function HomePage() {
       {/* ------------------------------------------------------------ promise */}
       {promise ? (
         <div className="bg-sage-wash py-14 sm:py-16">
-          <div className="mx-auto max-w-6xl px-4 text-center sm:px-6">
-            <HeartShield className="mx-auto mb-5 size-12" />
-            <p className="text-h2 font-display mx-auto max-w-[24ch]">{promise}</p>
-            {values.length > 0 ? (
-              <ul className="text-sage-deep mt-7 flex flex-wrap justify-center gap-x-6 gap-y-2">
-                {values.map((value) => (
-                  <li key={value} className="label">
-                    {value}
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-          </div>
+          <Reveal>
+            <div className="mx-auto max-w-6xl px-4 text-center sm:px-6">
+              <HeartShield className="mx-auto mb-5 size-12" />
+              <p className="text-h2 font-display mx-auto max-w-[24ch]">{promise}</p>
+              {values.length > 0 ? (
+                <ul className="text-sage-deep mt-7 flex flex-wrap justify-center gap-x-6 gap-y-2">
+                  {values.map((value) => (
+                    <li key={value} className="label">
+                      {value}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </div>
+          </Reveal>
         </div>
       ) : null}
 
@@ -140,14 +144,14 @@ export default async function HomePage() {
 
         {reasons.length > 0 ? (
           <ul className="mx-auto grid max-w-4xl gap-4 sm:grid-cols-2">
-            {reasons.map((reason, index) => (
+            {reasons.map((reason) => (
               <li key={reason}>
-                <Reveal delay={index * 0.06}>
+                <MotionLift>
                   <div className="border-rule bg-paper-raise flex h-full items-start gap-3 rounded border p-5">
                     <HeartShield className="mt-0.5 size-6 shrink-0" />
                     <p className="font-semibold">{reason}</p>
                   </div>
-                </Reveal>
+                </MotionLift>
               </li>
             ))}
           </ul>
@@ -164,9 +168,9 @@ export default async function HomePage() {
 
         {care.length > 0 ? (
           <ul className="mx-auto mb-12 grid max-w-4xl gap-4 md:grid-cols-3">
-            {care.map((type, index) => (
+            {care.map((type) => (
               <li key={type.slug}>
-                <Reveal delay={index * 0.06}>
+                <MotionLift>
                   <div className="border-rule bg-paper-raise flex h-full flex-col items-center rounded border p-8 text-center">
                     {isIconName(type.icon) ? (
                       <IconBadge name={type.icon} accent="sage" size="lg" className="mb-4" />
@@ -176,7 +180,7 @@ export default async function HomePage() {
                       <p className="text-ink mt-3 text-[1.05rem]">{type.description}</p>
                     ) : null}
                   </div>
-                </Reveal>
+                </MotionLift>
               </li>
             ))}
           </ul>
@@ -184,16 +188,16 @@ export default async function HomePage() {
 
         {services.length > 0 ? (
           <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {services.map((service, index) => (
+            {services.map((service) => (
               <li key={service.slug}>
-                <Reveal delay={Math.min(index, 5) * 0.05}>
+                <MotionLift>
                   <ServiceCard
                     title={service.title}
                     icon={service.icon}
                     summary={service.description}
                     className="h-full"
                   />
-                </Reveal>
+                </MotionLift>
               </li>
             ))}
           </ul>
@@ -201,17 +205,10 @@ export default async function HomePage() {
       </AnchorSection>
 
       {/* ---------------------------------------------------------------- day */}
-      {/* The signature moment: the ground ramps dawn → night behind the 13
-          entries, using the client's own accent colours. Full-bleed, so it
-          reads as a change of place rather than another band. */}
-      <AnchorSection
-        id="day"
-        title="A day in our home"
-        bleed
-        className="relative isolate overflow-hidden"
-      >
-        <DayGradient />
-        <div className="relative mx-auto max-w-3xl px-4 sm:px-6">
+      {/* Time-of-day accents stay on the timeline icons only. The ground is the
+          same sage-wash as the other quiet bands, not a dawn-to-night ramp. */}
+      <AnchorSection id="day" title="A day in our home" ground="wash">
+        <div className="mx-auto max-w-3xl">
           <div className="mb-14 text-center">
             <p className="label text-sage-deep mb-3">{t("day_eyebrow", "Morning to night")}</p>
             <h2 className="text-h1 mb-5">{t("day_heading", "A day in our home")}</h2>
@@ -225,17 +222,16 @@ export default async function HomePage() {
 
           {schedule.length > 0 ? (
             <div className="relative">
-              {schedule.map((item, index) => (
-                <Reveal key={item.position} delay={Math.min(index, 6) * 0.04}>
-                  <TimelineEntry
-                    timeLabel={item.timeLabel}
-                    title={item.title}
-                    body={item.body}
-                    bullets={item.bullets}
-                    icon={item.icon}
-                    accent={item.accent}
-                  />
-                </Reveal>
+              {schedule.map((item) => (
+                <TimelineEntry
+                  key={item.position}
+                  timeLabel={item.timeLabel}
+                  title={item.title}
+                  body={item.body}
+                  bullets={item.bullets}
+                  icon={item.icon}
+                  accent={item.accent}
+                />
               ))}
             </div>
           ) : null}
@@ -263,17 +259,15 @@ export default async function HomePage() {
       {meals ? (
         <AnchorSection id="meals" title="Meals and dining" ground="wash">
           <div className="grid items-center gap-10 lg:grid-cols-2">
-            <Reveal>
-              <div className="relative aspect-4/3 w-full overflow-hidden rounded">
-                <Image
-                  src={mealsPhoto.src}
-                  alt={mealsPhoto.alt}
-                  fill
-                  sizes="(min-width: 1024px) 50vw, 100vw"
-                  className="object-cover"
-                />
-              </div>
-            </Reveal>
+            <div className="relative aspect-4/3 w-full overflow-hidden rounded">
+              <Image
+                src={mealsPhoto.src}
+                alt={mealsPhoto.alt}
+                fill
+                sizes="(min-width: 1024px) 50vw, 100vw"
+                className="object-cover"
+              />
+            </div>
             <div>
               <SectionHeading
                 eyebrow={t("meals_eyebrow", "Meals & dining")}
@@ -298,7 +292,9 @@ export default async function HomePage() {
       {testimonials.length > 0 ? (
         <div className="py-16 sm:py-24">
           <div className="mx-auto max-w-6xl px-4 sm:px-6">
-            <TestimonialList items={testimonials} />
+            <Reveal>
+              <TestimonialList items={testimonials} />
+            </Reveal>
           </div>
         </div>
       ) : null}
@@ -344,63 +340,38 @@ export default async function HomePage() {
       {/*
         The closing moment, and the one the whole page builds toward.
 
-        Two columns on desktop: the invitation and the direct ways to reach a
-        human on the left, the form raised on a card to the right. Someone who
-        would rather phone should not have to scroll past a form to find the
-        number, and someone ready to write should not have to hunt for the form.
+        The form is never wrapped in Reveal: opacity-0 is how this page once
+        went blank, and a family must always be able to write. On a narrow
+        viewport the form comes straight after the invitation, before the
+        card, so it is not sitting in empty space to the right of left-aligned
+        copy. From md up it sits in the right column.
       */}
       <AnchorSection id="contact" title="Book a house tour" ground="wash">
-        <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)] lg:gap-16">
-          <div className="lg:sticky lg:top-24">
+        <div className="grid items-start gap-10 md:grid-cols-2 md:gap-12 lg:gap-16">
+          <div>
             <p className="label text-sage-deep mb-3">{t("contact_eyebrow", "Book a house tour")}</p>
             <h2 className="text-h1 mb-5">{t("contact_heading", "Come and see the home")}</h2>
 
-            <p className="text-lead text-ink-soft mb-6 max-w-[46ch]">
+            <p className="text-lead text-ink-soft max-w-[46ch]">
               {t(
                 "contact_lead",
                 "Tell us a little about your loved one and what they need. There is no pressure and no obligation, and most families visit two or three homes before they decide.",
               )}
             </p>
+          </div>
 
-            {phone || email ? (
-              <>
-                <p className="label text-stone mb-3">Or reach us directly</p>
-                <ul className="mb-8 grid gap-3 sm:max-w-sm">
-                  {phone && tel ? (
-                    <li>
-                      <a
-                        href={tel}
-                        className="group border-rule bg-paper hover:border-sage flex min-h-16 items-center gap-4 rounded border px-5 transition-colors"
-                      >
-                        <Phone className="text-sage size-5 shrink-0" aria-hidden="true" />
-                        <span className="min-w-0">
-                          <span className="label text-stone block">Call us</span>
-                          <span className="text-ink group-hover:text-sage-deep block font-semibold">
-                            {phone}
-                          </span>
-                        </span>
-                      </a>
-                    </li>
-                  ) : null}
-                  {email ? (
-                    <li>
-                      <a
-                        href={`mailto:${email}`}
-                        className="group border-rule bg-paper hover:border-sage flex min-h-16 items-center gap-4 rounded border px-5 transition-colors"
-                      >
-                        <Mail className="text-sage size-5 shrink-0" aria-hidden="true" />
-                        <span className="min-w-0">
-                          <span className="label text-stone block">Email us</span>
-                          <span className="text-ink group-hover:text-sage-deep block font-semibold break-all">
-                            {email}
-                          </span>
-                        </span>
-                      </a>
-                    </li>
-                  ) : null}
-                </ul>
-              </>
-            ) : null}
+          <div className="border-rule bg-paper-raise min-w-0 rounded-lg border p-6 shadow-lg sm:p-8 md:row-span-2">
+            <TourForm />
+          </div>
+
+          <div>
+            <BusinessCard
+              phone={phone}
+              phoneHref={tel}
+              email={email}
+              fax={fax}
+              addressLine={address}
+            />
 
             <div className="border-sage/40 flex items-start gap-3 border-t pt-6">
               <HeartShield className="mt-0.5 size-7 shrink-0" />
@@ -410,13 +381,6 @@ export default async function HomePage() {
               </p>
             </div>
           </div>
-
-          {/* The form, raised off the band so it reads as the thing to do. */}
-          <Reveal>
-            <div className="border-rule bg-paper-raise rounded-lg border p-6 shadow-lg sm:p-8">
-              <TourForm />
-            </div>
-          </Reveal>
         </div>
       </AnchorSection>
 

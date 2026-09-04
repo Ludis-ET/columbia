@@ -1,7 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { ArrowUp } from "lucide-react";
+import { HouseMotion } from "@/components/motion/house";
+import { houseTransition } from "@/lib/motion";
 
 /**
  * Back to top.
@@ -23,21 +26,27 @@ export function BackToTop() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  if (!visible) return null;
-
   return (
-    <button
-      type="button"
-      onClick={() => {
-        window.scrollTo({ top: 0 });
-        // Send focus back to the top of the document, not just the scroll
-        // position, otherwise the next Tab resumes from wherever they were.
-        document.getElementById("main")?.focus({ preventScroll: true });
-      }}
-      className="border-rule-strong bg-paper-raise text-ink hover:border-sage hover:text-sage-deep fixed right-4 bottom-20 z-40 inline-flex size-12 items-center justify-center rounded-full border shadow-md transition-colors sm:bottom-4 print:hidden"
-    >
-      <ArrowUp className="size-5" aria-hidden="true" strokeWidth={2} />
-      <span className="sr-only">Back to top</span>
-    </button>
+    <HouseMotion>
+      <AnimatePresence>
+        {visible ? (
+          <motion.button
+            type="button"
+            initial={{ y: 8 }}
+            animate={{ y: 0 }}
+            exit={{ y: 8 }}
+            transition={houseTransition}
+            onClick={() => {
+              window.scrollTo({ top: 0 });
+              document.getElementById("main")?.focus({ preventScroll: true });
+            }}
+            className="border-rule-strong bg-paper-raise text-ink hover:border-sage hover:text-sage-deep fixed right-4 bottom-20 z-40 inline-flex size-12 items-center justify-center rounded-full border shadow-md transition-colors sm:bottom-4 print:hidden"
+          >
+            <ArrowUp className="size-5" aria-hidden="true" strokeWidth={2} />
+            <span className="sr-only">Back to top</span>
+          </motion.button>
+        ) : null}
+      </AnimatePresence>
+    </HouseMotion>
   );
 }

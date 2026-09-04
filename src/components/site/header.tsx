@@ -3,13 +3,16 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import { motion } from "motion/react";
 import { Menu, X } from "lucide-react";
 import { Monogram } from "@/components/brand/monogram";
 import { AnchorLink } from "@/components/site/anchor-link";
 import { ThemeToggle } from "@/components/site/theme-toggle";
 import { SectionNav } from "@/components/site/section-nav";
+import { HouseMotion } from "@/components/motion/house";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { houseTransition } from "@/lib/motion";
 
 /**
  * Site header.
@@ -38,99 +41,121 @@ export function Header() {
   useEffect(() => setOpen(false), [pathname]);
 
   return (
-    <header
-      className={cn(
-        "bg-paper/95 border-rule sticky top-0 z-50 border-b backdrop-blur transition-shadow",
-        condensed && "shadow-sm",
-      )}
-    >
-      <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 sm:px-6">
-        <Link
-          href="/"
-          className="flex shrink-0 items-center gap-2.5 py-3"
-          aria-label="Columbia Care Adult Family Home, home"
-        >
-          <Monogram className={cn("transition-all", condensed ? "size-9" : "size-11")} decorative />
-          <span className="hidden leading-tight md:block">
-            <span className="font-display text-ink block text-[1.05rem] font-semibold">
-              Columbia Care
-            </span>
-            <span className="label text-stone block text-[0.6875rem]">
-              Adult Family Home · Everett
-            </span>
-          </span>
-        </Link>
-
-        <nav aria-label="Sections of this page" className="ml-auto hidden lg:block">
-          {onePager ? (
-            <SectionNav />
-          ) : (
-            <Link href="/" className="text-ink-soft hover:text-sage-deep px-3 py-2 text-[0.95rem]">
-              Back to the home page
-            </Link>
-          )}
-        </nav>
-
-        <div className="ml-auto flex items-center gap-2 lg:ml-0">
-          {/* Below lg the toggle lives in the mobile menu instead, keeping both
-              overflows the bar at the largest reader text size. */}
-          <ThemeToggle className="hidden lg:inline-flex" />
-
-          <AnchorLink
-            sectionId="contact"
-            // Tighter horizontal padding between lg and xl: the nav, toggle and
-            // this button together were 5px over a 1024px viewport. Height stays
-            // at 48px, the target-size floor is not negotiable, the padding is.
-            className={cn(
-              buttonVariants({ size: "default" }),
-              "hidden px-4 sm:inline-flex xl:px-6",
-            )}
+    <HouseMotion>
+      <header
+        className={cn(
+          "bg-paper/95 border-rule sticky top-0 z-50 border-b backdrop-blur transition-shadow",
+          condensed && "shadow-sm",
+        )}
+      >
+        <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 sm:px-6">
+          <Link
+            href="/"
+            className="flex shrink-0 items-center gap-2.5 py-3"
+            aria-label="Columbia Care Adult Family Home, home"
           >
-            Book a house tour
-          </AnchorLink>
+            <Monogram
+              className={cn("transition-all", condensed ? "size-9" : "size-11")}
+              decorative
+            />
+            <span className="hidden leading-tight md:block">
+              <span className="font-display text-ink block text-[1.05rem] font-semibold">
+                Columbia Care
+              </span>
+              <span className="label text-stone block text-[0.6875rem]">
+                Adult Family Home · Everett
+              </span>
+            </span>
+          </Link>
 
-          <button
-            type="button"
-            onClick={() => setOpen((v) => !v)}
-            aria-expanded={open}
-            aria-controls="mobile-nav"
-            className="text-ink inline-flex size-12 items-center justify-center rounded lg:hidden"
-          >
-            {open ? (
-              <X className="size-6" aria-hidden="true" />
+          <nav aria-label="Sections of this page" className="ml-auto hidden lg:block">
+            {onePager ? (
+              <SectionNav />
             ) : (
-              <Menu className="size-6" aria-hidden="true" />
+              <Link
+                href="/"
+                className="text-ink-soft hover:text-sage-deep px-3 py-2 text-[0.95rem]"
+              >
+                Back to the home page
+              </Link>
             )}
-            <span className="sr-only">{open ? "Close menu" : "Open menu"}</span>
-          </button>
-        </div>
-      </div>
+          </nav>
 
-      <div id="mobile-nav" hidden={!open} className="border-rule bg-paper-raise border-t lg:hidden">
-        <nav
-          aria-label="Sections of this page, mobile"
-          className="mx-auto max-w-6xl px-4 py-3 sm:px-6"
-        >
-          {onePager ? (
-            <SectionNav orientation="vertical" onNavigate={() => setOpen(false)} />
-          ) : (
-            <Link href="/" className="text-ink-soft flex min-h-12 items-center px-2 text-[1.05rem]">
-              Back to the home page
-            </Link>
-          )}
+          <div className="ml-auto flex items-center gap-2 lg:ml-0">
+            {/* Below lg the toggle lives in the mobile menu instead, keeping both
+              overflows the bar at the largest reader text size. */}
+            <ThemeToggle className="hidden lg:inline-flex" />
 
-          <div className="border-rule mt-3 flex items-center justify-between gap-3 border-t pt-3">
-            <ThemeToggle />
             <AnchorLink
               sectionId="contact"
-              onNavigate={() => setOpen(false)}
-              className={buttonVariants({ size: "default" })}
+              // Tighter horizontal padding between lg and xl: the nav, toggle and
+              // this button together were 5px over a 1024px viewport. Height stays
+              // at 48px, the target-size floor is not negotiable, the padding is.
+              className={cn(
+                buttonVariants({ size: "default" }),
+                "hidden px-4 sm:inline-flex xl:px-6",
+              )}
             >
               Book a house tour
             </AnchorLink>
+
+            <button
+              type="button"
+              onClick={() => setOpen((v) => !v)}
+              aria-expanded={open}
+              aria-controls="mobile-nav"
+              className="text-ink inline-flex size-12 items-center justify-center rounded lg:hidden"
+            >
+              {open ? (
+                <X className="size-6" aria-hidden="true" />
+              ) : (
+                <Menu className="size-6" aria-hidden="true" />
+              )}
+              <span className="sr-only">{open ? "Close menu" : "Open menu"}</span>
+            </button>
           </div>
-        </nav>
-      </div>
-    </header>
+        </div>
+
+        <motion.div
+          id="mobile-nav"
+          initial={false}
+          animate={{ height: open ? "auto" : 0 }}
+          transition={houseTransition}
+          className={cn(
+            "bg-paper-raise overflow-hidden lg:hidden",
+            open ? "border-rule border-t" : "border-t border-transparent",
+          )}
+          aria-hidden={!open}
+          {...(!open ? { inert: true } : {})}
+        >
+          <nav
+            aria-label="Sections of this page, mobile"
+            className="mx-auto max-w-6xl px-4 py-3 sm:px-6"
+          >
+            {onePager ? (
+              <SectionNav orientation="vertical" onNavigate={() => setOpen(false)} />
+            ) : (
+              <Link
+                href="/"
+                className="text-ink-soft flex min-h-12 items-center px-2 text-[1.05rem]"
+              >
+                Back to the home page
+              </Link>
+            )}
+
+            <div className="border-rule mt-3 flex items-center justify-between gap-3 border-t pt-3">
+              <ThemeToggle />
+              <AnchorLink
+                sectionId="contact"
+                onNavigate={() => setOpen(false)}
+                className={buttonVariants({ size: "default" })}
+              >
+                Book a house tour
+              </AnchorLink>
+            </div>
+          </nav>
+        </motion.div>
+      </header>
+    </HouseMotion>
   );
 }
