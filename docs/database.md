@@ -15,6 +15,8 @@ repo. So applying the schema is a manual step, made as small as possible:
 
 Safe to re-run: the schema is `IF NOT EXISTS`, the seed is `ON CONFLICT DO UPDATE`.
 
+If the project is already live and you only need the Care-section updates (summaries and hiding the duplicate Long term care service), paste [`supabase/apply-care-summaries.sql`](../supabase/apply-care-summaries.sql) instead of the whole bundle.
+
 Then verify:
 
 ```bash
@@ -52,8 +54,8 @@ pnpm dlx supabase db execute -f supabase/seed.sql
 | ---------------- | ------------------ | ------------------------------------------------------ |
 | `site_settings`  | 1                  | Singleton. Phone and licence are **NULL**, unconfirmed |
 | `availability`   | 1                  | Status `unset`, so the badge renders nothing           |
-| `care_types`     | 3                  | The brochure chips                                     |
-| `services`       | 8                  | 7 verbatim services + the long-term-care chip          |
+| `care_types`     | 3                  | Brochure chips, each with a short summary              |
+| `services`       | 8                  | 7 published services; `long-term-care` is unpublished  |
 | `schedule_items` | 13                 | The full day timeline                                  |
 | `every_day`      | 7                  | "Every Day at Columbia Care"                           |
 | `why_families`   | 4                  | Brochure bullets                                       |

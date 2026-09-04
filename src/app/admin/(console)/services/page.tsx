@@ -45,7 +45,7 @@ export default async function ServicesAdminPage() {
     <>
       <PageHeader
         title="Services"
-        lead="The care and services shown on the website. These came from your brochure."
+        lead="The care and services shown on the website. These came from your brochure. Long term care is hidden on the public page because it already appears as a care type."
         count={`${rows.filter((r) => r.published).length} of ${rows.length} showing`}
       />
 

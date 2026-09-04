@@ -80,3 +80,28 @@ export const legacyServiceRedirect = { source: "/services/:slug", destination: "
 
 /** Sections shown in the header nav. Contact is reached by the CTA button. */
 export const headerNavSections = sections.filter((s) => s.inHeaderNav);
+
+export type HeaderNavItem =
+  | { type: "link"; section: SiteSection }
+  | { type: "group"; label: string; sections: SiteSection[] };
+
+function sectionById(id: string): SiteSection {
+  const found = sections.find((s) => s.id === id);
+  if (!found) throw new Error(`Unknown section: ${id}`);
+  return found;
+}
+
+/**
+ * Desktop header: Care, A day and Meals sit in one disclosure so the bar
+ * stays short at 1024px. Mobile still lists every destination.
+ */
+export const headerNavItems: HeaderNavItem[] = [
+  { type: "link", section: sectionById("about") },
+  {
+    type: "group",
+    label: "Care",
+    sections: [sectionById("care"), sectionById("day"), sectionById("meals")],
+  },
+  { type: "link", section: sectionById("home") },
+  { type: "link", section: sectionById("visit") },
+];

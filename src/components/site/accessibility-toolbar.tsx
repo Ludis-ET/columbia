@@ -119,7 +119,7 @@ export function AccessibilityToolbar() {
   const changed = GROUPS.some((group) => prefs[group.key]);
 
   return (
-    <div className="fixed bottom-4 left-4 z-50 print:hidden">
+    <div className="fixed bottom-20 left-4 z-50 sm:bottom-4 print:hidden">
       {open ? (
         <div
           ref={panelRef}

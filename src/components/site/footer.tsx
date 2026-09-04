@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Mail, Phone, Printer } from "lucide-react";
+import { Download, Mail, Phone, Printer } from "lucide-react";
 import { AnchorLink } from "@/components/site/anchor-link";
 import { Monogram } from "@/components/brand/monogram";
 import { Wave } from "@/components/brand/wave";
@@ -52,7 +52,9 @@ export async function Footer() {
                   <span className="font-display block text-[1.05rem] font-semibold">
                     Columbia Care
                   </span>
-                  <span className="label block text-[0.6875rem] opacity-70">Adult Family Home</span>
+                  <span className="label block text-[0.6875rem] opacity-70">
+                    Adult Family Home · Everett
+                  </span>
                 </span>
               </div>
               {locationLine ? <p className="text-[0.95rem] opacity-80">{locationLine}</p> : null}
@@ -117,12 +119,22 @@ export async function Footer() {
             </div>
           </div>
 
-          <div className="mt-10 flex flex-col gap-3 border-t border-[color-mix(in_srgb,var(--paper)_18%,transparent)] pt-6 text-[0.875rem] opacity-75 sm:flex-row sm:items-center sm:justify-between">
-            <p>
+          <div className="mt-10 flex flex-col gap-3 border-t border-[color-mix(in_srgb,var(--paper)_18%,transparent)] pt-6 text-[0.875rem] sm:flex-row sm:items-center sm:justify-between">
+            <p className="opacity-75">
               &copy; {new Date().getFullYear()} Columbia Care Adult Family Home
               {licence ? ` · Washington State licence ${licence}` : ""}
             </p>
-            <ul className="flex flex-wrap gap-x-5 gap-y-1">
+            <ul className="flex flex-wrap items-center gap-x-5 gap-y-1">
+              <li>
+                <a
+                  href="/columbia-care-afh-everett.pdf"
+                  download="Columbia-Care-AFH-Everett.pdf"
+                  className="inline-flex min-h-12 items-center gap-2 hover:underline"
+                >
+                  <Download className="size-4 shrink-0" aria-hidden="true" />
+                  Download our card
+                </a>
+              </li>
               {legalNav.map((item) => (
                 <li key={item.href}>
                   <Link href={item.href} className="hover:underline">

@@ -4,7 +4,7 @@ import { fontVariables } from "@/lib/fonts";
 import { HashScroll } from "@/components/site/hash-scroll";
 import { preferencesScript } from "@/lib/preferences";
 import { revealScript } from "@/lib/reveal";
-import { identity, published, siteName } from "@/lib/content";
+import { identity, published, searchName, siteName } from "@/lib/content";
 import { OrganisationJsonLd } from "@/components/seo/structured-data";
 import { siteUrl } from "@/lib/site-url";
 
@@ -23,8 +23,8 @@ const description =
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: `${siteName} | Everett, WA`,
-    template: `%s, Columbia Care Adult Family Home | Everett, WA`,
+    default: `${searchName} | Adult Family Home`,
+    template: `%s, ${searchName}`,
   },
   description,
   applicationName: siteName,
@@ -35,10 +35,10 @@ export const metadata: Metadata = {
     siteName,
     locale: "en_US",
     url: siteUrl,
-    title: `${siteName} | Everett, WA`,
+    title: `${searchName} | Adult Family Home`,
     description,
   },
-  twitter: { card: "summary_large_image", title: siteName, description },
+  twitter: { card: "summary_large_image", title: searchName, description },
   robots: {
     index: true,
     follow: true,

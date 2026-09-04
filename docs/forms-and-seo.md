@@ -75,13 +75,18 @@ shared sender only delivers to the account owner's own address.
 
 ## SEO
 
-| Piece           | Where                                      |
-| --------------- | ------------------------------------------ |
-| Sitemap         | `src/app/sitemap.ts` generated from the DB |
-| robots.txt      | `src/app/robots.ts`                        |
-| Structured data | `src/components/seo/structured-data.tsx`   |
-| Social card     | `src/app/opengraph-image.tsx` generated    |
-| Canonicals      | Per-page `alternates.canonical`            |
+| Piece           | Where                                              |
+| --------------- | -------------------------------------------------- |
+| Sitemap         | `src/app/sitemap.ts` generated from the DB         |
+| robots.txt      | `src/app/robots.ts`                                |
+| Structured data | `src/components/seo/structured-data.tsx`           |
+| Social card     | `src/app/opengraph-image.tsx` generated            |
+| Canonicals      | Per-page `alternates.canonical`                    |
+| Document title  | `Columbia Care AFH - Everett \| Adult Family Home` |
+
+JSON-LD `name` stays **Columbia Care Adult Family Home** (the legal name). `alternateName` is **Columbia Care AFH - Everett**, so search results can tell this home from similarly named AFHs. Do not prefix the name with `*`, `!`, `?` or `#`.
+
+Set `NEXT_PUBLIC_SITE_URL=https://columbiacareafh.com` in the Vercel production environment once that domain is attached. Canonical tags and JSON-LD `url` will otherwise point at a `*.vercel.app` preview.
 
 ### The content rule applies hardest to JSON-LD
 

@@ -15,6 +15,10 @@ const ROUTES = [...PUBLIC_ROUTES, ...INTERNAL_ROUTES, "/nope-404"];
 const TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"];
 
 async function scan(page: Page, url: string) {
+  // Reveals start at opacity 0. Axe then samples faded text against the band
+  // behind it and reports contrast failures that a reader never sees. Reduced
+  // motion is the accessible state: content is visible on first paint.
+  await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto(url, { waitUntil: "domcontentloaded" });
   return new AxeBuilder({ page }).withTags(TAGS).analyze();
 }
@@ -43,7 +47,7 @@ for (const route of ROUTES) {
 }
 
 test("no axe violations in dark theme", async ({ page }) => {
-  await page.emulateMedia({ colorScheme: "dark" });
+  await page.emulateMedia({ colorScheme: "dark", reducedMotion: "reduce" });
   for (const route of ["/", "/a-day-in-our-home", "/kitchen-sink"]) {
     const results = await scan(page, route);
     expect(results.violations, `${route} in dark theme`).toEqual([]);
@@ -51,6 +55,7 @@ test("no axe violations in dark theme", async ({ page }) => {
 });
 
 test("no axe violations at largest text and high contrast", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
   for (const route of ["/", "/services", "/contact"]) {
     await page.goto(route, { waitUntil: "domcontentloaded" });
     await page.evaluate(() => {

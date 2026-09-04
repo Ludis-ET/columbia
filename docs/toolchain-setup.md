@@ -84,7 +84,11 @@ Built-in skills worth reaching for:
 
 ## Still outstanding
 
-- [ ] Register the domain, `columbiacareafh.com` if available. **Your action.**
+- [ ] Register the domain, `columbiacareafh.com` if it is not already yours. **Your action.**
+- [ ] In Vercel: Project → Settings → Domains → add `columbiacareafh.com` and `www.columbiacareafh.com`. Point `www` at the apex (or the reverse). One canonical only.
+- [ ] Set `NEXT_PUBLIC_SITE_URL=https://columbiacareafh.com` in the Vercel production environment. Canonical tags and JSON-LD `url` use this.
+- [ ] Do not set `RESEND_FROM` to `tours@columbiacareafh.com` until that mailbox exists and the domain is verified in Resend.
+- [ ] Claim directory listings as **Columbia Care AFH - Everett** (or the exact DSHS licensed name plus Everett) on the [DSHS AFH lookup](https://fortress.wa.gov/dshs/adsaapps/Lookup/AFHAdvLookup.aspx), the Adult Family Home Council locator, MyAFH Snohomish, and Google Business Profile. Name, address and phone must match the site. Do not prefix the listing name with `*`, `!`, `?` or `#`.
 - [ ] Send [client-questions.md](client-questions.md) to the client
 - [ ] Run the four `/plugin` commands above
 - [ ] Approve the three MCP servers when prompted

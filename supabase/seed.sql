@@ -46,29 +46,29 @@ on conflict (id) do update set
 insert into availability (id, status) values ('singleton', 'unset')
 on conflict (id) do nothing;
 
--- care_types: the three brochure chips, verbatim.
-insert into care_types (slug, title, short_title, icon, position, published) values
-  ('long-term-care', 'Long term care', 'Long term care', 'house', 0, true),
-  ('memory-care', 'Memory care', 'Memory care', 'heart', 1, true),
-  ('personal-care', 'Personal care, assistance and more', 'Personal care', 'people', 2, true)
+-- care_types: the three brochure chips, verbatim, with artwork-derived summaries.
+insert into care_types (slug, title, short_title, summary, icon, position, published) values
+  ('long-term-care', 'Long term care', 'Long term care', 'A safe, comfortable, and caring home where every resident is treated with dignity and respect, receiving personalized care in a family-like environment.', 'house', 0, true),
+  ('memory-care', 'Memory care', 'Memory care', 'Dementia and Alzheimer''s care is part of the care we provide.', 'heart', 1, true),
+  ('personal-care', 'Personal care, assistance and more', 'Personal care', 'Staff assist with toileting, bathing, dressing, grooming, and other activities of daily living (ADLs).', 'people', 2, true)
 on conflict (slug) do update set
   title = excluded.title, short_title = excluded.short_title,
-  icon = excluded.icon, position = excluded.position, published = excluded.published;
+  summary = excluded.summary, icon = excluded.icon, position = excluded.position,
+  published = excluded.published;
 
--- services: the seven verbatim services plus the long-term-care chip.
--- `summary` is NULL, the client has not written descriptions (see q4).
+-- services: seven published offerings. long-term-care is unpublished (duplicates a care type).
 insert into services (slug, title, summary, icon, position, has_detail_page, related_schedule, published) values
-  ('long-term-care', 'Long term care', null, 'house', 0, true, array[1, 3, 12, 13]::integer[], true),
-  ('24-hour-care', '24-hour compassionate care and supervision', null, 'shield', 1, false, array[1, 12, 13]::integer[], true),
-  ('personal-care', 'Assistance with activities of daily living (ADLs)', null, 'people', 2, true, array[1, 11]::integer[], true),
-  ('medication-management', 'Medication management', null, 'capsule', 3, true, array[2]::integer[], true),
-  ('meals', 'Fresh and nutritious meals', null, 'bowl', 4, false, array[2, 5, 8, 9]::integer[], true),
-  ('housekeeping-laundry', 'Housekeeping and laundry', null, 'house', 5, false, '{}', true),
-  ('transportation', 'Transportation for appointments', null, 'car', 6, false, array[3]::integer[], true),
-  ('memory-care', 'Dementia and Alzheimer''s care', null, 'heart', 7, true, '{}', true)
+  ('long-term-care', 'Long term care', 'A safe, comfortable, and caring home where every resident is treated with dignity and respect, receiving personalized care in a family-like environment.', 'house', 0, true, array[1, 3, 12, 13]::integer[], false),
+  ('24-hour-care', '24-hour compassionate care and supervision', 'Caregivers remain available throughout the night. Residents receive assistance when needed, according to their individual care plans.', 'shield', 1, false, array[1, 12, 13]::integer[], true),
+  ('personal-care', 'Assistance with activities of daily living (ADLs)', 'Staff assist with toileting, bathing, dressing, grooming, and other activities of daily living (ADLs).', 'people', 2, true, array[1, 11]::integer[], true),
+  ('medication-management', 'Medication management', 'Medications are administered according to each resident''s orders and medication schedule. Staff document care and medication administration.', 'capsule', 3, true, array[2]::integer[], true),
+  ('meals', 'Fresh and nutritious meals', 'Our home provides a wide variety of nutritious, home-cooked meals daily for breakfast, lunch, dinner, and snacks between meals such as fresh fruit and vegetables.', 'bowl', 4, false, array[2, 5, 8, 9]::integer[], true),
+  ('housekeeping-laundry', 'Housekeeping and laundry', 'The home is kept clean, safe, and comfortable. Housekeeping and laundry are part of what we provide.', 'house', 5, false, '{}', true),
+  ('transportation', 'Transportation for appointments', 'Staff help residents with appointments and other scheduled activities.', 'car', 6, false, array[3]::integer[], true),
+  ('memory-care', 'Dementia and Alzheimer''s care', 'Dementia and Alzheimer''s care is part of the care we provide.', 'heart', 7, true, '{}', true)
 on conflict (slug) do update set
-  title = excluded.title, icon = excluded.icon, position = excluded.position,
-  has_detail_page = excluded.has_detail_page,
+  title = excluded.title, summary = excluded.summary, icon = excluded.icon,
+  position = excluded.position, has_detail_page = excluded.has_detail_page,
   related_schedule = excluded.related_schedule, published = excluded.published;
 
 -- schedule_items: all 13 day-timeline entries, verbatim.

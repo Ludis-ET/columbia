@@ -67,6 +67,7 @@ export interface CareTypeRow {
   slug: string;
   title: string;
   short_title: string;
+  summary: string | null;
   icon: string;
   position: number;
   published: boolean;

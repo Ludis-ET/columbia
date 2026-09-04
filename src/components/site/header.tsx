@@ -55,7 +55,9 @@ export function Header() {
             <span className="font-display text-ink block text-[1.05rem] font-semibold">
               Columbia Care
             </span>
-            <span className="label text-stone block text-[0.6875rem]">Adult Family Home</span>
+            <span className="label text-stone block text-[0.6875rem]">
+              Adult Family Home · Everett
+            </span>
           </span>
         </Link>
 

@@ -41,10 +41,17 @@ test("the page has exactly one h1 and an ordered heading outline", async ({ page
 });
 
 test("clicking a nav link moves focus into the section, not just the scroll", async ({ page }) => {
-  await page.goto("/", { waitUntil: "domcontentloaded" });
   await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/", { waitUntil: "domcontentloaded" });
 
-  await page.getByRole("link", { name: "A day", exact: true }).first().click();
+  const nav = page.getByRole("navigation", { name: "Sections of this page" }).first();
+  const care = nav.getByRole("button", { name: "Care", exact: true });
+  await expect(async () => {
+    if ((await care.getAttribute("aria-expanded")) === "true") return;
+    await care.click();
+    expect(await care.getAttribute("aria-expanded")).toBe("true");
+  }).toPass();
+  await nav.getByRole("link", { name: "A day", exact: true }).click();
 
   const focusedId = await page.evaluate(() => document.activeElement?.id);
   expect(focusedId, "focus should land on the section").toBe("day");
@@ -64,13 +71,19 @@ test("the active section is marked for assistive technology", async ({ page }) =
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/", { waitUntil: "domcontentloaded" });
 
-  await page.getByRole("link", { name: "Meals", exact: true }).first().click();
+  const nav = page.getByRole("navigation", { name: "Sections of this page" }).first();
+  const care = nav.getByRole("button", { name: "Care", exact: true });
+  await expect(async () => {
+    if ((await care.getAttribute("aria-expanded")) === "true") return;
+    await care.click();
+    expect(await care.getAttribute("aria-expanded")).toBe("true");
+  }).toPass();
+  await nav.getByRole("link", { name: "Meals", exact: true }).click();
   // aria-current="location", not "page", there is only one page.
-  // Scoped to the desktop bar: the mobile menu renders the same nav, so an
-  // unscoped locator matches twice.
+  // The Care disclosure is marked current while Meals, A day or Care is in view.
   await expect(
-    page.locator('nav[aria-label="Sections of this page"] a[aria-current="location"]'),
-  ).toHaveText("Meals");
+    page.locator('nav[aria-label="Sections of this page"] [aria-current="location"]').first(),
+  ).toHaveText("Care");
 });
 
 test("old multi-page URLs redirect to their section", async ({ page }) => {
@@ -96,6 +109,7 @@ test("all the content is present on the one page", async ({ page }) => {
     "home-cooked meals", // meals
     "2215 Columbia Ave", // visit
     "Send this to Columbia Care", // contact form
+    "Download our card", // footer business card
   ]) {
     expect(text, `"${needle}" is missing from the one-pager`).toContain(needle);
   }

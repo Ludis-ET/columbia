@@ -14,14 +14,12 @@ import { MapBlock } from "@/components/site/map-block";
 import { TourForm } from "@/components/site/tour-form";
 import { BackToTop } from "@/components/site/back-to-top";
 import { Reveal } from "@/components/motion/reveal";
-import { LaurelDivider } from "@/components/brand/laurel";
 import { HeartShield } from "@/components/brand/heart-shield";
 import { IconBadge, isIconName } from "@/components/icons";
 import { identity, published } from "@/lib/content";
 import {
   getAvailability,
   getCareTypes,
-  getEveryDay,
   getGallery,
   getSchedule,
   getServices,
@@ -58,7 +56,6 @@ export default async function HomePage() {
     availability,
     services,
     care,
-    included,
     reasons,
     quotes,
     schedule,
@@ -71,7 +68,6 @@ export default async function HomePage() {
     getAvailability(),
     getServices(),
     getCareTypes(),
-    getEveryDay(),
     getWhyFamilies(),
     getTestimonials(),
     getSchedule(),
@@ -171,11 +167,14 @@ export default async function HomePage() {
             {care.map((type, index) => (
               <li key={type.slug}>
                 <Reveal delay={index * 0.06}>
-                  <div className="border-rule bg-paper flex h-full flex-col items-center rounded border p-8 text-center">
+                  <div className="border-rule bg-paper-raise flex h-full flex-col items-center rounded border p-8 text-center">
                     {isIconName(type.icon) ? (
                       <IconBadge name={type.icon} accent="sage" size="lg" className="mb-4" />
                     ) : null}
                     <h3 className="text-h3 font-sans font-bold">{type.shortTitle}</h3>
+                    {type.description ? (
+                      <p className="text-ink mt-3 text-[1.05rem]">{type.description}</p>
+                    ) : null}
                   </div>
                 </Reveal>
               </li>
@@ -192,39 +191,12 @@ export default async function HomePage() {
                     title={service.title}
                     icon={service.icon}
                     summary={service.description}
-                    className="bg-paper h-full"
+                    className="h-full"
                   />
                 </Reveal>
               </li>
             ))}
           </ul>
-        ) : null}
-
-        {included.length > 0 ? (
-          <>
-            <LaurelDivider className="py-12" />
-            <h3 className="text-h3 mb-6 text-center font-sans font-bold">
-              {t("care_included_heading", "Included every single day")}
-            </h3>
-            <ul className="flex flex-wrap justify-center gap-2">
-              {included.map((item) => (
-                <li
-                  key={item.title}
-                  className="border-rule bg-paper inline-flex items-center gap-2 rounded-full border py-1.5 pr-4 pl-1.5"
-                >
-                  {isIconName(item.icon) ? (
-                    <IconBadge
-                      name={item.icon}
-                      accent="sage"
-                      size="sm"
-                      className="size-8 [&>svg]:size-4"
-                    />
-                  ) : null}
-                  <span className="text-[0.9375rem]">{item.title}</span>
-                </li>
-              ))}
-            </ul>
-          </>
         ) : null}
       </AnchorSection>
 
@@ -232,7 +204,12 @@ export default async function HomePage() {
       {/* The signature moment: the ground ramps dawn → night behind the 13
           entries, using the client's own accent colours. Full-bleed, so it
           reads as a change of place rather than another band. */}
-      <AnchorSection id="day" title="A day in our home" bleed className="relative overflow-hidden">
+      <AnchorSection
+        id="day"
+        title="A day in our home"
+        bleed
+        className="relative isolate overflow-hidden"
+      >
         <DayGradient />
         <div className="relative mx-auto max-w-3xl px-4 sm:px-6">
           <div className="mb-14 text-center">

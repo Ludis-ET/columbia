@@ -37,6 +37,7 @@ test("structured data omits every unconfirmed fact", async ({ page }) => {
   const data = JSON.parse(raw!);
   expect(data["@type"]).toBe("AssistedLivingFacility");
   expect(data.name).toBe("Columbia Care Adult Family Home");
+  expect(data.alternateName).toBe("Columbia Care AFH - Everett");
 
   // Absent because the client has not confirmed them. An absent property is
   // honest; a guessed one is published to Google as fact.
@@ -78,4 +79,9 @@ test("every public page has a canonical and a unique title", async ({ page }) =>
     titles.add(title);
     await expect(page.locator('link[rel="canonical"]')).toHaveCount(1);
   }
+});
+
+test("the homepage title names the home and the city", async ({ page }) => {
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await expect(page).toHaveTitle(/Columbia Care AFH - Everett/);
 });

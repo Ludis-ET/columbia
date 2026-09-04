@@ -52,6 +52,13 @@
       "provenance": "ARTWORK",
       "source": "A1, A3"
     },
+    "searchName": {
+      "value": "Columbia Care AFH - Everett",
+      "provenance": "ARTWORK_CONFIRMED",
+      "source": "A1 shortName plus confirmed city",
+      "confirmedOn": "2026-09-04, written client feedback",
+      "note": "Public search title so families can tell this home from similarly named AFHs. The legal name stays Columbia Care Adult Family Home. Do not prefix with *, !, ? or #."
+    },
     "tagline": {
       "value": "A Place to Feel at Home, A Place to Be Cared For.",
       "provenance": "ARTWORK",
@@ -163,32 +170,35 @@
   "careTypes": {
     "provenance": "ARTWORK",
     "source": "A2",
-    "note": "The brochure chips. These three plus the seven services are the complete published offering. `slug` and `shortTitle` are routing/presentation only, no new claims.",
+    "note": "The brochure chips. These three plus the seven published services are the complete offering. `slug` and `shortTitle` are routing/presentation only. `description` is composed from the artwork (about paragraph, 7am schedule, services list).",
     "value": [
       {
         "slug": "long-term-care",
         "title": "Long term care",
         "shortTitle": "Long term care",
-        "icon": "house"
+        "icon": "house",
+        "description": "A safe, comfortable, and caring home where every resident is treated with dignity and respect, receiving personalized care in a family-like environment."
       },
       {
         "slug": "memory-care",
         "title": "Memory care",
         "shortTitle": "Memory care",
-        "icon": "heart"
+        "icon": "heart",
+        "description": "Dementia and Alzheimer's care is part of the care we provide."
       },
       {
         "slug": "personal-care",
         "title": "Personal care, assistance and more",
         "shortTitle": "Personal care",
-        "icon": "people"
+        "icon": "people",
+        "description": "Staff assist with toileting, bathing, dressing, grooming, and other activities of daily living (ADLs)."
       }
     ]
   },
   "services": {
     "provenance": "ARTWORK",
     "source": "A3",
-    "note": "COMPLETE LIST. Respite, hospice-supportive, diabetic, mobility/transfer and incontinence care are common in this category but appear NOWHERE in the artwork. Do not add them. `relatedSchedule` is an editorial cross-reference to schedule entries the client already wrote, it introduces no new claims. `description` is null until the client writes one.",
+    "note": "COMPLETE LIST. Respite, hospice-supportive, diabetic, mobility/transfer and incontinence care are common in this category but appear NOWHERE in the artwork. Do not add them. `relatedSchedule` is an editorial cross-reference to schedule entries the client already wrote, it introduces no new claims. `description` sentences are composed from the artwork (about, meals, schedule, every-day). `long-term-care` is unpublished on the public site because it duplicates the care-type card; the row is kept for the admin list.",
     "value": [
       {
         "slug": "long-term-care",
@@ -196,8 +206,9 @@
         "icon": "house",
         "hasDetailPage": true,
         "relatedSchedule": [1, 3, 12, 13],
-        "description": null,
-        "sourceNote": "Title is the verbatim 'Long term care' chip from brochure panel 1 (A2)."
+        "published": false,
+        "description": "A safe, comfortable, and caring home where every resident is treated with dignity and respect, receiving personalized care in a family-like environment.",
+        "sourceNote": "Title is the verbatim 'Long term care' chip from brochure panel 1 (A2). Unpublished: it duplicated the care-type card (client feedback 2026-09-04)."
       },
       {
         "slug": "24-hour-care",
@@ -205,7 +216,7 @@
         "icon": "shield",
         "hasDetailPage": false,
         "relatedSchedule": [1, 12, 13],
-        "description": null
+        "description": "Caregivers remain available throughout the night. Residents receive assistance when needed, according to their individual care plans."
       },
       {
         "slug": "personal-care",
@@ -213,7 +224,7 @@
         "icon": "people",
         "hasDetailPage": true,
         "relatedSchedule": [1, 11],
-        "description": null
+        "description": "Staff assist with toileting, bathing, dressing, grooming, and other activities of daily living (ADLs)."
       },
       {
         "slug": "medication-management",
@@ -221,7 +232,7 @@
         "icon": "capsule",
         "hasDetailPage": true,
         "relatedSchedule": [2],
-        "description": null
+        "description": "Medications are administered according to each resident's orders and medication schedule. Staff document care and medication administration."
       },
       {
         "slug": "meals",
@@ -229,7 +240,7 @@
         "icon": "bowl",
         "hasDetailPage": false,
         "relatedSchedule": [2, 5, 8, 9],
-        "description": null
+        "description": "Our home provides a wide variety of nutritious, home-cooked meals daily for breakfast, lunch, dinner, and snacks between meals such as fresh fruit and vegetables."
       },
       {
         "slug": "housekeeping-laundry",
@@ -237,7 +248,7 @@
         "icon": "house",
         "hasDetailPage": false,
         "relatedSchedule": [],
-        "description": null
+        "description": "The home is kept clean, safe, and comfortable. Housekeeping and laundry are part of what we provide."
       },
       {
         "slug": "transportation",
@@ -245,7 +256,7 @@
         "icon": "car",
         "hasDetailPage": false,
         "relatedSchedule": [3],
-        "description": null
+        "description": "Staff help residents with appointments and other scheduled activities."
       },
       {
         "slug": "memory-care",
@@ -253,11 +264,11 @@
         "icon": "heart",
         "hasDetailPage": true,
         "relatedSchedule": [],
-        "description": null
+        "description": "Dementia and Alzheimer's care is part of the care we provide."
       }
     ],
-    "descriptionsProvenance": "ASK_CLIENT",
-    "descriptionsQuestion": "Would you like a short paragraph describing each service in your own words? Until then each service page is built only from your daily schedule and services list."
+    "descriptionsProvenance": "ARTWORK",
+    "descriptionsQuestion": "Card summaries are composed from the artwork. The owner can reword them in the admin console."
   },
   "whyFamilies": {
     "provenance": "ARTWORK",

@@ -376,7 +376,7 @@ export default function KitchenSinkPage() {
       <Bench n="14" title="Day gradient" note="the signature moment">
         <div />
       </Bench>
-      <div className="relative overflow-hidden py-20">
+      <div className="relative isolate overflow-hidden py-20">
         <DayGradient />
         <div className="mx-auto max-w-5xl px-4 sm:px-6">
           <p className="text-ink-soft max-w-[62ch]">

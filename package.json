@@ -16,6 +16,7 @@
     "check:placeholders": "node scripts/check-placeholders.mjs",
     "test:a11y": "playwright test",
     "seed:generate": "node scripts/generate-seed.mjs",
+    "card:generate": "node scripts/generate-business-card.mjs",
     "db:types": "supabase gen types typescript --project-id wmxvickqaxkuaatftput > src/lib/db/database.types.ts",
     "db:bundle": "node scripts/bundle-sql.mjs",
     "db:seed": "node scripts/db-seed.mjs",

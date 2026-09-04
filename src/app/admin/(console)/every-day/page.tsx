@@ -32,8 +32,8 @@ export default async function EveryDayAdminPage() {
     <>
       <PageHeader
         title="Included every day"
-        lead={`The round chips under "Included every single day" on the homepage.`}
-        count={`${rows.filter((r) => r.published).length} of ${rows.length} showing`}
+        lead="From your infographic. These are not shown on the public homepage right now; the Care cards cover the same ground."
+        count={`${rows.filter((r) => r.published).length} of ${rows.length} in the list`}
       />
 
       {rows.length === 0 ? (

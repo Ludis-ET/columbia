@@ -191,6 +191,7 @@ if (careTypes.length) {
       slug: t.slug,
       title: t.title,
       short_title: t.shortTitle,
+      summary: t.description ?? null,
       icon: t.icon,
       position: i,
       published: true,
@@ -213,7 +214,7 @@ if (services.length) {
       position: i,
       has_detail_page: s.hasDetailPage ?? false,
       related_schedule: s.relatedSchedule ?? [],
-      published: true,
+      published: s.published !== false,
     })),
     { onConflict: "slug" },
   );

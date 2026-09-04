@@ -57,6 +57,7 @@ export async function OrganisationJsonLd() {
     "@type": "AssistedLivingFacility",
     "@id": `${siteUrl}#organisation`,
     name: published(identity.name),
+    alternateName: published(identity.searchName),
     description: published(identity.about),
     slogan: published(identity.tagline),
     url: siteUrl,

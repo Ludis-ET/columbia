@@ -93,40 +93,41 @@ w();
 // --- care_types ------------------------------------------------------------
 const care = published(raw.careTypes) ?? [];
 if (care.length) {
-  w("-- care_types: the three brochure chips, verbatim.");
-  w("insert into care_types (slug, title, short_title, icon, position, published) values");
+  w("-- care_types: the three brochure chips, verbatim, with artwork-derived summaries.");
+  w("insert into care_types (slug, title, short_title, summary, icon, position, published) values");
   w(
     care
       .map(
-        (t, i) => `  (${q(t.slug)}, ${q(t.title)}, ${q(t.shortTitle)}, ${q(t.icon)}, ${i}, true)`,
+        (t, i) =>
+          `  (${q(t.slug)}, ${q(t.title)}, ${q(t.shortTitle)}, ${q(t.description ?? null)}, ${q(t.icon)}, ${i}, true)`,
       )
       .join(",\n") + "\non conflict (slug) do update set",
   );
   w("  title = excluded.title, short_title = excluded.short_title,");
-  w("  icon = excluded.icon, position = excluded.position, published = excluded.published;");
+  w("  summary = excluded.summary, icon = excluded.icon, position = excluded.position,");
+  w("  published = excluded.published;");
   w();
 }
 
 // --- services --------------------------------------------------------------
 const services = published(raw.services) ?? [];
 if (services.length) {
-  w("-- services: the seven verbatim services plus the long-term-care chip.");
-  w("-- `summary` is NULL, the client has not written descriptions (see q4).");
+  w("-- services: seven published offerings. long-term-care is unpublished (duplicates a care type).");
   w(
     "insert into services (slug, title, summary, icon, position, has_detail_page, related_schedule, published) values",
   );
   w(
     services
-      .map(
-        (s, i) =>
-          `  (${q(s.slug)}, ${q(s.title)}, ${q(s.description)}, ${q(s.icon)}, ${i}, ${
-            s.hasDetailPage ? "true" : "false"
-          }, ${intArr(s.relatedSchedule)}, true)`,
-      )
+      .map((s, i) => {
+        const isPublished = s.published !== false;
+        return `  (${q(s.slug)}, ${q(s.title)}, ${q(s.description)}, ${q(s.icon)}, ${i}, ${
+          s.hasDetailPage ? "true" : "false"
+        }, ${intArr(s.relatedSchedule)}, ${isPublished ? "true" : "false"})`;
+      })
       .join(",\n") + "\non conflict (slug) do update set",
   );
-  w("  title = excluded.title, icon = excluded.icon, position = excluded.position,");
-  w("  has_detail_page = excluded.has_detail_page,");
+  w("  title = excluded.title, summary = excluded.summary, icon = excluded.icon,");
+  w("  position = excluded.position, has_detail_page = excluded.has_detail_page,");
   w("  related_schedule = excluded.related_schedule, published = excluded.published;");
   w();
 }

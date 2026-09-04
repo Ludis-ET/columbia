@@ -70,7 +70,7 @@ export default async function Image() {
         <div style={{ display: "flex", flexDirection: "column" }}>
           <div style={{ fontSize: "30px", color: INK, fontWeight: 700 }}>Columbia Care</div>
           <div style={{ fontSize: "19px", color: SAGE, letterSpacing: "0.14em" }}>
-            ADULT FAMILY HOME
+            ADULT FAMILY HOME · EVERETT
           </div>
         </div>
       </div>

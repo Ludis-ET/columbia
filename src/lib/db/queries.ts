@@ -94,14 +94,17 @@ export const getServices = cache(async (): Promise<Service[]> => {
   return rows
     .filter((r) => r.published)
     .sort((a, b) => a.position - b.position)
-    .map((r) => ({
-      slug: r.slug,
-      title: r.title,
-      icon: r.icon,
-      hasDetailPage: r.has_detail_page,
-      relatedSchedule: r.related_schedule ?? [],
-      description: r.summary,
-    }));
+    .map((r) => {
+      const fromFile = (file.published(file.services) ?? []).find((s) => s.slug === r.slug);
+      return {
+        slug: r.slug,
+        title: r.title,
+        icon: r.icon,
+        hasDetailPage: r.has_detail_page,
+        relatedSchedule: r.related_schedule ?? [],
+        description: r.summary ?? fromFile?.description ?? null,
+      };
+    });
 });
 
 export const getCareTypes = cache(async (): Promise<CareType[]> => {
@@ -112,12 +115,16 @@ export const getCareTypes = cache(async (): Promise<CareType[]> => {
   return rows
     .filter((r) => r.published)
     .sort((a, b) => a.position - b.position)
-    .map((r) => ({
-      slug: r.slug,
-      title: r.title,
-      shortTitle: r.short_title,
-      icon: r.icon,
-    }));
+    .map((r) => {
+      const fromFile = (file.published(file.careTypes) ?? []).find((t) => t.slug === r.slug);
+      return {
+        slug: r.slug,
+        title: r.title,
+        shortTitle: r.short_title,
+        icon: r.icon,
+        description: r.summary ?? fromFile?.description ?? null,
+      };
+    });
 });
 
 export const getSchedule = cache(async (): Promise<ScheduleItem[]> => {
@@ -321,10 +328,7 @@ export const getGallery = cache(async (): Promise<GalleryImage[]> => {
   if (!rows || rows.length === 0) return placeholderGallery;
 
   const galleryRows = rows.filter(
-    (r) =>
-      appearsInGallery(r) &&
-      r.published &&
-      (!r.contains_people || r.release_on_file),
+    (r) => appearsInGallery(r) && r.published && (!r.contains_people || r.release_on_file),
   );
 
   if (galleryRows.length === 0) return placeholderGallery;
@@ -355,10 +359,7 @@ export const getSectionImage = cache(
 
     const matches = rows
       .filter(
-        (r) =>
-          hasPlacement(r, slot) &&
-          r.published &&
-          (!r.contains_people || r.release_on_file),
+        (r) => hasPlacement(r, slot) && r.published && (!r.contains_people || r.release_on_file),
       )
       .sort((a, b) => a.position - b.position);
 

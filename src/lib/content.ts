@@ -70,8 +70,10 @@ export interface Service {
    * detail page be built entirely from the artwork, with no invented copy.
    */
   relatedSchedule: number[];
-  /** Null until the client writes one. Renders nothing while null. */
+  /** 1–2 sentences on the homepage card. Null renders the title only. */
   description: string | null;
+  /** False hides the card on the public site. Default true. */
+  published?: boolean;
   sourceNote?: string;
 }
 
@@ -80,6 +82,7 @@ export interface CareType {
   title: string;
   shortTitle: string;
   icon: string;
+  description?: string | null;
 }
 
 export interface EveryDayItem {
@@ -106,6 +109,7 @@ interface SourceOfTruth {
   identity: {
     name: Entry<string>;
     shortName: Entry<string>;
+    searchName: Entry<string>;
     tagline: Entry<string>;
     promise: Entry<string>;
     closingLine: Entry<string>;
@@ -171,6 +175,9 @@ export const openQuestions = content.openQuestions;
 /** Business name. Present in the artwork, so this is always a string. */
 export const siteName = published(identity.name) ?? "Columbia Care Adult Family Home";
 
+/** Search title. Legal name stays `siteName`; this is for Google snippets. */
+export const searchName = published(identity.searchName) ?? "Columbia Care AFH - Everett";
+
 /** Formats the address as a single line, or null if unconfirmed. */
 export function addressLine(): string | null {
   const a = published(contact.address);
@@ -192,9 +199,9 @@ export function pendingQuestions(): OpenQuestion[] {
   return [...openQuestions].sort((a, b) => order[a.priority] - order[b.priority]);
 }
 
-/** Published services, or an empty list. */
+/** Published services shown on the public site. */
 export function serviceList(): Service[] {
-  return published(services) ?? [];
+  return (published(services) ?? []).filter((service) => service.published !== false);
 }
 
 /** Services that have their own page. Drives generateStaticParams. */

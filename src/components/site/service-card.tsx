@@ -24,7 +24,7 @@ export function ServiceCard({
     <>
       {isIconName(icon) ? <IconBadge name={icon} accent="sage" className="mb-4" /> : null}
       <h3 className="text-h3 font-sans font-bold">{title}</h3>
-      {summary ? <p className="text-ink-soft mt-2">{summary}</p> : null}
+      {summary ? <p className="text-ink mt-2">{summary}</p> : null}
       {href ? (
         <span className="text-sage-deep mt-4 inline-flex items-center gap-1.5 font-semibold">
           Learn more
