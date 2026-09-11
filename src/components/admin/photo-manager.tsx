@@ -1,7 +1,15 @@
 "use client";
 
 import Image from "next/image";
-import { useActionState, useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import {
+  useActionState,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import {
   CheckSquare,
   Eye,
@@ -122,10 +130,7 @@ export function PhotoManager({
   const FILTER_TABS = buildFilterTabs(categories);
   const dynamicPlacementOptions = buildPlacementOptions(categories);
 
-  const sortedPhotos = useMemo(
-    () => [...photos].sort((a, b) => a.position - b.position),
-    [photos],
-  );
+  const sortedPhotos = useMemo(() => [...photos].sort((a, b) => a.position - b.position), [photos]);
 
   const filterCounts = useMemo(() => {
     const counts: Record<string, number> = { all: photos.length };
@@ -344,11 +349,7 @@ export function PhotoManager({
         </div>
 
         <div className="border-rule bg-paper-raise mb-5 flex flex-wrap items-center gap-2 rounded-xl border p-2">
-          <div
-            className="flex flex-1 flex-wrap gap-1"
-            role="tablist"
-            aria-label="Filter library"
-          >
+          <div className="flex flex-1 flex-wrap gap-1" role="tablist" aria-label="Filter library">
             {FILTER_TABS.filter(({ id }) => id === "all" || (filterCounts[id] ?? 0) > 0).map(
               ({ id, label, icon: Icon }) => {
                 const active = activeFilter === id;
@@ -370,7 +371,7 @@ export function PhotoManager({
                     {label}
                     <span
                       className={cn(
-                        "tabular-nums text-[0.75rem]",
+                        "text-[0.75rem] tabular-nums",
                         active ? "text-paper/75" : "text-stone",
                       )}
                     >
@@ -429,7 +430,12 @@ export function PhotoManager({
               <Button size="dense" onClick={() => runBulk(true)} disabled={pending}>
                 Show on website
               </Button>
-              <Button size="dense" variant="outline" onClick={() => runBulk(false)} disabled={pending}>
+              <Button
+                size="dense"
+                variant="outline"
+                onClick={() => runBulk(false)}
+                disabled={pending}
+              >
                 Hide
               </Button>
               <Button
@@ -494,9 +500,7 @@ export function PhotoManager({
                 {tagMode === "add"
                   ? "Tap a tag to add it to every selected photo."
                   : "Tap a tag to remove it from every selected photo."}
-                {sharedTags.size > 0
-                  ? " Tags on all selected photos appear filled in."
-                  : null}
+                {sharedTags.size > 0 ? " Tags on all selected photos appear filled in." : null}
               </p>
               <PlacementPicker
                 selected={sharedTags}
@@ -548,7 +552,13 @@ export function PhotoManager({
         )}
       </section>
 
-      {editing ? <EditDialog photo={editing} onClose={() => setEditing(null)} placementOptions={dynamicPlacementOptions} /> : null}
+      {editing ? (
+        <EditDialog
+          photo={editing}
+          onClose={() => setEditing(null)}
+          placementOptions={dynamicPlacementOptions}
+        />
+      ) : null}
     </div>
   );
 }
@@ -574,7 +584,11 @@ function altFromFilename(name: string): string {
   return base.charAt(0).toUpperCase() + base.slice(1);
 }
 
-function UploadZone({ placementOptions }: { placementOptions: ReturnType<typeof buildPlacementOptions> }) {
+function UploadZone({
+  placementOptions,
+}: {
+  placementOptions: ReturnType<typeof buildPlacementOptions>;
+}) {
   const [toast, setToast] = useState<ActionResult | null>(null);
   const [dragOver, setDragOver] = useState(false);
   const [pending, setPending] = useState<PendingUpload[]>([]);
@@ -766,10 +780,7 @@ function UploadZone({ placementOptions }: { placementOptions: ReturnType<typeof 
                 </div>
 
                 {pending.length > 1 ? (
-                  <ul
-                    className="mt-4 flex gap-2 overflow-x-auto pb-1"
-                    aria-label="Selected photos"
-                  >
+                  <ul className="mt-4 flex gap-2 overflow-x-auto pb-1" aria-label="Selected photos">
                     {pending.map((item) => {
                       const selected = item.id === active.id;
                       return (
@@ -869,21 +880,14 @@ function UploadZone({ placementOptions }: { placementOptions: ReturnType<typeof 
                   <>
                     <div className="grid gap-1.5">
                       <Label htmlFor="upload-alt-0">
-                        Description for screen readers <span className="text-stone">(required)</span>
+                        Description for screen readers{" "}
+                        <span className="text-stone">(required)</span>
                       </Label>
                       <Input
                         id="upload-alt-0"
                         value={pending[0].alt}
                         onChange={(e) => updatePending(pending[0].id, { alt: e.target.value })}
                         required
-                      />
-                    </div>
-                    <div className="grid gap-1.5">
-                      <Label htmlFor="upload-caption-0">Caption (optional)</Label>
-                      <Input
-                        id="upload-caption-0"
-                        value={pending[0].caption}
-                        onChange={(e) => updatePending(pending[0].id, { caption: e.target.value })}
                       />
                     </div>
                   </>
@@ -1046,12 +1050,6 @@ function PhotoTile({
           </div>
         )}
 
-        <div className="from-ink/70 absolute inset-x-0 bottom-0 bg-gradient-to-t to-transparent p-3 pt-10">
-          <p className="line-clamp-1 text-[0.875rem] font-semibold text-white">
-            {photo.caption || "Untitled"}
-          </p>
-        </div>
-
         <span
           className={cn(
             "label absolute top-2 left-2 rounded-md px-2 py-1 text-[0.6875rem] shadow-sm",
@@ -1156,8 +1154,16 @@ function PlacementPicker({
     <div className={cn("grid gap-2", compact ? "gap-1.5" : "gap-3")}>
       {!compact ? (
         <>
-          <PlacementGroup label="On the home page" options={site} {...{ selected, onToggle, disabled, name }} />
-          <PlacementGroup label="In the gallery" options={gallery} {...{ selected, onToggle, disabled, name }} />
+          <PlacementGroup
+            label="On the home page"
+            options={site}
+            {...{ selected, onToggle, disabled, name }}
+          />
+          <PlacementGroup
+            label="In the gallery"
+            options={gallery}
+            {...{ selected, onToggle, disabled, name }}
+          />
         </>
       ) : (
         <div className="flex flex-wrap gap-1">
@@ -1300,12 +1306,6 @@ function EditDialog({
             label="Description for screen readers"
             required
             defaultValue={photo.alt}
-          />
-          <Field
-            id="edit-caption"
-            name="caption"
-            label="Caption"
-            defaultValue={photo.caption ?? ""}
           />
 
           <fieldset>
