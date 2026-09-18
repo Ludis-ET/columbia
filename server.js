@@ -1,9 +1,9 @@
-const { createServer } = require("http");
-const { parse } = require("url");
-const next = require("next");
+import { createServer } from "node:http";
+import { parse } from "node:url";
+import next from "next";
 
 const dev = false;
-const port = process.env.PORT || 3000;
+const port = parseInt(process.env.PORT, 10) || 3000;
 const app = next({ dev });
 const handle = app.getRequestHandler();
 
