@@ -1,13 +1,22 @@
 import { createServer } from "node:http";
 import { parse } from "node:url";
+import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { loadEnvConfig } from "@next/env";
 import next from "next";
 
-// Ensure environment variables from .env / .env.local are loaded from the exact project directory
+// Use Node 22 built-in env file loader (zero extra dependencies)
 const projectDir = path.dirname(fileURLToPath(import.meta.url));
-loadEnvConfig(projectDir);
+for (const envFile of [".env", ".env.local"]) {
+  const fullPath = path.join(projectDir, envFile);
+  if (fs.existsSync(fullPath)) {
+    try {
+      process.loadEnvFile(fullPath);
+    } catch {
+      // ignore parsing errors or already loaded
+    }
+  }
+}
 
 const dev = process.env.NODE_ENV !== "production";
 const port = process.env.PORT || 3000;
