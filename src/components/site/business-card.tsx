@@ -52,9 +52,7 @@ export function BusinessCard({
                 <span className="font-display block text-[1.2rem] font-semibold">
                   Columbia Care
                 </span>
-                <span className="label mt-2 block text-[color-mix(in_srgb,var(--sage)_75%,white)]">
-                  Adult Family Home · Everett
-                </span>
+                <span className="label text-paper/85 mt-2 block">Adult Family Home · Everett</span>
               </span>
               <Wave
                 className="pointer-events-none absolute inset-x-0 bottom-0 z-0 h-10 w-full"

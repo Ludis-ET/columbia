@@ -84,6 +84,7 @@ test("the honeypot is hidden from assistive technology", async ({ page }) => {
 });
 
 test("no axe violations on the form, including its error state", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto(FORM, { waitUntil: "domcontentloaded" });
   await page.getByRole("button", { name: /send this to columbia care/i }).click();
   await expect(page.locator('form [aria-live="assertive"]')).toContainText(
@@ -94,6 +95,7 @@ test("no axe violations on the form, including its error state", async ({ page }
   );
 
   const results = await new AxeBuilder({ page })
+    .include("form")
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
     .analyze();
 

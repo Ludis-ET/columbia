@@ -361,6 +361,7 @@
     /* 18px base, the aged-care readability floor. Not 16. */
     font-size: 112.5%;
     scroll-behavior: smooth;
+    overflow-x: clip;
   }
 
   body {
@@ -371,6 +372,7 @@
     line-height: 1.65;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    overflow-x: clip;
   }
 
   h1,

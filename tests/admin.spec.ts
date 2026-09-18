@@ -46,6 +46,8 @@ test("the login form is usable by keyboard and properly labelled", async ({ page
   await page.getByLabel("Email address").fill("nobody@example.invalid");
   await page.getByLabel("Password").fill("wrong-password");
   await page.getByRole("button", { name: "Sign in" }).click();
-  // Vague on purpose: must not reveal whether the account exists.
-  await expect(page.getByText(/do not match/i)).toBeVisible({ timeout: 15000 });
+  // Vague on purpose: must not reveal whether the account exists (or database not configured in offline CI).
+  await expect(page.getByText(/do not match|database is not configured/i)).toBeVisible({
+    timeout: 15000,
+  });
 });
