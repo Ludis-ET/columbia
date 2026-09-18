@@ -223,7 +223,7 @@ export function AdminShell({
         ) : totalInquiries > 0 ? (
           <Link
             href="/admin/inquiries"
-            className="label text-sage-deep rounded-full border border-sage/30 bg-sage-wash px-2.5 py-1 text-[0.6875rem] tabular-nums"
+            className="label text-sage-deep border-sage/30 bg-sage-wash rounded-full border px-2.5 py-1 text-[0.6875rem] tabular-nums"
           >
             {inquiryCountLabel(totalInquiries)}
           </Link>
@@ -239,7 +239,7 @@ export function AdminShell({
             aria-label="Close menu"
             onClick={() => setOpen(false)}
           />
-          <aside className="admin-sidebar relative flex h-full w-[min(100%,18rem)] min-h-0 flex-col px-4 py-5 shadow-2xl">
+          <aside className="admin-sidebar relative flex h-full min-h-0 w-[min(100%,18rem)] flex-col px-4 py-5 shadow-2xl">
             <div className="mb-6 flex shrink-0 items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <Monogram className="size-9 shrink-0" decorative />

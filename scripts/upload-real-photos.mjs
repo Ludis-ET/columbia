@@ -35,13 +35,13 @@ const JPEG_QUALITY = 82;
 const MAX_BYTES = 45 * 1024 * 1024;
 
 const FOLDER_MAP = {
-  backyard:   ["Outdoors"],
-  bedroom:    ["Bedrooms"],
-  dining:     ["Dining & kitchen"],
-  Entrance:   ["Entrance"],
-  Kitchen:    ["Dining & kitchen"],
+  backyard: ["Outdoors"],
+  bedroom: ["Bedrooms"],
+  dining: ["Dining & kitchen"],
+  Entrance: ["Entrance"],
+  Kitchen: ["Dining & kitchen"],
   Livingroom: ["Living areas"],
-  Restroom:   ["Restroom"],
+  Restroom: ["Restroom"],
 };
 
 let heroAssigned = false;
@@ -93,13 +93,13 @@ function altFromFilename(filename, folder) {
 
 function captionFromFolder(folder) {
   const captions = {
-    backyard:   "The backyard",
-    bedroom:    "A bedroom",
-    dining:     "The dining room",
-    Entrance:   "The entrance",
-    Kitchen:    "The kitchen",
+    backyard: "The backyard",
+    bedroom: "A bedroom",
+    dining: "The dining room",
+    Entrance: "The entrance",
+    Kitchen: "The kitchen",
     Livingroom: "The living room",
-    Restroom:   "The restroom",
+    Restroom: "The restroom",
   };
   return captions[folder] ?? folder;
 }
@@ -146,7 +146,9 @@ async function uploadPhoto(filePath, folder, position) {
   }
 
   if (rawBuffer.length > MAX_BYTES) {
-    console.log(`  🔄 Compressing ${filename} (${(rawBuffer.length / 1024 / 1024).toFixed(1)} MB)...`);
+    console.log(
+      `  🔄 Compressing ${filename} (${(rawBuffer.length / 1024 / 1024).toFixed(1)} MB)...`,
+    );
   }
 
   let buffer;

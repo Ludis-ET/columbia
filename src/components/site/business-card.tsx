@@ -49,7 +49,9 @@ export function BusinessCard({
                 <Monogram className="size-12" decorative />
               </span>
               <span className="relative z-10 text-center leading-tight">
-                <span className="font-display block text-[1.2rem] font-semibold">Columbia Care</span>
+                <span className="font-display block text-[1.2rem] font-semibold">
+                  Columbia Care
+                </span>
                 <span className="label mt-2 block text-[color-mix(in_srgb,var(--sage)_75%,white)]">
                   Adult Family Home · Everett
                 </span>
@@ -91,7 +93,7 @@ export function BusinessCard({
                 <CardLine icon={Mail} label="Email">
                   <a
                     href={`mailto:${email}`}
-                    className="text-ink hover:text-sage-deep break-all rounded underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2"
+                    className="text-ink hover:text-sage-deep rounded break-all underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2"
                   >
                     {email}
                   </a>
@@ -150,7 +152,10 @@ function CardLine({
 }
 
 /** Splits a confirmed address line for a two-line card layout. Does not invent parts. */
-function splitAddress(addressLine: string | null): { street: string | null; locality: string | null } {
+function splitAddress(addressLine: string | null): {
+  street: string | null;
+  locality: string | null;
+} {
   if (!addressLine) return { street: null, locality: null };
   const comma = addressLine.indexOf(", ");
   if (comma === -1) return { street: addressLine, locality: null };

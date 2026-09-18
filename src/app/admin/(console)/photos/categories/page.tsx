@@ -14,13 +14,14 @@ export default async function GalleryCategoriesAdminPage() {
     .order("position", { ascending: true })) ?? { data: [] };
 
   // Count photos per category by fetching all placements
-  const { data: mediaRows } = (await supabase
-    ?.from("media")
-    .select("placements, category")) ?? { data: [] };
+  const { data: mediaRows } = (await supabase?.from("media").select("placements, category")) ?? {
+    data: [],
+  };
 
   const photoCounts: Record<string, number> = {};
   for (const row of mediaRows ?? []) {
-    const placements: string[] = (row.placements as string[]) ?? (row.category ? [row.category] : []);
+    const placements: string[] =
+      (row.placements as string[]) ?? (row.category ? [row.category] : []);
     for (const p of placements) {
       if (p !== "hero" && p !== "meals") {
         photoCounts[p] = (photoCounts[p] ?? 0) + 1;

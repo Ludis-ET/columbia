@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * scripts/clean-placeholders.mjs
- * 
+ *
  * Removes old placeholder media rows (the ones with paths in /placeholder/)
  * and any rows with alt text containing "Placeholder:" from the media table.
  * These were seeded from the file fallback before real photos were uploaded.
@@ -18,18 +18,22 @@ function loadEnv() {
 }
 loadEnv();
 
-const sb = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
-  auth: { persistSession: false },
-});
+const sb = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY,
+  {
+    auth: { persistSession: false },
+  },
+);
 
 // Find rows that aren't real uploads (don't have gallery/ prefix in storage_path,
 // OR have alt text that contains "Placeholder:")
 const { data: allRows } = await sb.from("media").select("id, storage_path, alt");
 
-const toDelete = (allRows ?? []).filter(r => 
-  // Old placeholder paths (absolute paths starting with /placeholder or no path)
-  !r.storage_path.startsWith("gallery/") ||
-  r.alt?.includes("Placeholder:")
+const toDelete = (allRows ?? []).filter(
+  (r) =>
+    // Old placeholder paths (absolute paths starting with /placeholder or no path)
+    !r.storage_path.startsWith("gallery/") || r.alt?.includes("Placeholder:"),
 );
 
 if (toDelete.length === 0) {
@@ -40,7 +44,7 @@ if (toDelete.length === 0) {
     console.log(`  - ${r.alt} (${r.storage_path})`);
   }
 
-  const ids = toDelete.map(r => r.id);
+  const ids = toDelete.map((r) => r.id);
   const { error } = await sb.from("media").delete().in("id", ids);
   if (error) {
     console.error("Error deleting rows:", error.message);
@@ -50,8 +54,8 @@ if (toDelete.length === 0) {
 
   // Remove storage objects that aren't in the gallery/ bucket path
   const storagePaths = toDelete
-    .filter(r => r.storage_path.startsWith("gallery/"))
-    .map(r => r.storage_path);
+    .filter((r) => r.storage_path.startsWith("gallery/"))
+    .map((r) => r.storage_path);
   if (storagePaths.length > 0) {
     await sb.storage.from("media").remove(storagePaths);
   }

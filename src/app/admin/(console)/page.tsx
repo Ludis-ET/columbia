@@ -49,18 +49,17 @@ export default async function AdminDashboard() {
   const supabase = await createClient();
   const profile = await getAdminProfile();
 
-  const [availability, inquiryCounts, photoStats, settingsRow, recentActivity] =
-    await Promise.all([
-      supabase?.from("availability").select("*").eq("id", "singleton").maybeSingle(),
-      getInquiryCounts(supabase),
-      supabase?.from("media").select("id, published"),
-      supabase?.from("site_settings").select("*").eq("id", "singleton").maybeSingle(),
-      supabase
-        ?.from("audit_log")
-        .select("id, action, entity, created_at")
-        .order("created_at", { ascending: false })
-        .limit(5),
-    ]);
+  const [availability, inquiryCounts, photoStats, settingsRow, recentActivity] = await Promise.all([
+    supabase?.from("availability").select("*").eq("id", "singleton").maybeSingle(),
+    getInquiryCounts(supabase),
+    supabase?.from("media").select("id, published"),
+    supabase?.from("site_settings").select("*").eq("id", "singleton").maybeSingle(),
+    supabase
+      ?.from("audit_log")
+      .select("id, action, entity, created_at")
+      .order("created_at", { ascending: false })
+      .limit(5),
+  ]);
 
   const counts = inquiryCounts.byStatus;
 

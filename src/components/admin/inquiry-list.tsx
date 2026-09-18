@@ -2,7 +2,15 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useActionState, useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import {
+  useActionState,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import {
   ArrowLeft,
   Calendar,
@@ -142,7 +150,13 @@ function ConfirmDialog({
         </h2>
         <p className="text-stone mb-6 text-[0.9375rem]">{message}</p>
         <div className="flex flex-wrap justify-end gap-2">
-          <Button type="button" variant="outline" size="dense" onClick={onCancel} disabled={pending}>
+          <Button
+            type="button"
+            variant="outline"
+            size="dense"
+            onClick={onCancel}
+            disabled={pending}
+          >
             Cancel
           </Button>
           <Button
@@ -439,7 +453,9 @@ export function InquiryList({ inquiries: initial }: { inquiries: InquiryRow[] })
             />
           ) : (
             <AdminCard className="hidden p-8 text-center lg:block">
-              <p className="text-stone text-[0.9375rem]">Select an enquiry to read the full message.</p>
+              <p className="text-stone text-[0.9375rem]">
+                Select an enquiry to read the full message.
+              </p>
             </AdminCard>
           )}
         </div>
@@ -482,7 +498,7 @@ function ListItem({
       <div
         className={cn(
           "bg-paper-raise w-full rounded border text-left transition-colors",
-          active ? "border-sage ring-1 ring-sage/30" : "border-rule hover:border-sage/40",
+          active ? "border-sage ring-sage/30 ring-1" : "border-rule hover:border-sage/40",
           inquiry.status === "new" && !active && "border-l-[3px] border-l-[#A93659]",
         )}
       >
@@ -539,7 +555,10 @@ function DetailPanel({
   onDeleted: (id: string) => void;
   onUpdated: (id: string, status: InquiryStatus, notes: string | null) => void;
 }) {
-  const [state, action, pending] = useActionState<ActionResult | null, FormData>(updateInquiry, null);
+  const [state, action, pending] = useActionState<ActionResult | null, FormData>(
+    updateInquiry,
+    null,
+  );
   const [deletePending, startDelete] = useTransition();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
@@ -635,7 +654,11 @@ function DetailPanel({
           <Field label="Name" value={inquiry.name} />
           <Field label="Phone" value={phoneDisplay || inquiry.phone} empty="Not provided" />
           <Field label="Email" value={inquiry.email} empty="Not provided" />
-          <Field label="Who they are enquiring for" value={inquiry.relationship} empty="Not specified" />
+          <Field
+            label="Who they are enquiring for"
+            value={inquiry.relationship}
+            empty="Not specified"
+          />
         </FieldSection>
 
         {inquiry.preferred_times?.length ? (
@@ -658,7 +681,9 @@ function DetailPanel({
           </FieldSection>
         ) : (
           <FieldSection title="Their message" icon={MessageSquare}>
-            <p className="text-stone mt-1 text-[0.9375rem]">No message — they only left contact details.</p>
+            <p className="text-stone mt-1 text-[0.9375rem]">
+              No message — they only left contact details.
+            </p>
           </FieldSection>
         )}
 
@@ -676,7 +701,7 @@ function DetailPanel({
                   <label
                     key={s.value}
                     className={cn(
-                      "border-rule has-checked:border-sage has-checked:bg-sage-wash flex min-h-[4.5rem] cursor-pointer flex-col rounded border p-3 transition-colors has-checked:ring-1 has-checked:ring-sage/30",
+                      "border-rule has-checked:border-sage has-checked:bg-sage-wash has-checked:ring-sage/30 flex min-h-[4.5rem] cursor-pointer flex-col rounded border p-3 transition-colors has-checked:ring-1",
                     )}
                   >
                     <span className="flex items-center gap-2">

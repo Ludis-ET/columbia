@@ -34,8 +34,8 @@ export default async function InquiriesPage() {
       {inquiries.length === 0 ? (
         <EmptyState title="No enquiries yet">
           <p>
-            When someone fills in the <strong className="font-semibold">Book a house tour</strong> form
-            on your homepage, their message lands here and you get an email straight away.
+            When someone fills in the <strong className="font-semibold">Book a house tour</strong>{" "}
+            form on your homepage, their message lands here and you get an email straight away.
           </p>
           <p className="mt-2">
             The form lives in the Contact section at the bottom of your homepage. You can{" "}

@@ -350,10 +350,7 @@ export const getGallery = cache(async (): Promise<GalleryImage[]> => {
   if (!rows) return [];
 
   const galleryRows = rows.filter(
-    (r) =>
-      appearsInGallery(r) &&
-      r.published &&
-      (!r.contains_people || r.release_on_file),
+    (r) => appearsInGallery(r) && r.published && (!r.contains_people || r.release_on_file),
   );
 
   return galleryRows

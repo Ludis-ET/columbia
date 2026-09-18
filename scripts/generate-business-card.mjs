@@ -72,7 +72,14 @@ const idBold = add("<< /Type /Font /Subtype /Type1 /BaseFont /Times-Bold >>");
 const idRoman = add("<< /Type /Font /Subtype /Type1 /BaseFont /Times-Roman >>");
 const idStream = add(`<< /Length ${streamLen} >>\nstream\n${stream}endstream`);
 
-if (idCatalog !== 1 || idPages !== 2 || idPage !== 3 || idBold !== 4 || idRoman !== 5 || idStream !== 6) {
+if (
+  idCatalog !== 1 ||
+  idPages !== 2 ||
+  idPage !== 3 ||
+  idBold !== 4 ||
+  idRoman !== 5 ||
+  idStream !== 6
+) {
   throw new Error("PDF object numbering drifted");
 }
 

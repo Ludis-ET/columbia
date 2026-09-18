@@ -50,7 +50,9 @@ async function run() {
       const outName = `${prefix}-${idx}.jpg`;
       const outPath = join(DEST_ROOT, outName);
 
-      console.log(`Processing ${folder}/${file} -> ${outName} (${(stat.size / 1024 / 1024).toFixed(1)}MB -> web)`);
+      console.log(
+        `Processing ${folder}/${file} -> ${outName} (${(stat.size / 1024 / 1024).toFixed(1)}MB -> web)`,
+      );
 
       await sharp(filePath)
         .rotate() // auto-orient from EXIF

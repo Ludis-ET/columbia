@@ -67,18 +67,12 @@ export default async function TestimonialsAdminPage() {
       {rows.length === 0 ? (
         <EmptyState title="No testimonials yet">
           <p>
-            When a family offers a kind word, ask them to put it in an email or a short note you
-            can keep on file. Paste the quote here once you have permission. Never write one
-            yourself.
+            When a family offers a kind word, ask them to put it in an email or a short note you can
+            keep on file. Paste the quote here once you have permission. Never write one yourself.
           </p>
         </EmptyState>
       ) : (
-        <ContentList
-          table="testimonials"
-          rows={rows}
-          canDelete
-          editableFields={EDITABLE_FIELDS}
-        />
+        <ContentList table="testimonials" rows={rows} canDelete editableFields={EDITABLE_FIELDS} />
       )}
     </>
   );

@@ -25,11 +25,7 @@ export default async function ConsoleLayout({ children }: { children: React.Reac
   const inquiryCounts = await getInquiryCounts(supabase);
 
   return (
-    <AdminShell
-      role={profile.role}
-      email={profile.email}
-      inquiryCounts={inquiryCounts}
-    >
+    <AdminShell role={profile.role} email={profile.email} inquiryCounts={inquiryCounts}>
       {children}
     </AdminShell>
   );

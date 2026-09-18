@@ -17,9 +17,7 @@ const EMPTY_BY_STATUS: Record<InquiryStatus, number> = {
 };
 
 /** Live enquiry counts for admin chrome and dashboard. */
-export async function getInquiryCounts(
-  supabase: SupabaseClient | null,
-): Promise<InquiryCounts> {
+export async function getInquiryCounts(supabase: SupabaseClient | null): Promise<InquiryCounts> {
   if (!supabase) {
     return { total: 0, new: 0, last30Days: 0, byStatus: { ...EMPTY_BY_STATUS } };
   }
@@ -50,7 +48,10 @@ export async function getInquiryCounts(
   };
 }
 
-export function inquiryCountLabel(count: number, kind: "total" | "new" | "need-reply" = "total"): string {
+export function inquiryCountLabel(
+  count: number,
+  kind: "total" | "new" | "need-reply" = "total",
+): string {
   const word = count === 1 ? "enquiry" : "enquiries";
   if (kind === "new") return `${count} new ${word}`;
   if (kind === "need-reply") return `${count} ${word} need${count === 1 ? "s" : ""} a reply`;

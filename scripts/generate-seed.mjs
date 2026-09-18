@@ -112,7 +112,9 @@ if (care.length) {
 // --- services --------------------------------------------------------------
 const services = published(raw.services) ?? [];
 if (services.length) {
-  w("-- services: seven published offerings. long-term-care is unpublished (duplicates a care type).");
+  w(
+    "-- services: seven published offerings. long-term-care is unpublished (duplicates a care type).",
+  );
   w(
     "insert into services (slug, title, summary, icon, position, has_detail_page, related_schedule, published) values",
   );

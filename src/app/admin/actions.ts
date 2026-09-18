@@ -343,7 +343,10 @@ export async function clearAllInquiries(): Promise<ActionResult> {
   const supabase = await createClient();
   if (!supabase) return { ok: false, message: GENERIC_ERROR };
 
-  const { error } = await supabase.from("inquiries").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+  const { error } = await supabase
+    .from("inquiries")
+    .delete()
+    .neq("id", "00000000-0000-0000-0000-000000000000");
   if (error) return { ok: false, message: GENERIC_ERROR };
 
   await recordAudit("delete", "inquiries", "all");
@@ -403,10 +406,7 @@ function photoFields(formData: FormData) {
   const caption = String(formData.get("caption") ?? "").trim() || null;
   const containsPeople = formData.get("contains_people") === "on";
   const releaseOnFile = formData.get("release_on_file") === "on";
-  const placements = formData
-    .getAll("placements")
-    .map(String)
-    .filter(Boolean);
+  const placements = formData.getAll("placements").map(String).filter(Boolean);
   const category = syncLegacyCategory(placements);
 
   return { alt, caption, placements, category, containsPeople, releaseOnFile };
@@ -436,7 +436,10 @@ async function uploadOnePhoto(
   }
 
   if (!meta.alt) {
-    return { ok: false, message: `Every photo needs a description. "${file.name}" is missing one.` };
+    return {
+      ok: false,
+      message: `Every photo needs a description. "${file.name}" is missing one.`,
+    };
   }
 
   const ext = file.type === "image/jpeg" ? "jpg" : file.type.replace("image/", "");
@@ -469,8 +472,7 @@ async function uploadOnePhoto(
     if (insertError.message.includes("media_release_required")) {
       return {
         ok: false,
-        message:
-          "A photo shows a person without a signed release, so it cannot be saved yet.",
+        message: "A photo shows a person without a signed release, so it cannot be saved yet.",
       };
     }
     return { ok: false, message: GENERIC_ERROR };
@@ -556,8 +558,7 @@ export async function uploadPhotos(
 
   return {
     ok: true,
-    message:
-      uploaded === 1 ? "1 photo uploaded." : `${uploaded} photos uploaded.`,
+    message: uploaded === 1 ? "1 photo uploaded." : `${uploaded} photos uploaded.`,
   };
 }
 
@@ -594,7 +595,8 @@ export async function updatePhoto(
   const id = String(formData.get("id") ?? "");
   if (!id) return { ok: false, message: GENERIC_ERROR };
 
-  const { alt, caption, placements, category, containsPeople, releaseOnFile } = photoFields(formData);
+  const { alt, caption, placements, category, containsPeople, releaseOnFile } =
+    photoFields(formData);
   if (!alt) {
     return { ok: false, message: "Every photo needs a description for screen readers." };
   }
@@ -654,10 +656,7 @@ export async function togglePhotoPlacement(
 
   const category = syncLegacyCategory(placements);
 
-  const { error } = await supabase
-    .from("media")
-    .update({ placements, category })
-    .eq("id", id);
+  const { error } = await supabase.from("media").update({ placements, category }).eq("id", id);
 
   if (error) return { ok: false, message: GENERIC_ERROR };
 
@@ -665,11 +664,7 @@ export async function togglePhotoPlacement(
   revalidateFor("media");
 
   const label =
-    placement === "hero"
-      ? "homepage hero"
-      : placement === "meals"
-        ? "meals section"
-        : placement;
+    placement === "hero" ? "homepage hero" : placement === "meals" ? "meals section" : placement;
 
   return {
     ok: true,
@@ -752,10 +747,7 @@ export async function createGalleryCategory(
   return { ok: true, message: `Category "${name}" added.` };
 }
 
-export async function renameGalleryCategory(
-  id: string,
-  name: string,
-): Promise<ActionResult> {
+export async function renameGalleryCategory(id: string, name: string): Promise<ActionResult> {
   await requireAdmin();
   const supabase = await createClient();
   if (!supabase) return { ok: false, message: GENERIC_ERROR };
@@ -837,12 +829,10 @@ export async function deleteGalleryCategory(id: string): Promise<ActionResult> {
 
     if (affectedPhotos && affectedPhotos.length > 0) {
       for (const photo of affectedPhotos) {
-        const newPlacements = (photo.placements as string[]).filter(
-          (p: string) => p !== catName,
-        );
+        const newPlacements = (photo.placements as string[]).filter((p: string) => p !== catName);
         const newCategory =
           photo.category === catName
-            ? newPlacements.find((p: string) => p !== "hero" && p !== "meals") ?? null
+            ? (newPlacements.find((p: string) => p !== "hero" && p !== "meals") ?? null)
             : photo.category;
         await supabase
           .from("media")

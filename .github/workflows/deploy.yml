@@ -71,4 +71,3 @@ jobs:
           exclude: |
             **/.git*
             **/.git*/**
-

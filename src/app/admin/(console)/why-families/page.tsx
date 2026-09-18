@@ -5,9 +5,7 @@ import { ContentList, type ContentRow, type EditableField } from "@/components/a
 
 export const metadata = { title: "Why families choose us" };
 
-const EDITABLE_FIELDS: EditableField[] = [
-  { name: "text", label: "Reason", multiline: true },
-];
+const EDITABLE_FIELDS: EditableField[] = [{ name: "text", label: "Reason", multiline: true }];
 
 export default async function WhyFamiliesAdminPage() {
   const supabase = await createClient();
@@ -36,7 +34,9 @@ export default async function WhyFamiliesAdminPage() {
 
       {rows.length === 0 ? (
         <EmptyState title="No reasons yet">
-          <p>The four brochure bullets should appear here after <code>pnpm db:seed</code>.</p>
+          <p>
+            The four brochure bullets should appear here after <code>pnpm db:seed</code>.
+          </p>
         </EmptyState>
       ) : (
         <ContentList
