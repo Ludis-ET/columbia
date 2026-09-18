@@ -28,11 +28,7 @@ interface CategoryRow {
 // Add form
 // ---------------------------------------------------------------------------
 
-function AddCategoryForm({
-  onSuccess,
-}: {
-  onSuccess: (name: string) => void;
-}) {
+function AddCategoryForm({ onSuccess }: { onSuccess: (name: string) => void }) {
   const [result, action, pending] = useActionState(
     async (prev: ActionResult | null, formData: FormData) => {
       const res = await createGalleryCategory(prev, formData);
@@ -46,7 +42,7 @@ function AddCategoryForm({
   );
 
   return (
-    <form action={action} className="flex gap-2 items-end">
+    <form action={action} className="flex items-end gap-2">
       <div className="flex-1">
         <Label htmlFor="new-category-name" className="mb-1 block text-xs">
           New category name
@@ -60,19 +56,11 @@ function AddCategoryForm({
           className="h-9"
         />
       </div>
-      <Button
-        type="submit"
-        size="sm"
-        disabled={pending}
-        className="shrink-0"
-        id="btn-add-category"
-      >
-        <Plus className="size-4 mr-1" />
+      <Button type="submit" size="sm" disabled={pending} className="shrink-0" id="btn-add-category">
+        <Plus className="mr-1 size-4" />
         Add
       </Button>
-      {result && (
-        <Toast result={result} />
-      )}
+      {result && <Toast result={result} />}
     </form>
   );
 }
@@ -95,7 +83,10 @@ function RenameInline({
   const [error, setError] = useState<string | null>(null);
 
   async function submit() {
-    if (value.trim() === currentName) { onDone(); return; }
+    if (value.trim() === currentName) {
+      onDone();
+      return;
+    }
     startTransition(async () => {
       const res = await renameGalleryCategory(id, value);
       if (res.ok) {
@@ -112,10 +103,14 @@ function RenameInline({
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === "Enter") { e.preventDefault(); submit(); }
+          if (e.key === "Enter") {
+            e.preventDefault();
+            submit();
+          }
           if (e.key === "Escape") onDone();
         }}
         className="h-8 flex-1"
+        // eslint-disable-next-line jsx-a11y/no-autofocus
         autoFocus
         maxLength={60}
         id={`rename-input-${id}`}
@@ -174,7 +169,7 @@ function CategoryRow({
   return (
     <li
       className={cn(
-        "border-rule flex items-center gap-3 rounded border bg-paper p-3 transition-opacity",
+        "border-rule bg-paper flex items-center gap-3 rounded border p-3 transition-opacity",
         pending && "opacity-50",
       )}
     >
@@ -182,11 +177,7 @@ function CategoryRow({
 
       {/* Name / editor */}
       {editing ? (
-        <RenameInline
-          id={cat.id}
-          currentName={cat.name}
-          onDone={() => setEditing(false)}
-        />
+        <RenameInline id={cat.id} currentName={cat.name} onDone={() => setEditing(false)} />
       ) : (
         <span className="flex-1 font-medium">{cat.name}</span>
       )}
@@ -205,7 +196,7 @@ function CategoryRow({
             type="button"
             onClick={() => handleReorder("up")}
             disabled={isFirst || pending}
-            className="hover:text-ink text-stone disabled:opacity-30 p-1"
+            className="hover:text-ink text-stone p-1 disabled:opacity-30"
             aria-label={`Move ${cat.name} up`}
             id={`btn-move-up-${cat.id}`}
           >
@@ -215,7 +206,7 @@ function CategoryRow({
             type="button"
             onClick={() => handleReorder("down")}
             disabled={isLast || pending}
-            className="hover:text-ink text-stone disabled:opacity-30 p-1"
+            className="hover:text-ink text-stone p-1 disabled:opacity-30"
             aria-label={`Move ${cat.name} down`}
             id={`btn-move-down-${cat.id}`}
           >
@@ -277,9 +268,9 @@ function DeleteConfirm({
           This will remove the category from the gallery filter.
         </p>
         {photoCount > 0 && (
-          <p className="text-amber-700 dark:text-amber-400 mb-4 text-[0.9375rem]">
-            ⚠ {photoCount} photo{photoCount !== 1 ? "s are" : " is"} tagged with this
-            category — they will become untagged but will not be deleted.
+          <p className="mb-4 text-[0.9375rem] text-amber-700 dark:text-amber-400">
+            ⚠ {photoCount} photo{photoCount !== 1 ? "s are" : " is"} tagged with this category —
+            they will become untagged but will not be deleted.
           </p>
         )}
         <div className="flex gap-3">
@@ -312,7 +303,11 @@ export function GalleryCategoryManager({
 }) {
   const [categories, setCategories] = useState(initialCategories);
   const [toast, setToast] = useState<{ message: string; ok: boolean } | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string; photoCount: number } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: string;
+    name: string;
+    photoCount: number;
+  } | null>(null);
   const [deletePending, startDeleteTransition] = useTransition();
 
   function showToast(message: string, ok: boolean) {
@@ -326,7 +321,7 @@ export function GalleryCategoryManager({
     window.location.reload();
   }
 
-  function handleReorder(_id: string, _dir: "up" | "down") {
+  function handleReorder() {
     // Revalidation handles the actual data — reload to reflect new order
     window.location.reload();
   }
@@ -362,9 +357,7 @@ export function GalleryCategoryManager({
       <AdminCard>
         <h2 className="mb-4 font-semibold">
           Current categories
-          <span className="text-stone ml-2 text-sm font-normal">
-            ({categories.length})
-          </span>
+          <span className="text-stone ml-2 text-sm font-normal">({categories.length})</span>
         </h2>
 
         {categories.length === 0 ? (
@@ -397,9 +390,7 @@ export function GalleryCategoryManager({
       )}
 
       {/* Toast */}
-      {toast && (
-        <Toast result={toast} />
-      )}
+      {toast && <Toast result={toast} />}
     </div>
   );
 }

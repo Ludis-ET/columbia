@@ -127,8 +127,8 @@ export function PhotoManager({
   const [selectMode, setSelectMode] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  const FILTER_TABS = buildFilterTabs(categories);
-  const dynamicPlacementOptions = buildPlacementOptions(categories);
+  const FILTER_TABS = useMemo(() => buildFilterTabs(categories), [categories]);
+  const dynamicPlacementOptions = useMemo(() => buildPlacementOptions(categories), [categories]);
 
   const sortedPhotos = useMemo(() => [...photos].sort((a, b) => a.position - b.position), [photos]);
 
@@ -143,7 +143,7 @@ export function PhotoManager({
       counts[tab.id] = photos.filter((p) => hasPlacement(p, tab.id)).length;
     }
     return counts;
-  }, [photos]);
+  }, [photos, FILTER_TABS]);
 
   const visiblePhotos = useMemo(() => {
     const q = query.trim().toLowerCase();
