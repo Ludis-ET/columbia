@@ -30,6 +30,9 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build Next.js application
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
         run: pnpm build
 
       - name: Prepare deployment bundle
@@ -38,6 +41,13 @@ jobs:
 
           # Copy compiled production build (.next)
           cp -r .next deploy-dist/
+
+          # Strip build-only caches, sourcemaps, and traces (cuts 80%+ of files for fast FTP)
+          rm -rf deploy-dist/.next/cache
+          rm -rf deploy-dist/.next/diagnostics
+          rm -rf deploy-dist/.next/build
+          find deploy-dist/.next -name "*.map" -type f -delete
+          find deploy-dist/.next -name "*.nft.json" -type f -delete
 
           # Copy public assets
           if [ -d "public" ]; then
@@ -66,3 +76,8 @@ jobs:
             **/.git*
             **/.git*/**
             **/node_modules/**
+            **/.next/cache/**
+            **/.next/diagnostics/**
+            **/.next/build/**
+            **/*.map
+            **/*.nft.json
