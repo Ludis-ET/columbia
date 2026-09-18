@@ -65,10 +65,15 @@ This application is built with **Next.js (App Router)** and contains dynamic fea
    - `PORT`: (defaults to Passenger environment, or set `3000`)
 4. Click **Create** to initialize the app.
 
-> [!WARNING]
-> **DO NOT CLICK "Run NPM Install" in cPanel!**
-> Because this application uses Next.js **standalone mode**, GitHub Actions bundles and uploads all required production dependencies directly into your application directory.
-> Clicking "Run NPM Install" in cPanel will cause an `edgesOut` crash or out-of-memory error because cPanel's npm tries to resolve devDependencies without a lockfile.
+> [!TIP]
+> **Installing Dependencies in cPanel:**
+> Rather than uploading heavy `node_modules` over FTP, run this command in your cPanel terminal inside `/home/columbmq/columbia`:
+>
+> ```bash
+> npm install --omit=dev --legacy-peer-deps
+> ```
+>
+> This installs only runtime dependencies quickly and prevents npm's peer-dependency crash.
 
 ---
 

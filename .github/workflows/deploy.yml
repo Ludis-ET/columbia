@@ -36,23 +36,17 @@ jobs:
         run: |
           mkdir -p deploy-dist
 
-          # Copy standalone server, node_modules, and hidden .next directory
-          if [ -d ".next/standalone" ]; then
-            cp -r .next/standalone/. deploy-dist/
-          else
-            cp -r .next deploy-dist/
-            cp package.json deploy-dist/
-          fi
+          # Copy compiled production build (.next)
+          cp -r .next deploy-dist/
 
-          # Copy static files and public assets required by Next.js standalone
-          mkdir -p deploy-dist/.next/static
-          if [ -d ".next/static" ]; then
-            cp -r .next/static/. deploy-dist/.next/static/
-          fi
-
+          # Copy public assets
           if [ -d "public" ]; then
             cp -r public deploy-dist/
           fi
+
+          # Copy package.json and server.js for cPanel Node environment
+          cp package.json deploy-dist/
+          cp server.js deploy-dist/
 
           # Signal Phusion Passenger on cPanel to restart the application
           mkdir -p deploy-dist/tmp
@@ -71,3 +65,4 @@ jobs:
           exclude: |
             **/.git*
             **/.git*/**
+            **/node_modules/**
