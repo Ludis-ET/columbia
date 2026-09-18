@@ -1,0 +1,69 @@
+name: Deploy to cPanel
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-cpanel
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Next.js application
+        run: pnpm build
+
+      - name: Prepare deployment bundle
+        run: |
+          mkdir -p deploy-dist
+
+          # Copy standalone server and minimal dependencies
+          if [ -d ".next/standalone" ]; then
+            cp -r .next/standalone/* deploy-dist/
+          else
+            cp -r .next deploy-dist/
+            cp package.json deploy-dist/
+          fi
+
+          # Copy static files and public assets required by Next.js
+          mkdir -p deploy-dist/.next/static
+          if [ -d ".next/static" ]; then
+            cp -r .next/static/* deploy-dist/.next/static/
+          fi
+
+          if [ -d "public" ]; then
+            cp -r public deploy-dist/
+          fi
+
+          # Signal Phusion Passenger on cPanel to restart the application
+          mkdir -p deploy-dist/tmp
+          touch deploy-dist/tmp/restart.txt
+
+      - name: Deploy via FTP to cPanel
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.HOST }}
+          username: ${{ secrets.FTP }}
+          password: ${{ secrets.PASS }}
+          local-dir: ./deploy-dist/
+          server-dir: ./
+          dangerous-clean-slate: false

@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 import { legacyRedirects, legacyServiceRedirect } from "./src/lib/sections";
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   // Each photo may be up to 8 MB; batch uploads send one file per action.
   experimental: {
     serverActions: {
