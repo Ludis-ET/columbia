@@ -30,8 +30,8 @@ This application is built with **Next.js (App Router)** and contains dynamic fea
 3. Under **Add FTP Account**:
    - **Log in**: Choose a username (e.g. `columbia-deployer`).
    - **Password / Password (Again)**: Generate a secure password.
-   - **Directory**: **Important!** Clear the default subfolder and set this to the exact folder of your application:
-     - For primary domain root: `public_html` or your specific app folder (e.g., `columbia`).
+   - **Directory**: Set this to **`columbia`** (which maps to `/home/columbmq/columbia`).
+     _(Do not use `public_html` — cPanel blocks Node.js apps from residing directly in `public_html`)_.
    - **Quota**: Set to **Unlimited**.
 4. Click **Create FTP Account**.
 
@@ -48,10 +48,10 @@ This application is built with **Next.js (App Router)** and contains dynamic fea
 
 1. In cPanel, go to **Software** > **Setup Node.js App**.
 2. Click **Create Application**:
-   - **Node.js version**: Choose **`20.x`** (matches project requirements).
+   - **Node.js version**: Choose **`20.x`** or **`22.x`**.
    - **Application mode**: Select **`Production`**.
-   - **Application root**: Enter the folder path you pointed your FTP account to (e.g. `columbia` or `public_html`).
-   - **Application URL**: Select your domain name.
+   - **Application root**: Enter **`columbia`** _(cPanel will resolve this to `/home/columbmq/columbia`). Never use `public_html` here._
+   - **Application URL**: Select your domain from the dropdown and leave the path box blank (so it serves your main website).
    - **Application startup file**: Enter **`server.js`**.
 3. Under **Environment variables**, click **Add Variable** for your production variables (from `.env.example`):
    - `NEXT_PUBLIC_SUPABASE_URL`
@@ -174,9 +174,9 @@ If your host requires manual configuration or if you need to enforce HTTPS and c
 
 ```apache
 # DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION BEGIN
-PassengerAppRoot "/home/YOUR_CPANEL_USER/columbia"
+PassengerAppRoot "/home/columbmq/columbia"
 PassengerBaseURI "/"
-PassengerNodejs "/home/YOUR_CPANEL_USER/nodevenv/columbia/20/bin/node"
+PassengerNodejs "/home/columbmq/nodevenv/columbia/20/bin/node"
 PassengerAppType node
 PassengerStartupFile server.js
 # DO NOT REMOVE. CLOUDLINUX PASSENGER CONFIGURATION END
