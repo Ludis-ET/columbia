@@ -12,7 +12,7 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "husky",
+    "prepare": "husky || true",
     "check:placeholders": "node scripts/check-placeholders.mjs",
     "test:a11y": "playwright test",
     "seed:generate": "node scripts/generate-seed.mjs",
