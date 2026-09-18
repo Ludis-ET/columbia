@@ -36,18 +36,18 @@ jobs:
         run: |
           mkdir -p deploy-dist
 
-          # Copy standalone server and minimal dependencies
+          # Copy standalone server, node_modules, and hidden .next directory
           if [ -d ".next/standalone" ]; then
-            cp -r .next/standalone/* deploy-dist/
+            cp -r .next/standalone/. deploy-dist/
           else
             cp -r .next deploy-dist/
             cp package.json deploy-dist/
           fi
 
-          # Copy static files and public assets required by Next.js
+          # Copy static files and public assets required by Next.js standalone
           mkdir -p deploy-dist/.next/static
           if [ -d ".next/static" ]; then
-            cp -r .next/static/* deploy-dist/.next/static/
+            cp -r .next/static/. deploy-dist/.next/static/
           fi
 
           if [ -d "public" ]; then

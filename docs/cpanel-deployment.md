@@ -65,6 +65,11 @@ This application is built with **Next.js (App Router)** and contains dynamic fea
    - `PORT`: (defaults to Passenger environment, or set `3000`)
 4. Click **Create** to initialize the app.
 
+> [!WARNING]
+> **DO NOT CLICK "Run NPM Install" in cPanel!**
+> Because this application uses Next.js **standalone mode**, GitHub Actions bundles and uploads all required production dependencies directly into your application directory.
+> Clicking "Run NPM Install" in cPanel will cause an `edgesOut` crash or out-of-memory error because cPanel's npm tries to resolve devDependencies without a lockfile.
+
 ---
 
 ## 3. Step 2: Configure the 3 GitHub Secrets
@@ -139,12 +144,12 @@ jobs:
           # Create a clean deployment folder
           mkdir -p deploy-dist
 
-          # Copy standalone output (includes server.js and minimal node_modules)
-          cp -r .next/standalone/* deploy-dist/
+          # Copy standalone output (includes server.js, node_modules, and hidden .next metadata)
+          cp -r .next/standalone/. deploy-dist/
 
           # Next.js standalone requires .next/static and public copied into the root
           mkdir -p deploy-dist/.next/static
-          cp -r .next/static/* deploy-dist/.next/static/
+          cp -r .next/static/. deploy-dist/.next/static/
           if [ -d "public" ]; then
             cp -r public deploy-dist/
           fi
@@ -208,10 +213,11 @@ _(Replace `/home/YOUR_CPANEL_USER/columbia` with the exact path shown at the top
 
 ## 8. Troubleshooting Checklist
 
-| Issue                                 | Cause                                                  | Solution                                                                                                                                           |
-| :------------------------------------ | :----------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **FTP Connection Failed / Timeout**   | Firewall or wrong host/port                            | Use the direct server IP instead of `ftp.yourdomain.com`, or ensure Port 21 is reachable.                                                          |
-| **Login Incorrect (530)**             | Incomplete username or bad password                    | In cPanel, FTP usernames are usually full email format: `username@domain.com`. Verify in cPanel > FTP Accounts.                                    |
-| **Files uploaded to wrong directory** | FTP directory path                                     | In cPanel FTP Accounts, ensure the directory matches the Application Root of your Node.js App.                                                     |
-| **App not restarting after push**     | Missing `restart.txt` trigger                          | Check that `tmp/restart.txt` exists in your application root. You can also click **Restart** inside cPanel's Node.js App interface.                |
-| **503 / 500 Internal Server Error**   | Missing environment variables or node version mismatch | Check the `stderr.log` file in your application folder on cPanel. Verify all required environment variables are set in cPanel > Setup Node.js App. |
+| Issue                                                               | Cause                                                             | Solution                                                                                                                                                                                                               |
+| :------------------------------------------------------------------ | :---------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **FTP Connection Failed / Timeout**                                 | Firewall or wrong host/port                                       | Use the direct server IP instead of `ftp.yourdomain.com`, or ensure Port 21 is reachable.                                                                                                                              |
+| **Login Incorrect (530)**                                           | Incomplete username or bad password                               | In cPanel, FTP usernames are usually full email format: `username@domain.com`. Verify in cPanel > FTP Accounts.                                                                                                        |
+| **Files uploaded to wrong directory**                               | FTP directory path                                                | In cPanel FTP Accounts, ensure the directory matches the Application Root of your Node.js App.                                                                                                                         |
+| **App not restarting after push**                                   | Missing `restart.txt` trigger                                     | Check that `tmp/restart.txt` exists in your application root. You can also click **Restart** inside cPanel's Node.js App interface.                                                                                    |
+| **503 / 500 Internal Server Error**                                 | Missing environment variables or node version mismatch            | Check the `stderr.log` file in your application folder on cPanel. Verify all required environment variables are set in cPanel > Setup Node.js App.                                                                     |
+| **npm error `Cannot read properties of null (reading 'edgesOut')`** | Clicked "Run NPM Install" in cPanel or ran `npm install` manually | **Do not run npm install on cPanel.** The standalone build uploaded via GitHub Actions already contains all needed dependencies. If a broken `node_modules` was created, remove it or let GitHub Actions overwrite it. |
