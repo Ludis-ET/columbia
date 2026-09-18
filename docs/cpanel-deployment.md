@@ -167,6 +167,9 @@ jobs:
           local-dir: ./deploy-dist/
           server-dir: ./
           dangerous-clean-slate: false # Set to true only if you want to wipe files removed from git
+          exclude: |
+            **/.git*
+            **/.git*/**
 ```
 
 ---

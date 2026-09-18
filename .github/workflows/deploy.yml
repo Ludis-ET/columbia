@@ -68,3 +68,7 @@ jobs:
           server-dir: ./
           security: loose
           dangerous-clean-slate: false
+          exclude: |
+            **/.git*
+            **/.git*/**
+
