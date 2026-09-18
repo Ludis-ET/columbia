@@ -55,7 +55,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" data-theme="light" suppressHydrationWarning>
       <head>
         {/* Applies stored theme and reader preferences before first paint. */}
         <script suppressHydrationWarning dangerouslySetInnerHTML={{ __html: preferencesScript }} />
