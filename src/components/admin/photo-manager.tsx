@@ -1041,6 +1041,7 @@ function PhotoTile({
             src={photo.url}
             alt=""
             fill
+            unoptimized
             className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
             sizes="280px"
           />
@@ -1296,7 +1297,14 @@ function EditDialog({
 
           {photo.url ? (
             <div className="border-rule relative aspect-video overflow-hidden rounded-lg border">
-              <Image src={photo.url} alt="" fill className="object-cover" sizes="480px" />
+              <Image
+                src={photo.url}
+                alt=""
+                fill
+                unoptimized
+                className="object-cover"
+                sizes="480px"
+              />
             </div>
           ) : null}
 

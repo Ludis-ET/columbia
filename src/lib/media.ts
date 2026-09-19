@@ -114,10 +114,30 @@ export function placementLabel(id: string): string {
 }
 
 /** Public Supabase Storage URL for a row's `storage_path`. */
-export function mediaPublicUrl(storagePath: string): string | null {
-  const base = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  if (!base) return null;
-  return `${base}/storage/v1/object/public/media/${storagePath}`;
+export function mediaPublicUrl(storagePath: string | null | undefined): string | null {
+  if (!storagePath) return null;
+
+  // If already a full URL or absolute path, return it directly
+  if (
+    storagePath.startsWith("http://") ||
+    storagePath.startsWith("https://") ||
+    storagePath.startsWith("/")
+  ) {
+    return storagePath;
+  }
+  if (storagePath.startsWith("photos/")) {
+    return `/${storagePath}`;
+  }
+
+  const base =
+    process.env["NEXT_PUBLIC_SUPABASE_URL"] ||
+    process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    "https://wmxvickqaxkuaatftput.supabase.co";
+
+  const cleanBase = base.replace(/\/+$/, "");
+  const cleanPath = storagePath.replace(/^\/+/, "");
+
+  return `${cleanBase}/storage/v1/object/public/media/${cleanPath}`;
 }
 
 export type AdminPhoto = MediaRow & { url: string | null };
