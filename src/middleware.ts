@@ -13,8 +13,14 @@ import { NextResponse, type NextRequest } from "next/server";
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
 
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  const url =
+    process.env["NEXT_PUBLIC_SUPABASE_URL"] ||
+    process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    process.env["SUPABASE_URL"];
+  const key =
+    process.env["NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"] ||
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
+    process.env["SUPABASE_ANON_KEY"];
 
   // Without Supabase configured there is no admin to protect. The public site
   // still builds and serves from file content.
