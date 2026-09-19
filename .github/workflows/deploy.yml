@@ -29,10 +29,25 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Create production env file
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          cat << EOF > .env
+          NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY}
+          SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+          EOF
+          cp .env .env.production
+          cp .env .env.local
+
       - name: Build Next.js application
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: pnpm build
 
       - name: Prepare deployment bundle
@@ -54,9 +69,11 @@ jobs:
             cp -r public deploy-dist/
           fi
 
-          # Copy package.json and server.js for cPanel Node environment
+          # Copy package.json, server.js, and environment files for cPanel
           cp package.json deploy-dist/
           cp server.js deploy-dist/
+          cp .env deploy-dist/.env
+          cp .env.local deploy-dist/.env.local
 
           # Signal Phusion Passenger on cPanel to restart the application
           mkdir -p deploy-dist/tmp
