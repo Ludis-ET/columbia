@@ -20,6 +20,7 @@ const nextConfig: NextConfig = {
   },
 
   images: {
+    unoptimized: true,
     remotePatterns: [
       // Photographs served from Supabase Storage once real ones are uploaded.
       { protocol: "https", hostname: "*.supabase.co", pathname: "/storage/v1/object/public/**" },

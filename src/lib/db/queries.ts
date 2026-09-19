@@ -16,7 +16,7 @@ import type {
 } from "./database.types";
 
 import * as file from "@/lib/content";
-import { heroImage, mealsImage } from "@/lib/images";
+import { heroImage, mealsImage, galleryImages } from "@/lib/images";
 import {
   appearsInGallery,
   FALLBACK_GALLERY_CATEGORIES,
@@ -347,13 +347,15 @@ export const getTestimonials = cache(async (): Promise<TestimonialItem[]> => {
 export const getGallery = cache(async (): Promise<GalleryImage[]> => {
   const rows = await select<MediaRow>("media");
 
-  if (!rows) return [];
+  if (!rows || rows.length === 0) return galleryImages;
 
   const galleryRows = rows.filter(
     (r) => appearsInGallery(r) && r.published && (!r.contains_people || r.release_on_file),
   );
 
-  return galleryRows
+  if (galleryRows.length === 0) return galleryImages;
+
+  const mapped = galleryRows
     .sort((a, b) => a.position - b.position)
     .map((r) => ({
       src: mediaPublicUrl(r.storage_path) ?? "",
@@ -364,6 +366,8 @@ export const getGallery = cache(async (): Promise<GalleryImage[]> => {
       height: r.height ?? undefined,
     }))
     .filter((r) => r.src);
+
+  return mapped.length > 0 ? mapped : galleryImages;
 });
 
 /**
