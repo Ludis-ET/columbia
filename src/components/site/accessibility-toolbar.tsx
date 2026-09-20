@@ -205,13 +205,16 @@ export function AccessibilityToolbar() {
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
+          aria-label="Reading options"
+          title="Reading options"
           className={cn(
-            "border-rule-strong bg-paper-raise text-ink inline-flex min-h-12 items-center gap-2 rounded-full border py-2 pr-4 pl-3 font-semibold shadow-md transition-colors",
+            "border-rule-strong bg-paper-raise text-ink inline-flex size-12 items-center justify-center gap-2 rounded-full border p-0 font-semibold shadow-md transition-colors sm:size-auto sm:min-h-12 sm:py-2 sm:pr-4 sm:pl-3",
             "hover:border-sage hover:text-sage-deep",
+            changed && "border-sage text-sage-deep",
           )}
         >
-          <Accessibility className="size-5" aria-hidden="true" strokeWidth={2} />
-          <span className="text-[0.9375rem]">Reading options</span>
+          <Accessibility className="size-5 shrink-0" aria-hidden="true" strokeWidth={2} />
+          <span className="hidden text-[0.9375rem] sm:inline">Reading options</span>
         </button>
       </div>
     </HouseMotion>

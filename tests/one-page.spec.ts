@@ -189,3 +189,26 @@ test("photo gallery hide all tab hides and restores photographs", async ({ page 
   await allTab.click();
   await expect(photos.first()).toBeVisible();
 });
+
+test("reading options button is icon-only on mobile and full pill on desktop", async ({ page }) => {
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+
+  // Mobile viewport: icon only, text is visually hidden
+  await page.setViewportSize({ width: 375, height: 667 });
+  const readingButton = page.getByRole("button", { name: /reading options/i });
+  await expect(readingButton).toBeVisible();
+
+  const textLabel = readingButton.locator("span.hidden.sm\\:inline");
+  await expect(textLabel).not.toBeVisible();
+
+  const mobileBox = await readingButton.boundingBox();
+  expect(mobileBox).toBeTruthy();
+  // Width should be compact (around 48px) rather than stretching with text
+  expect(mobileBox!.width).toBeLessThanOrEqual(52);
+
+  // Desktop viewport: expands to show text label
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await expect(textLabel).toBeVisible();
+  const desktopBox = await readingButton.boundingBox();
+  expect(desktopBox!.width).toBeGreaterThan(100);
+});
