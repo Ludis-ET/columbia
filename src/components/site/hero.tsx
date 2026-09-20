@@ -36,7 +36,13 @@ export function Hero({
   const hasImage = Boolean(image);
 
   return (
-    <section className={cn("relative", !hasImage && "bg-sage-wash")}>
+    <section
+      className={cn(
+        "relative flex flex-col justify-center",
+        size === "home" ? "min-h-[calc(100dvh-4rem)] min-h-[calc(100vh-4rem)] sm:min-h-0" : "",
+        !hasImage && "bg-sage-wash",
+      )}
+    >
       {image ? (
         <>
           <Image
@@ -66,8 +72,8 @@ export function Hero({
 
       <div
         className={cn(
-          "relative mx-auto max-w-4xl px-4 text-center sm:px-6",
-          size === "home" ? "py-24 sm:py-36" : "py-16 sm:py-24",
+          "relative mx-auto w-full max-w-4xl px-4 text-center sm:px-6",
+          size === "home" ? "py-24 pb-28 sm:py-36" : "py-16 sm:py-24",
           hasImage && "text-white",
         )}
       >
