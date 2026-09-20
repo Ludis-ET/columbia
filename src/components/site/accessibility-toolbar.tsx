@@ -134,9 +134,9 @@ export function AccessibilityToolbar() {
               animate={{ y: 0 }}
               exit={{ y: 8 }}
               transition={houseTransition}
-              className="border-rule-strong bg-paper-raise mb-3 w-[min(20rem,calc(100vw-2rem))] rounded border p-4 shadow-lg"
+              className="border-rule-strong bg-paper-raise mb-3 flex max-h-[calc(100dvh-11rem)] w-[min(20rem,calc(100vw-2rem))] flex-col rounded-xl border p-4 shadow-xl sm:max-h-[calc(100vh-7rem)]"
             >
-              <div className="mb-3 flex items-start justify-between gap-3">
+              <div className="border-rule/60 mb-3 flex shrink-0 items-start justify-between gap-3 border-b pb-2">
                 <div>
                   <h2 className="text-[1.05rem] font-bold">Reading options</h2>
                   <p className="text-stone text-[0.875rem] leading-snug">
@@ -146,56 +146,60 @@ export function AccessibilityToolbar() {
                 <button
                   type="button"
                   onClick={close}
-                  className="text-stone hover:text-ink -mt-1 -mr-1 inline-flex size-9 shrink-0 items-center justify-center rounded"
+                  className="text-stone hover:text-ink -mt-1 -mr-1 inline-flex size-9 shrink-0 items-center justify-center rounded transition-colors"
                 >
                   <X className="size-5" aria-hidden="true" />
                   <span className="sr-only">Close reading options</span>
                 </button>
               </div>
 
-              <div className="flex flex-col gap-4">
-                {GROUPS.map((group) => (
-                  <fieldset key={group.key}>
-                    <legend className="label text-stone mb-1.5">{group.legend}</legend>
-                    <div className="flex flex-wrap gap-1.5">
-                      {group.choices.map((choice) => {
-                        const active = (prefs[group.key] ?? null) === choice.value;
-                        return (
-                          <button
-                            key={choice.label}
-                            type="button"
-                            onClick={() => choose(group.key, choice.value)}
-                            aria-pressed={active}
-                            className={cn(
-                              "min-h-11 rounded border px-3 text-[0.9375rem] transition-colors",
-                              active
-                                ? "border-sage bg-sage-wash text-sage-deep font-semibold"
-                                : "border-rule text-ink-soft hover:border-rule-strong",
-                            )}
-                          >
-                            {choice.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    {group.hint ? (
-                      <p className="text-stone mt-1.5 text-[0.8125rem] leading-snug">
-                        {group.hint}
-                      </p>
-                    ) : null}
-                  </fieldset>
-                ))}
-              </div>
+              <div className="-mr-1 min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1">
+                <div className="flex flex-col gap-4 py-1">
+                  {GROUPS.map((group) => (
+                    <fieldset key={group.key}>
+                      <legend className="label text-stone mb-1.5">{group.legend}</legend>
+                      <div className="flex flex-wrap gap-1.5">
+                        {group.choices.map((choice) => {
+                          const active = (prefs[group.key] ?? null) === choice.value;
+                          return (
+                            <button
+                              key={choice.label}
+                              type="button"
+                              onClick={() => choose(group.key, choice.value)}
+                              aria-pressed={active}
+                              className={cn(
+                                "min-h-11 rounded border px-3 text-[0.9375rem] transition-colors",
+                                active
+                                  ? "border-sage bg-sage-wash text-sage-deep font-semibold"
+                                  : "border-rule text-ink-soft hover:border-rule-strong",
+                              )}
+                            >
+                              {choice.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {group.hint ? (
+                        <p className="text-stone mt-1.5 text-[0.8125rem] leading-snug">
+                          {group.hint}
+                        </p>
+                      ) : null}
+                    </fieldset>
+                  ))}
+                </div>
 
-              {changed ? (
-                <button
-                  type="button"
-                  onClick={resetAll}
-                  className="text-sage-deep mt-4 min-h-11 text-[0.9375rem] font-semibold underline"
-                >
-                  Reset to defaults
-                </button>
-              ) : null}
+                {changed ? (
+                  <div className="pt-2 pb-1">
+                    <button
+                      type="button"
+                      onClick={resetAll}
+                      className="text-sage-deep min-h-11 text-[0.9375rem] font-semibold underline"
+                    >
+                      Reset to defaults
+                    </button>
+                  </div>
+                ) : null}
+              </div>
             </motion.div>
           ) : null}
         </AnimatePresence>

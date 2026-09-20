@@ -231,3 +231,34 @@ test("hero action buttons are hidden on mobile and visible on desktop", async ({
   await expect(heroCta).toBeVisible();
   await expect(mobileBookBtn).not.toBeVisible();
 });
+
+test("reading options menu stays within screen bounds and controllable with largest text size", async ({
+  page,
+}) => {
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await page.setViewportSize({ width: 375, height: 667 });
+
+  const trigger = page.getByRole("button", { name: /reading options/i });
+  await trigger.click();
+
+  const dialog = page.getByRole("dialog", { name: /reading options/i });
+  await expect(dialog).toBeVisible();
+
+  // Switch to Largest text size
+  const largestBtn = dialog.getByRole("button", { name: "Largest", exact: true });
+  await largestBtn.click();
+
+  // Wait for attribute to take effect
+  await expect(page.locator("html")).toHaveAttribute("data-text-size", "largest");
+
+  // Verify dialog stays within viewport boundaries
+  const dialogBox = await dialog.boundingBox();
+  expect(dialogBox).toBeTruthy();
+  expect(dialogBox!.y, "dialog top must not extend above viewport").toBeGreaterThanOrEqual(0);
+
+  // Close button must be visible and clickable
+  const closeBtn = dialog.getByRole("button", { name: /close reading options/i });
+  await expect(closeBtn).toBeVisible();
+  await closeBtn.click();
+  await expect(dialog).not.toBeVisible();
+});
