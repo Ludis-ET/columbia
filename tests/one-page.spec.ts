@@ -125,3 +125,67 @@ test("back-to-top appears once the reader is well down the page", async ({ page 
   await page.evaluate(() => window.scrollTo(0, 3000));
   await expect(button).toBeVisible();
 });
+
+test("mobile collapsible dropdowns for who-we-are and care-and-services toggle properly", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto("/", { waitUntil: "load" });
+  await page.waitForTimeout(500);
+
+  // 1. Who we are collapsible dropdown
+  const reasonsTrigger = page.getByRole("button", { name: /why families choose our home/i });
+  await expect(reasonsTrigger).toBeVisible();
+
+  // Initially on mobile, the reasons grid is hidden
+  const firstReason = page.getByText("Experienced and caring staff");
+  await expect(firstReason).not.toBeVisible();
+
+  // Click to open
+  await reasonsTrigger.click();
+  await expect(firstReason).toBeVisible();
+
+  // Click to close
+  await reasonsTrigger.click();
+  await expect(firstReason).not.toBeVisible();
+
+  // 2. Care and services collapsible dropdown
+  const servicesTrigger = page.getByRole("button", { name: /additional care & daily services/i });
+  await expect(servicesTrigger).toBeVisible();
+
+  // Initially on mobile, the 7 services grid is hidden
+  const firstService = page.getByText("Assistance with activities of daily living");
+  await expect(firstService).not.toBeVisible();
+
+  // Click to open
+  await servicesTrigger.click();
+  await expect(firstService).toBeVisible();
+
+  // Click bottom collapse shortcut
+  const bottomCollapse = page.getByRole("button", { name: "Collapse services", exact: true });
+  await bottomCollapse.click();
+  await expect(firstService).not.toBeVisible();
+});
+
+test("photo gallery hide all tab hides and restores photographs", async ({ page }) => {
+  await page.goto("/", { waitUntil: "load" });
+  await page.waitForTimeout(500);
+
+  const filterGroup = page.getByRole("group", { name: "Filter photographs" });
+  const hideAllTab = filterGroup.getByRole("button", { name: "Hide all", exact: true });
+  await expect(hideAllTab).toBeVisible();
+
+  // Initially images are visible
+  const photos = page.locator("#home ul img");
+  await expect(photos.first()).toBeVisible();
+
+  // Click 'Hide all'
+  await hideAllTab.click();
+  await expect(page.getByText(/photographs are currently hidden/i)).toBeVisible();
+  await expect(photos).toHaveCount(0);
+
+  // Click 'All' to restore
+  const allTab = filterGroup.getByRole("button", { name: "All", exact: true });
+  await allTab.click();
+  await expect(photos.first()).toBeVisible();
+});

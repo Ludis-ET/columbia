@@ -6,7 +6,8 @@ import { Hero } from "@/components/site/hero";
 import { AnchorSection } from "@/components/site/anchor-section";
 import { SectionHeading, Prose } from "@/components/site/section";
 import { AvailabilityBadge } from "@/components/site/availability-badge";
-import { ServiceCard } from "@/components/site/service-card";
+import { CollapsibleReasons } from "@/components/site/collapsible-reasons";
+import { CollapsibleServices } from "@/components/site/collapsible-services";
 import { TimelineEntry } from "@/components/site/timeline-entry";
 import { Gallery } from "@/components/site/gallery";
 import { TestimonialList } from "@/components/site/testimonial";
@@ -142,20 +143,7 @@ export default async function HomePage() {
           align="center"
         />
 
-        {reasons.length > 0 ? (
-          <ul className="mx-auto grid max-w-4xl gap-4 sm:grid-cols-2">
-            {reasons.map((reason) => (
-              <li key={reason}>
-                <MotionLift>
-                  <div className="border-rule bg-paper-raise flex h-full items-start gap-3 rounded border p-5">
-                    <HeartShield className="mt-0.5 size-6 shrink-0" />
-                    <p className="font-semibold">{reason}</p>
-                  </div>
-                </MotionLift>
-              </li>
-            ))}
-          </ul>
-        ) : null}
+        {reasons.length > 0 ? <CollapsibleReasons reasons={reasons} /> : null}
       </AnchorSection>
 
       {/* --------------------------------------------------------------- care */}
@@ -186,22 +174,7 @@ export default async function HomePage() {
           </ul>
         ) : null}
 
-        {services.length > 0 ? (
-          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {services.map((service) => (
-              <li key={service.slug}>
-                <MotionLift>
-                  <ServiceCard
-                    title={service.title}
-                    icon={service.icon}
-                    summary={service.description}
-                    className="h-full"
-                  />
-                </MotionLift>
-              </li>
-            ))}
-          </ul>
-        ) : null}
+        {services.length > 0 ? <CollapsibleServices services={services} /> : null}
       </AnchorSection>
 
       {/* ---------------------------------------------------------------- day */}

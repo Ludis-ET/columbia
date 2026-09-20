@@ -4,6 +4,7 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import Image from "next/image";
 import { AnimatePresence, motion } from "motion/react";
 import { createPortal } from "react-dom";
+import { EyeOff } from "lucide-react";
 import { HouseMotion, useHouseReducedMotion } from "@/components/motion/house";
 import { cn } from "@/lib/utils";
 import { houseTransition } from "@/lib/motion";
@@ -30,14 +31,57 @@ export interface GalleryImage {
 export function Gallery({ images, className }: { images: GalleryImage[]; className?: string }) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [filter, setFilter] = useState<string | null>(null);
+  const [showOverlay, setShowOverlay] = useState(false);
+  const galleryRef = useRef<HTMLDivElement>(null);
+  const filterBarRef = useRef<HTMLDivElement>(null);
   const chipId = useId();
+
+  const isHidden = filter === "__hide_all__";
+
+  const handleHideAll = useCallback(() => {
+    setFilter("__hide_all__");
+    setShowOverlay(false);
+    const homeEl = document.getElementById("home");
+    if (homeEl) {
+      homeEl.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (images.length === 0 || isHidden) {
+      setShowOverlay(false);
+      return;
+    }
+
+    const checkVisibility = () => {
+      if (!galleryRef.current || !filterBarRef.current) return;
+      const filterBarRect = filterBarRef.current.getBoundingClientRect();
+      const galleryRect = galleryRef.current.getBoundingClientRect();
+
+      // Show floating overlay button when the reader has scrolled past the top filter tabs,
+      // while the gallery photo section is still overflowing / visible on screen.
+      const scrolledPastTop = filterBarRect.bottom < 60;
+      const galleryStillVisible = galleryRect.bottom > 220 && galleryRect.top < window.innerHeight;
+
+      setShowOverlay(scrolledPastTop && galleryStillVisible);
+    };
+
+    window.addEventListener("scroll", checkVisibility, { passive: true });
+    window.addEventListener("resize", checkVisibility, { passive: true });
+    checkVisibility();
+
+    return () => {
+      window.removeEventListener("scroll", checkVisibility);
+      window.removeEventListener("resize", checkVisibility);
+    };
+  }, [images.length, isHidden]);
 
   if (images.length === 0) return null;
 
   const categories = Array.from(
     new Set(images.map((img) => img.category).filter((c): c is string => Boolean(c))),
   );
-  const visible = filter ? images.filter((img) => img.category === filter) : images;
+  const visible = isHidden ? [] : filter ? images.filter((img) => img.category === filter) : images;
 
   const openLightbox = (img: GalleryImage) => {
     const idx = visible.indexOf(img);
@@ -46,64 +90,138 @@ export function Gallery({ images, className }: { images: GalleryImage[]; classNa
 
   return (
     <HouseMotion>
-      <div className={className}>
-        {/* ── Category filter chips ── */}
-        {categories.length > 1 && (
-          <div className="mb-6 flex flex-wrap gap-2" role="group" aria-label="Filter photographs">
-            <FilterChip active={filter === null} onClick={() => setFilter(null)} layoutId={chipId}>
-              All
+      <div ref={galleryRef} className={cn("relative", className)}>
+        {/* ── Category filter chips with 'Hide all' tab ── */}
+        <div
+          ref={filterBarRef}
+          className="mb-6 flex flex-wrap gap-2"
+          role="group"
+          aria-label="Filter photographs"
+        >
+          <FilterChip active={filter === null} onClick={() => setFilter(null)} layoutId={chipId}>
+            All
+          </FilterChip>
+          {categories.map((cat) => (
+            <FilterChip
+              key={cat}
+              active={filter === cat}
+              onClick={() => setFilter(cat)}
+              layoutId={chipId}
+            >
+              {cat}
             </FilterChip>
-            {categories.map((cat) => (
-              <FilterChip
-                key={cat}
-                active={filter === cat}
-                onClick={() => setFilter(cat)}
-                layoutId={chipId}
-              >
-                {cat}
-              </FilterChip>
-            ))}
-          </div>
-        )}
+          ))}
+          <FilterChip
+            active={isHidden}
+            onClick={() => (isHidden ? setFilter(null) : handleHideAll())}
+            layoutId={chipId}
+          >
+            <span className="inline-flex items-center gap-1.5">
+              <EyeOff className="size-3.5" aria-hidden="true" />
+              Hide all
+            </span>
+          </FilterChip>
+        </div>
 
-        {/* ── Photo grid ── */}
-        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <AnimatePresence initial={false} mode="popLayout">
-            {visible.map((image) => (
-              <motion.li
-                key={image.src}
-                layout
-                transition={houseTransition}
-                initial={{ opacity: 0, scale: 0.96 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.96 }}
+        {/* ── Photo grid or Hidden notice ── */}
+        {isHidden ? (
+          <div className="border-rule bg-paper-raise rounded-xl border p-8 text-center sm:p-12">
+            <p className="text-ink font-sans text-base font-bold sm:text-lg">
+              Photographs are currently hidden
+            </p>
+            <p className="text-ink-soft mx-auto mt-2 max-w-md text-sm">
+              Select{" "}
+              <button
+                type="button"
+                onClick={() => setFilter(null)}
+                className="text-sage-deep cursor-pointer font-semibold underline underline-offset-2 hover:opacity-80"
               >
+                All
+              </button>{" "}
+              or choose any category above to view pictures of our home.
+            </p>
+            <button
+              type="button"
+              onClick={() => setFilter(null)}
+              className="bg-sage text-paper hover:bg-sage-deep mt-5 inline-flex cursor-pointer items-center gap-2 rounded-full px-5 py-2 text-xs font-semibold transition-colors sm:text-sm"
+            >
+              Show all photos
+            </button>
+          </div>
+        ) : (
+          <>
+            <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              <AnimatePresence initial={false} mode="popLayout">
+                {visible.map((image) => (
+                  <motion.li
+                    key={image.src}
+                    layout
+                    transition={houseTransition}
+                    initial={{ opacity: 0, scale: 0.96 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.96 }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => openLightbox(image)}
+                      aria-label={`View ${image.alt}`}
+                      className="group border-rule focus-visible:outline-ring relative block w-full overflow-hidden rounded-lg border focus-visible:outline-2 focus-visible:outline-offset-2"
+                    >
+                      <span className="relative block aspect-4/3 overflow-hidden">
+                        <Image
+                          src={image.src}
+                          alt={image.alt}
+                          fill
+                          sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                          className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+                        />
+                        {/* hover overlay */}
+                        <span className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors duration-300 group-hover:bg-black/20">
+                          <span className="scale-75 rounded-full bg-white/80 p-2 opacity-0 shadow-lg backdrop-blur-sm transition-all duration-300 group-hover:scale-100 group-hover:opacity-100">
+                            <ExpandIcon />
+                          </span>
+                        </span>
+                      </span>
+                    </button>
+                  </motion.li>
+                ))}
+              </AnimatePresence>
+            </ul>
+
+            {/* In-page bottom hide button */}
+            {visible.length > 0 && (
+              <div className="mt-6 flex justify-center">
                 <button
                   type="button"
-                  onClick={() => openLightbox(image)}
-                  aria-label={`View ${image.alt}`}
-                  className="group border-rule focus-visible:outline-ring relative block w-full overflow-hidden rounded-lg border focus-visible:outline-2 focus-visible:outline-offset-2"
+                  onClick={handleHideAll}
+                  className="border-rule bg-paper-raise hover:border-sage text-sage-deep hover:bg-sage-wash inline-flex cursor-pointer items-center gap-2 rounded-full border px-5 py-2.5 text-xs font-semibold shadow-xs transition-colors hover:shadow-sm sm:text-sm"
                 >
-                  <span className="relative block aspect-4/3 overflow-hidden">
-                    <Image
-                      src={image.src}
-                      alt={image.alt}
-                      fill
-                      sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                      className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.06] motion-reduce:transition-none motion-reduce:group-hover:scale-100"
-                    />
-                    {/* hover overlay */}
-                    <span className="absolute inset-0 flex items-center justify-center bg-black/0 transition-colors duration-300 group-hover:bg-black/20">
-                      <span className="scale-75 rounded-full bg-white/80 p-2 opacity-0 shadow-lg backdrop-blur-sm transition-all duration-300 group-hover:scale-100 group-hover:opacity-100">
-                        <ExpandIcon />
-                      </span>
-                    </span>
-                  </span>
+                  <EyeOff className="size-4" aria-hidden="true" />
+                  Hide all photos
                 </button>
-              </motion.li>
-            ))}
-          </AnimatePresence>
-        </ul>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* ── Floating Overlay Hide Button (appears when viewing overflowing photos) ── */}
+        <AnimatePresence>
+          {showOverlay && !isHidden && (
+            <motion.button
+              type="button"
+              initial={{ opacity: 0, y: 16, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 16, scale: 0.95 }}
+              transition={houseTransition}
+              onClick={handleHideAll}
+              className="border-rule-strong bg-paper/95 text-ink hover:border-sage hover:text-sage-deep hover:bg-paper fixed bottom-20 left-1/2 z-30 inline-flex -translate-x-1/2 cursor-pointer items-center gap-2 rounded-full border px-4 py-2.5 text-xs font-semibold shadow-xl backdrop-blur-md transition-all active:scale-95 sm:bottom-8 sm:text-sm"
+              aria-label="Hide gallery photographs"
+            >
+              <EyeOff className="text-sage-deep size-4" aria-hidden="true" />
+              <span>Hide photos</span>
+            </motion.button>
+          )}
+        </AnimatePresence>
 
         {/* ── Full-screen lightbox (portal) ── */}
         {activeIndex !== null && (
