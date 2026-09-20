@@ -212,3 +212,22 @@ test("reading options button is icon-only on mobile and full pill on desktop", a
   const desktopBox = await readingButton.boundingBox();
   expect(desktopBox!.width).toBeGreaterThan(100);
 });
+
+test("hero action buttons are hidden on mobile and visible on desktop", async ({ page }) => {
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+
+  // Mobile viewport: hero buttons are hidden, persistent bottom call bar is visible
+  await page.setViewportSize({ width: 375, height: 667 });
+  const heroCta = page.locator("section").first().getByRole("link", { name: "Book a house tour" });
+  await expect(heroCta).not.toBeVisible();
+
+  const mobileBookBtn = page
+    .locator("div.fixed.bottom-0")
+    .getByRole("link", { name: /book a tour/i });
+  await expect(mobileBookBtn).toBeVisible();
+
+  // Desktop viewport: hero buttons are visible, mobile call bar is hidden
+  await page.setViewportSize({ width: 1024, height: 768 });
+  await expect(heroCta).toBeVisible();
+  await expect(mobileBookBtn).not.toBeVisible();
+});

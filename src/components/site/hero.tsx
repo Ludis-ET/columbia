@@ -90,7 +90,7 @@ export function Hero({
             <Button render={<a/>}>. Same appearance, but the element carries its
             own href and children, which keeps it navigable (and lintable) as a
             link rather than a button wearing one. */}
-        <div className="mt-9 flex flex-wrap justify-center gap-3">
+        <div className="mt-9 hidden flex-wrap justify-center gap-3 sm:flex">
           <AnchorLink
             sectionId={primaryCta.sectionId}
             className={cn(
