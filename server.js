@@ -83,7 +83,14 @@ function serveStaticFile(res, filePath, immutable = false) {
     } else {
       res.setHeader("Cache-Control", "public, max-age=3600");
     }
-    fs.createReadStream(filePath).pipe(res);
+    const stream = fs.createReadStream(filePath);
+    stream.on("error", () => {
+      if (!res.headersSent) {
+        res.statusCode = 500;
+        res.end();
+      }
+    });
+    stream.pipe(res);
     return true;
   } catch {
     return false;
@@ -99,7 +106,10 @@ app.prepare().then(() => {
       // Bypasses Next.js internal router cache so newly deployed chunks on disk
       // never 500 during or before application restarts.
       if (rawUrl.startsWith("/_next/static/")) {
-        const subPath = rawUrl.slice("/_next/static/".length).split("?")[0];
+        let subPath = rawUrl.slice("/_next/static/".length).split("?")[0];
+        try {
+          subPath = decodeURIComponent(subPath);
+        } catch {}
         const safePath = path.normalize(subPath).replace(/^(\.\.[\/\\])+/, "");
         const filePath = path.join(projectDir, ".next", "static", safePath);
 
@@ -120,7 +130,10 @@ app.prepare().then(() => {
         !rawUrl.startsWith("/api/") &&
         !rawUrl.startsWith("/admin")
       ) {
-        const cleanPath = rawUrl.split("?")[0].replace(/^\/+/, "");
+        let cleanPath = rawUrl.split("?")[0].replace(/^\/+/, "");
+        try {
+          cleanPath = decodeURIComponent(cleanPath);
+        } catch {}
         if (cleanPath) {
           const safePublicPath = path.normalize(cleanPath).replace(/^(\.\.[\/\\])+/, "");
           const publicFilePath = path.join(projectDir, "public", safePublicPath);

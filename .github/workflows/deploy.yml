@@ -76,9 +76,9 @@ jobs:
           cp .env deploy-dist/.env
           cp .env.local deploy-dist/.env.local
 
-          # Signal Phusion Passenger on cPanel to restart the application
+          # Signal Phusion Passenger on cPanel to restart the application with guaranteed fresh mtime & content
           mkdir -p deploy-dist/tmp
-          touch deploy-dist/tmp/restart.txt
+          echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) - ${GITHUB_SHA}" > deploy-dist/tmp/restart.txt
 
       - name: Deploy via FTP to cPanel
         uses: SamKirkland/FTP-Deploy-Action@v4.3.5
