@@ -18,9 +18,16 @@ export const mealsImage = {
   alt: "Columbia Care family dining area set for home-cooked meals",
 };
 
+/**
+ * Beside the About copy. Pre-cropped to 5/7 so it reads as a portrait rather
+ * than a phone strip, and so the wheelchair stays in frame (a taller crop that
+ * kept the whole figure would run to ~1.9x its width).
+ */
 export const aboutImage = {
-  src: "/photos/backyard-1.jpg",
-  alt: "Columbia Care backyard and outdoor patio area",
+  src: "/photos/wheelchair-care.jpg",
+  alt: "A caregiver in scrubs walking beside an older adult seated in a wheelchair on a tree-lined path",
+  width: 591,
+  height: 827,
 };
 
 /**

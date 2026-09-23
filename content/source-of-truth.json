@@ -115,9 +115,11 @@
       "source": "A2"
     },
     "email": {
-      "value": "columbiacareafh@gmail.com",
-      "provenance": "ARTWORK",
-      "source": "A1, A2"
+      "value": "columbiacareafh@ccafh.com",
+      "provenance": "ARTWORK_CONFIRMED",
+      "source": "A1, A2",
+      "confirmedOn": "2026-09-23, written client instruction",
+      "note": "Supersedes the gmail address printed in the artwork. The client asked for the ccafh.com mailbox: the gmail account is personal and not secured."
     },
     "address": {
       "provenance": "ARTWORK",

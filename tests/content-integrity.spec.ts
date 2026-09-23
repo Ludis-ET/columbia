@@ -41,7 +41,7 @@ const FORBIDDEN: { pattern: RegExp; why: string }[] = [
 /** Strings that MUST appear, proving confirmed content really is published. */
 const REQUIRED_SOMEWHERE: { pattern: RegExp; label: string }[] = [
   { pattern: /2215 Columbia Ave/, label: "street address" },
-  { pattern: /columbiacareafh@gmail\.com/, label: "email" },
+  { pattern: /columbiacareafh@ccafh\.com/, label: "email" },
   { pattern: /425-212-9108/, label: "fax" },
   { pattern: /Everett/, label: "city" },
 ];

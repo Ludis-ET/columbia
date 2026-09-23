@@ -20,6 +20,7 @@ import { MotionLift } from "@/components/motion/lift";
 import { HeartShield } from "@/components/brand/heart-shield";
 import { IconBadge, isIconName } from "@/components/icons";
 import { identity, published } from "@/lib/content";
+import { aboutImage } from "@/lib/images";
 import {
   getAvailability,
   getCareTypes,
@@ -135,15 +136,39 @@ export default async function HomePage() {
       ) : null}
 
       {/* -------------------------------------------------------------- about */}
+      {/* Media left, content right: the portrait spans both grid rows so the
+          highlights accordion fills the column beside it, instead of leaving a
+          dead zone under a short paragraph. Below lg it collapses to reading
+          order — heading, photo, highlights. */}
       <AnchorSection id="about" title="About our home">
-        <SectionHeading
-          eyebrow={t("about_eyebrow", "Who we are")}
-          title={t("about_heading", "A family-like environment")}
-          lead={about}
-          align="center"
-        />
+        <div className="grid gap-8 sm:gap-10 lg:grid-cols-[minmax(0,30rem)_minmax(0,1fr)] lg:items-center">
+          <SectionHeading
+            eyebrow={t("about_eyebrow", "Who we are")}
+            title={t("about_heading", "A family-like environment")}
+            lead={about}
+            align="start"
+            className="mb-0"
+          />
 
-        {reasons.length > 0 ? <CollapsibleReasons reasons={reasons} /> : null}
+          <div className="mx-auto w-full max-w-[30rem] lg:order-first lg:row-span-2">
+            <div className="overflow-hidden rounded">
+              <Image
+                src={aboutImage.src}
+                alt={aboutImage.alt}
+                width={aboutImage.width}
+                height={aboutImage.height}
+                sizes="(min-width: 480px) 480px, 100vw"
+                className="h-auto w-full"
+              />
+            </div>
+          </div>
+
+          {reasons.length > 0 ? (
+            <div className="lg:col-start-2">
+              <CollapsibleReasons reasons={reasons} />
+            </div>
+          ) : null}
+        </div>
       </AnchorSection>
 
       {/* --------------------------------------------------------------- care */}

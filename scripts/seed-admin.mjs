@@ -18,7 +18,7 @@ import { createClient } from "@supabase/supabase-js";
 
 /** Dev-only credentials printed after a successful run. */
 const DEV_ADMIN = {
-  email: "admin@columbiacare.local",
+  email: "admin@ccafh.com",
   password: "ColumbiaDev-Admin2026!",
   fullName: "Columbia Care",
   role: "owner",

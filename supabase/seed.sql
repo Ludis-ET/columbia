@@ -23,7 +23,7 @@ insert into site_settings (
   '206-499-0849',
   null,
   '425-212-9108',
-  'columbiacareafh@gmail.com',
+  'columbiacareafh@ccafh.com',
   '2215 Columbia Ave', 'Everett', 'WA',
   '98203', 'US',
   null, null,

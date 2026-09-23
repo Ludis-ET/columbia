@@ -54,7 +54,7 @@ test("structured data omits every unconfirmed fact", async ({ page }) => {
 
   // Confirmed values that SHOULD be there.
   expect(data.faxNumber).toBe("425-212-9108");
-  expect(data.email).toBe("columbiacareafh@gmail.com");
+  expect(data.email).toBe("columbiacareafh@ccafh.com");
   expect(data.address.streetAddress).toBe("2215 Columbia Ave");
 });
 
