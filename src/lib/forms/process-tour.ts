@@ -119,7 +119,9 @@ export async function processTourSubmission(
     revalidatePath("/admin/inquiries");
     revalidatePath("/admin");
     revalidatePath("/admin", "layout");
-  } catch {}
+  } catch (revalidateError) {
+    console.warn("[tour] path revalidation failed:", revalidateError);
+  }
 
   // 6. Email, best effort. Never blocks the confirmation.
   try {
