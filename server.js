@@ -102,6 +102,21 @@ app.prepare().then(() => {
     try {
       const rawUrl = req.url || "/";
 
+      // Redirect HTTP to HTTPS in production behind reverse proxies
+      const proto = req.headers["x-forwarded-proto"];
+      const host = req.headers["x-forwarded-host"] || req.headers.host;
+      if (
+        proto === "http" &&
+        host &&
+        !host.startsWith("localhost") &&
+        !host.startsWith("127.0.0.1")
+      ) {
+        res.statusCode = 301;
+        res.setHeader("Location", `https://${host}${rawUrl}`);
+        res.end();
+        return;
+      }
+
       // 1. Directly serve Next.js immutable build assets (/_next/static/...)
       // Bypasses Next.js internal router cache so newly deployed chunks on disk
       // never 500 during or before application restarts.

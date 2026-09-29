@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import Script from "next/script";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { InfoHint } from "@/components/site/info-hint";
-import { submitTourRequest, type TourFormState } from "@/app/actions/tour";
+import type { TourFormState } from "@/lib/forms/process-tour";
 import { PREFERRED_TIMES, RELATIONSHIPS } from "@/lib/forms/tour-request";
 import { cn } from "@/lib/utils";
 
@@ -31,7 +31,8 @@ import { cn } from "@/lib/utils";
 const initialState: TourFormState = { status: "idle", message: "" };
 
 export function TourForm({ className }: { className?: string }) {
-  const [state, action, pending] = useActionState(submitTourRequest, initialState);
+  const [state, setState] = useState<TourFormState>(initialState);
+  const [pending, setPending] = useState(false);
   const [times, setTimes] = useState<string[]>([]);
   const errorRef = useRef<HTMLDivElement>(null);
   const uid = useId();
@@ -43,6 +44,31 @@ export function TourForm({ className }: { className?: string }) {
   useEffect(() => {
     if (state.status === "error") errorRef.current?.focus();
   }, [state]);
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setPending(true);
+    setState({ status: "idle", message: "" });
+
+    try {
+      const formData = new FormData(e.currentTarget);
+      const res = await fetch("/api/inquiries", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data: TourFormState = await res.json();
+      setState(data);
+    } catch {
+      setState({
+        status: "error",
+        message:
+          "Something went wrong sending that. Please try again, or call us instead, we would much rather hear from you.",
+      });
+    } finally {
+      setPending(false);
+    }
+  }
 
   if (state.status === "success") {
     return (
@@ -62,7 +88,13 @@ export function TourForm({ className }: { className?: string }) {
   const err = (field: string) => state.errors?.[field];
 
   return (
-    <form action={action} className={cn("grid gap-5", className)} noValidate>
+    <form
+      onSubmit={handleSubmit}
+      action="/api/inquiries"
+      method="POST"
+      className={cn("grid gap-5", className)}
+      noValidate
+    >
       <div className="flex flex-wrap items-center gap-1">
         <h3 className="text-h3 font-sans font-bold">Send us a message</h3>
         <InfoHint label="What we ask for">

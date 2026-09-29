@@ -6,6 +6,13 @@ const nextConfig: NextConfig = {
   experimental: {
     serverActions: {
       bodySizeLimit: "10mb",
+      allowedOrigins: [
+        "columbiacareafh.com",
+        "www.columbiacareafh.com",
+        "*.columbiacareafh.com",
+        "localhost:3000",
+        "127.0.0.1:3000",
+      ],
     },
   },
 
