@@ -1,5 +1,4 @@
 import { Resend } from "resend";
-import { renderToStaticMarkup } from "react-dom/server";
 import { FamilyAutoReply, OwnerNotification, type EnquiryEmailProps } from "./templates";
 
 /**
@@ -59,12 +58,11 @@ export async function sendEnquiryEmails(
   // Owner first: if only one of the two can go out, it must be this one.
   if (ownerTo) {
     try {
-      const html = "<!DOCTYPE html>" + renderToStaticMarkup(<OwnerNotification {...props} />);
       const { error } = await resend.emails.send({
         from: FROM,
         to: ownerTo,
         subject: `New enquiry from ${props.name}${props.phone ? ` ${props.phone}` : ""}`,
-        html,
+        react: <OwnerNotification {...props} />,
         // So the owner can hit reply and reach the family directly.
         replyTo: props.email ?? undefined,
       });
@@ -77,21 +75,18 @@ export async function sendEnquiryEmails(
 
   if (props.email) {
     try {
-      const html =
-        "<!DOCTYPE html>" +
-        renderToStaticMarkup(
+      const { error } = await resend.emails.send({
+        from: FROM,
+        to: props.email,
+        subject: "We have your message, Columbia Care Adult Family Home",
+        react: (
           <FamilyAutoReply
             name={props.name}
             phone={props.phone}
             addressLine={props.addressLine}
             locationLine={props.locationLine}
-          />,
-        );
-      const { error } = await resend.emails.send({
-        from: FROM,
-        to: props.email,
-        subject: "We have your message, Columbia Care Adult Family Home",
-        html,
+          />
+        ),
         replyTo: ownerTo ?? undefined,
       });
       if (error) console.warn("[email] auto-reply failed:", error.message);
