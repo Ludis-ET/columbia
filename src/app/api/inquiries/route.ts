@@ -6,9 +6,13 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const host = req.headers.get("x-forwarded-host") || req.headers.get("host") || undefined;
     const result = await processTourSubmission(formData, host);
+    if (result.status === "error") {
+      return NextResponse.json(result, { status: 400 });
+    }
     return NextResponse.json(result);
   } catch (error) {
-    console.error("[api/inquiries] error:", error);
+    const errMessage = error instanceof Error ? error.message : String(error);
+    console.error("[api/inquiries] caught unhandled error:", errMessage, error);
     return NextResponse.json(
       {
         status: "error",

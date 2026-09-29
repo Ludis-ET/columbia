@@ -25,11 +25,13 @@ export async function createClient(): Promise<SupabaseClient | null> {
   const url =
     process.env["NEXT_PUBLIC_SUPABASE_URL"] ||
     process.env.NEXT_PUBLIC_SUPABASE_URL ||
-    process.env["SUPABASE_URL"];
+    process.env["SUPABASE_URL"] ||
+    "https://wmxvickqaxkuaatftput.supabase.co";
   const key =
     process.env["NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY"] ||
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ||
-    process.env["SUPABASE_ANON_KEY"];
+    process.env["SUPABASE_ANON_KEY"] ||
+    "sb_publishable_H4WsQ5lCbjFhM8913e39lQ_CJoFT_C8";
 
   if (!url || !key) return null;
 

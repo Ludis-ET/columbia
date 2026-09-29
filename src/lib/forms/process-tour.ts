@@ -1,5 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/db/server";
+import { getSupabase } from "@/lib/db/client";
 import { getSiteSettings } from "@/lib/db/queries";
 import { sendEnquiryEmails } from "@/lib/email/send";
 import { verifyTurnstile } from "@/lib/forms/turnstile";
@@ -71,7 +72,7 @@ export async function processTourSubmission(
     };
   }
 
-  const supabase = await createClient();
+  const supabase = (await createClient().catch(() => null)) ?? getSupabase();
   if (!supabase) {
     console.error("[tour] Supabase is not configured, enquiry LOST:", data.name);
     return { status: "error", message: GENERIC_ERROR };
