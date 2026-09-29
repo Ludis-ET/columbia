@@ -1,5 +1,5 @@
 import { Resend } from "resend";
-import { render } from "@react-email/components";
+import { renderToStaticMarkup } from "react-dom/server";
 import { FamilyAutoReply, OwnerNotification, type EnquiryEmailProps } from "./templates";
 
 /**
@@ -59,7 +59,7 @@ export async function sendEnquiryEmails(
   // Owner first: if only one of the two can go out, it must be this one.
   if (ownerTo) {
     try {
-      const html = await render(<OwnerNotification {...props} />);
+      const html = "<!DOCTYPE html>" + renderToStaticMarkup(<OwnerNotification {...props} />);
       const { error } = await resend.emails.send({
         from: FROM,
         to: ownerTo,
@@ -77,14 +77,16 @@ export async function sendEnquiryEmails(
 
   if (props.email) {
     try {
-      const html = await render(
-        <FamilyAutoReply
-          name={props.name}
-          phone={props.phone}
-          addressLine={props.addressLine}
-          locationLine={props.locationLine}
-        />,
-      );
+      const html =
+        "<!DOCTYPE html>" +
+        renderToStaticMarkup(
+          <FamilyAutoReply
+            name={props.name}
+            phone={props.phone}
+            addressLine={props.addressLine}
+            locationLine={props.locationLine}
+          />,
+        );
       const { error } = await resend.emails.send({
         from: FROM,
         to: props.email,
