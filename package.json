@@ -24,7 +24,10 @@
     "admin:seed": "node scripts/seed-admin.mjs",
     "test:unit": "vitest run",
     "test": "vitest run && playwright test",
-    "db:seed:copy": "node scripts/seed-copy.mjs"
+    "db:seed:copy": "node scripts/seed-copy.mjs",
+    "deploy:package": "node scripts/package-cpanel.mjs",
+    "deploy:smoke": "node scripts/smoke-cpanel.mjs",
+    "test:deploy": "node --test scripts/cpanel.test.mjs && python -m unittest discover -s scripts -p test_deploy_cpanel.py"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
@@ -83,7 +86,7 @@
     ]
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "packageManager": "pnpm@10.14.0"
 }

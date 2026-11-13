@@ -1,154 +1,156 @@
-name: Deploy to cPanel
+name: Build and deploy to cPanel
 
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+# Never cancel an upload or activation halfway through.
 concurrency:
-  group: deploy-cpanel
-  cancel-in-progress: true
+  group: cpanel-${{ github.event_name == 'pull_request' && github.ref || 'production' }}
+  cancel-in-progress: false
+
+env:
+  NEXT_TELEMETRY_DISABLED: "1"
+  RELEASE_ID: ${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
 
 jobs:
-  build-and-deploy:
+  build:
+    name: Build and verify release
     runs-on: ubuntu-latest
+    timeout-minutes: 25
+    # All required secrets already exist in the repository.
+    # SMTP/Resend credentials stay in cPanel; the service-role key is unused.
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
+      # Public address: no NEXT_PUBLIC_SITE_URL secret is needed.
+      NEXT_PUBLIC_SITE_URL: https://columbiacareafh.com
+      # Optional; leave unset unless Turnstile is enabled.
+      NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}
+      NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: ${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY }}
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
+      - name: Set up pnpm
         uses: pnpm/action-setup@v4
 
-      - name: Setup Node.js 22
+      - name: Set up Node.js 22
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: "22"
           cache: pnpm
 
-      - name: Install dependencies
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Check production configuration
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        env:
+          HOST: ${{ secrets.HOST }}
+          FTP: ${{ secrets.FTP }}
+          PASS: ${{ secrets.PASS }}
+          FTP_PROTOCOL: ${{ vars.FTP_PROTOCOL || 'ftps' }}
+          FTP_PORT: ${{ vars.FTP_PORT || '21' }}
+          SITE_URL: ${{ vars.SITE_URL || 'https://columbiacareafh.com' }}
+        run: |
+          python scripts/deploy_cpanel.py --check-config
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          for (const name of ['NEXT_PUBLIC_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY']) {
+            assert(process.env[name], 'Missing repository secret: ' + name);
+          }
+          const key = process.env.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY;
+          if (key) assert(Buffer.from(key, 'base64').length === 32, 'Server Actions key must be base64-encoded 32 bytes');
+          NODE
+
+      - name: Install locked dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Create production env file
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-          NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: ${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY }}
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          RESEND_FROM: ${{ secrets.RESEND_FROM }}
-          OWNER_NOTIFICATION_EMAIL: ${{ secrets.OWNER_NOTIFICATION_EMAIL }}
-          SMTP_HOST: ${{ secrets.SMTP_HOST || 'mail.columbiacareafh.com' }}
-          SMTP_PORT: ${{ secrets.SMTP_PORT || '465' }}
-          SMTP_SECURE: ${{ secrets.SMTP_SECURE || 'true' }}
-          SMTP_USER: ${{ secrets.SMTP_USER || 'noreply@columbiacareafh.com' }}
-          SMTP_PASS: ${{ secrets.SMTP_PASS || '3U=J%0k_xt}b!CBb' }}
-          SMTP_FROM: ${{ secrets.SMTP_FROM || 'Columbia Care AFH <noreply@columbiacareafh.com>' }}
-          NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}
-          TURNSTILE_SECRET_KEY: ${{ secrets.TURNSTILE_SECRET_KEY }}
-        run: |
-          cat << EOF > .env
-          NODE_ENV=production
-          NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:-https://wmxvickqaxkuaatftput.supabase.co}
-          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY:-sb_publishable_H4WsQ5lCbjFhM8913e39lQ_CJoFT_C8}
-          SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY:-eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndteHZpY2txYXhrdWFhdGZ0cHV0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4ODEzNDgxMCwiZXhwIjoyMTAzNzEwODEwfQ.TasgRJzqyrk2NyQYilWMpn1SNQH0EKJSpZ6X0gsrEZs}
-          NEXT_SERVER_ACTIONS_ENCRYPTION_KEY=${NEXT_SERVER_ACTIONS_ENCRYPTION_KEY:-TMiLGTSZX12++0ONBT3wGjNsQJ95vTMCLvNe2lJY2lo=}
-          RESEND_API_KEY=${RESEND_API_KEY}
-          RESEND_FROM=${RESEND_FROM}
-          OWNER_NOTIFICATION_EMAIL=${OWNER_NOTIFICATION_EMAIL}
-          SMTP_HOST=${SMTP_HOST}
-          SMTP_PORT=${SMTP_PORT}
-          SMTP_SECURE=${SMTP_SECURE}
-          SMTP_USER=${SMTP_USER}
-          SMTP_PASS=${SMTP_PASS}
-          SMTP_FROM="${SMTP_FROM}"
-          NEXT_PUBLIC_TURNSTILE_SITE_KEY=${NEXT_PUBLIC_TURNSTILE_SITE_KEY}
-          TURNSTILE_SECRET_KEY=${TURNSTILE_SECRET_KEY}
-          EOF
-          cp .env .env.production
-          cp .env .env.local
+      - name: Lint
+        run: pnpm lint
 
-      - name: Build Next.js application
-        env:
-          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL || 'https://wmxvickqaxkuaatftput.supabase.co' }}
-          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || 'sb_publishable_H4WsQ5lCbjFhM8913e39lQ_CJoFT_C8' }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndteHZpY2txYXhrdWFhdGZ0cHV0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4ODEzNDgxMCwiZXhwIjoyMTAzNzEwODEwfQ.TasgRJzqyrk2NyQYilWMpn1SNQH0EKJSpZ6X0gsrEZs' }}
-          NEXT_SERVER_ACTIONS_ENCRYPTION_KEY: ${{ secrets.NEXT_SERVER_ACTIONS_ENCRYPTION_KEY || 'TMiLGTSZX12++0ONBT3wGjNsQJ95vTMCLvNe2lJY2lo=' }}
-          NEXT_PUBLIC_TURNSTILE_SITE_KEY: ${{ secrets.NEXT_PUBLIC_TURNSTILE_SITE_KEY }}
+      - name: Unit and deployment regression tests
+        run: |
+          pnpm test:unit
+          pnpm test:deploy
+
+      - name: Build production application
         run: pnpm build
 
-      - name: Prepare deployment bundle
-        run: |
-          mkdir -p deploy-dist
+      - name: Typecheck
+        run: pnpm typecheck
 
-          # Copy compiled production build (.next)
-          cp -r .next deploy-dist/
+      - name: Package unchanged standalone output
+        run: pnpm deploy:package
 
-          # Strip build-only caches, sourcemaps, and traces (cuts 80%+ of files for fast FTP)
-          rm -rf deploy-dist/.next/cache
-          rm -rf deploy-dist/.next/diagnostics
-          rm -rf deploy-dist/.next/build
-          find deploy-dist/.next -name "*.map" -type f -delete
-          find deploy-dist/.next -name "*.nft.json" -type f -delete
+      - name: Start artifact through the LiteSpeed require path and test HTTP
+        run: pnpm deploy:smoke
 
-          # Guarantee .next/server/preview-props.json is present with full non-empty keys
-          mkdir -p deploy-dist/.next/server
-          printf '{"previewModeId":"b34f649ac9a9f2b7a71269496c6a9900","previewModeSigningKey":"8446ebfef117a8462dee301fd6a9ceafcd6bee02a169b0905fc6d73a2da47728","previewModeEncryptionKey":"e47726d8e033161aefcb3fbb6588114d7f08ca99c13545bc21da808a0b0df43e"}' > deploy-dist/.next/server/preview-props.json
+      - name: Archive verified release
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        run: tar -czf cpanel-release.tar.gz -C deploy-dist .
 
-          # Force-patch prerender-manifest.json so it ALWAYS has preview keys and a unique deploy timestamp
-          # (the timestamp ensures FTP always sees it as changed and uploads it, even if the manifest was broken on the server)
-          node -e "
-            const fs = require('fs');
-            const p = 'deploy-dist/.next/prerender-manifest.json';
-            let m = {};
-            try { m = JSON.parse(fs.readFileSync(p, 'utf8')); } catch {}
-            m.preview = {
-              previewModeId: 'b34f649ac9a9f2b7a71269496c6a9900',
-              previewModeSigningKey: '8446ebfef117a8462dee301fd6a9ceafcd6bee02a169b0905fc6d73a2da47728',
-              previewModeEncryptionKey: 'e47726d8e033161aefcb3fbb6588114d7f08ca99c13545bc21da808a0b0df43e'
-            };
-            m._deployedAt = new Date().toISOString();
-            fs.writeFileSync(p, JSON.stringify(m, null, 2));
-            console.log('prerender-manifest.json patched with preview keys and deploy timestamp');
-          "
-
-          # Copy public assets
-          if [ -d "public" ]; then
-            cp -r public deploy-dist/
-          fi
-
-          # Copy package.json, lockfile, .npmrc, server.js, and environment files for cPanel
-          cp package.json deploy-dist/
-          if [ -f "package-lock.json" ]; then
-            cp package-lock.json deploy-dist/
-          fi
-          if [ -f ".npmrc" ]; then
-            cp .npmrc deploy-dist/
-          fi
-          cp server.js deploy-dist/
-          cp .env deploy-dist/.env
-          cp .env.local deploy-dist/.env.local
-
-          # Signal Phusion Passenger on cPanel to restart the application with guaranteed fresh mtime & content
-          mkdir -p deploy-dist/tmp
-          echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) - ${GITHUB_SHA}" > deploy-dist/tmp/restart.txt
-
-      - name: Deploy via FTP to cPanel
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      - name: Save verified release
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
         with:
-          server: ${{ secrets.HOST }}
-          username: ${{ secrets.FTP }}
-          password: ${{ secrets.PASS }}
-          local-dir: ./deploy-dist/
-          server-dir: ./
-          security: loose
-          dangerous-clean-slate: false
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/node_modules/**
-            **/.next/cache/**
-            **/.next/diagnostics/**
-            **/.next/build/**
-            **/*.map
-            **/*.nft.json
+          name: cpanel-release
+          path: cpanel-release.tar.gz
+          retention-days: 3
+          if-no-files-found: error
+
+  deploy:
+    name: Deploy and verify live site
+    needs: build
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout deployment scripts
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Download the tested artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: cpanel-release
+
+      - name: Extract verified release
+        run: |
+          mkdir deploy-dist
+          tar -xzf cpanel-release.tar.gz -C deploy-dist
+
+      - name: Upload, activate, restart and verify (rollback on failure)
+        env:
+          HOST: ${{ secrets.HOST }}
+          FTP: ${{ secrets.FTP }}
+          PASS: ${{ secrets.PASS }}
+          FTP_PROTOCOL: ${{ vars.FTP_PROTOCOL || 'ftps' }}
+          FTP_PORT: ${{ vars.FTP_PORT || '21' }}
+          FTP_SERVER_DIR: ${{ vars.FTP_SERVER_DIR || '.' }}
+          SITE_URL: ${{ vars.SITE_URL || 'https://columbiacareafh.com' }}
+        run: python scripts/deploy_cpanel.py
+
+      - name: Record successful deployment
+        run: |
+          echo "Verified release: $RELEASE_ID" >> "$GITHUB_STEP_SUMMARY"
+          echo "Health, homepage, JavaScript, CSS and admin login all passed." >> "$GITHUB_STEP_SUMMARY"

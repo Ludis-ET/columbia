@@ -7,7 +7,7 @@ import eslintConfigPrettier from "eslint-config-prettier";
 import { defineConfig, globalIgnores } from "eslint/config";
 
 export default defineConfig([
-  globalIgnores([".next", "out", "next-env.d.ts"]),
+  globalIgnores([".next", "out", "deploy-dist", ".tmp", "next-env.d.ts"]),
   {
     files: ["**/*.{ts,tsx}"],
     extends: [

@@ -99,8 +99,11 @@ The old multi-page URLs (`/about`, `/services`, `/services/:slug`, `/a-day-in-ou
 **Admin** authenticated, noindex: `/admin/*`. **Internal** noindex: `/specimen` ·
 `/kitchen-sink`
 
-## Git hooks & CI
+## Git hooks and deployment
 
-`pre-commit` runs `lint-staged` (ESLint `--fix` + Prettier on staged files) then
-`tsc --noEmit`. CI runs typecheck → lint → format check → build on every push and PR.
-Playwright, axe and a Lighthouse budget join CI in Phase 7.
+Pre-commit runs lint-staged and TypeScript checks. The single build and deploy
+workflow checks pull requests and builds, tests, packages, and deploys main to
+cPanel. A deployment is successful only after live HTTP checks pass.
+
+See [cPanel deployment and 503 recovery](docs/cpanel-deployment.md) for required
+GitHub secrets, runtime settings, restart behavior, and rollback instructions.
