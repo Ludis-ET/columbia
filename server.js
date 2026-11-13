@@ -43,26 +43,51 @@ const hostname = process.env.HOSTNAME || "localhost";
 const rawPort = process.env.PORT || 3000;
 const port = typeof rawPort === "string" && !isNaN(Number(rawPort)) ? Number(rawPort) : rawPort;
 
-// Ensure .next/server/preview-props.json exists to prevent ENOENT crashes across Next.js versions
-const previewPropsPath = path.join(projectDir, ".next", "server", "preview-props.json");
-if (!fs.existsSync(previewPropsPath)) {
+// Clean up any stale or lingering preview-props.json to prevent conflicts
+const legacyPreviewProps = path.join(projectDir, ".next", "server", "preview-props.json");
+if (fs.existsSync(legacyPreviewProps)) {
   try {
-    const serverDir = path.dirname(previewPropsPath);
-    if (!fs.existsSync(serverDir)) {
-      fs.mkdirSync(serverDir, { recursive: true });
+    fs.unlinkSync(legacyPreviewProps);
+  } catch {}
+}
+
+// Ensure .next/prerender-manifest.json exists with valid preview keys to prevent runtime crash:
+// "TypeError: Cannot read properties of undefined (reading 'previewModeId')"
+const prerenderManifestPath = path.join(projectDir, ".next", "prerender-manifest.json");
+try {
+  let manifest = null;
+  if (fs.existsSync(prerenderManifestPath)) {
+    try {
+      manifest = JSON.parse(fs.readFileSync(prerenderManifestPath, "utf8"));
+    } catch {
+      manifest = null;
     }
-    fs.writeFileSync(
-      previewPropsPath,
-      JSON.stringify({
-        previewModeId: "",
-        previewModeSigningKey: "",
-        previewModeEncryptionKey: "",
-      }),
-      "utf8",
-    );
-  } catch (err) {
-    console.warn("Could not create fallback preview-props.json:", err);
   }
+  if (!manifest || typeof manifest !== "object") {
+    manifest = {};
+  }
+  if (
+    !manifest.preview ||
+    typeof manifest.preview !== "object" ||
+    !manifest.preview.previewModeId
+  ) {
+    manifest.version = manifest.version || 4;
+    manifest.routes = manifest.routes || {};
+    manifest.dynamicRoutes = manifest.dynamicRoutes || {};
+    manifest.notFoundRoutes = manifest.notFoundRoutes || [];
+    manifest.preview = {
+      previewModeId: "columbia-care-preview-mode-id",
+      previewModeSigningKey: "8446ebfef117a8462dee301fd6a9ceafcd6bee02a169b0905fc6d73a2da47728",
+      previewModeEncryptionKey: "e47726d8e033161aefcb3fbb6588114d7f08ca99c13545bc21da808a0b0df43e",
+    };
+    const nextDir = path.dirname(prerenderManifestPath);
+    if (!fs.existsSync(nextDir)) {
+      fs.mkdirSync(nextDir, { recursive: true });
+    }
+    fs.writeFileSync(prerenderManifestPath, JSON.stringify(manifest, null, 2), "utf8");
+  }
+} catch (err) {
+  console.warn("Could not ensure prerender-manifest.json preview keys:", err);
 }
 
 // When using middleware, hostname and port must be provided to next(...)
