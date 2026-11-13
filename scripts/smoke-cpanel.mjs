@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { createHash } from "node:crypto";
 import { createServer } from "node:net";
 import { spawn } from "node:child_process";
 import { fileURLToPath } from "node:url";
@@ -13,7 +14,19 @@ const temporary = fs.mkdtempSync(path.join(os.tmpdir(), "columbia-cpanel-"));
 let child;
 let output = "";
 try {
-  fs.cpSync(source, temporary, { recursive: true });
+  // Test the actual upload format: no release directory is preinstalled.
+  // The bootstrap must verify, unpack and start the compressed artifact itself.
+  const archive = fileURLToPath(new URL("../cpanel-release.tar.gz", import.meta.url));
+  fs.mkdirSync(path.join(temporary, "archives"));
+  fs.copyFileSync(archive, path.join(temporary, "archives", release.id + ".tar.gz"));
+  for (const file of ["server.js", "cpanel.cjs"]) {
+    fs.copyFileSync(path.join(source, file), path.join(temporary, file));
+  }
+  const hash = createHash("sha256");
+  for await (const block of fs.createReadStream(archive)) hash.update(block);
+  release.archiveSha256 = hash.digest("hex");
+  release.archiveBytes = fs.statSync(archive).size;
+  fs.writeFileSync(path.join(temporary, "active-release.json"), JSON.stringify(release));
   const listener = createServer();
   await new Promise((resolve, reject) => {
     listener.once("error", reject);

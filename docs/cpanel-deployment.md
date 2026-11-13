@@ -20,7 +20,9 @@ running build. The new pipeline preserves generated manifests and rejects
 incomplete builds.
 
 Next's standalone output includes the runtime dependencies and compiled
-configuration. Do not run npm install in the deployed release or edit manifests.
+configuration. The deployer uploads one compressed archive; the startup loader
+verifies and extracts it on the server. Do not run npm install in the deployed
+release or edit manifests.
 
 ## Configure cPanel once
 
@@ -59,6 +61,11 @@ Runtime settings:
 - OWNER_NOTIFICATION_EMAIL / STAKEHOLDER_EMAILS for notification recipients.
 - TURNSTILE_SECRET_KEY if Turnstile is enabled. Configure its corresponding
   NEXT_PUBLIC_TURNSTILE_SITE_KEY in GitHub at build time too.
+
+The hosting environment must provide the standard tar command (normally
+available on Linux/cPanel). Extraction uses a unique staging directory and
+promotes it only after validating the generated manifests. Later restarts
+reuse the extracted release and do not unpack it again.
 
 Do not set PORT unless your hosting provider instructs you to. The generated
 server defaults to 3000 and LiteSpeed/Passenger handles the app listener. Binding
@@ -133,35 +140,58 @@ Runtime credentials are not copied into build artifacts.
 1. Before building a production deployment, Actions checks the FTP TLS
    handshake, login and application directory without changing files.
 2. Lint, unit tests and deployment regression tests must pass.
-3. Actions builds with locked pnpm dependencies on Node 22, then typechecks.
+3. Actions restores the Next.js build cache, builds with locked pnpm dependencies
+   on Node 22, then typechecks.
 4. Packaging copies standalone output, public files and .next/static. It
-   preserves generated manifests and removes traced environment files.
-5. A smoke check starts the isolated artifact through require(), matching
-   LiteSpeed's loading method. It checks readiness, the homepage, a JavaScript
-   asset, a CSS asset and the admin login page.
-6. Actions uploads the artifact into releases/<commit>-<run>-<attempt>/.
-   The running release is never overwritten.
-7. After all files arrive, FTP rename replaces active-release.json. Only then
-   is tmp/restart.txt replaced to request a restart.
-8. Live verification requires the exact release and commit, HTTP 200, the
+   preserves generated manifests, removes traced environment files, and creates
+   cpanel-release.tar.gz once.
+5. A smoke check starts from just that archive and the startup files. It verifies
+   extraction through the LiteSpeed require path, readiness, the homepage,
+   JavaScript, CSS and the admin login page.
+6. Actions uploads the compressed archive to archives/<release>.tar.gz.upload
+   over one FTP data connection, verifies its size, then renames it into place.
+   Progress includes percentage, MiB transferred, rate and estimated time left.
+7. Actions uploads the two small startup files and atomically selects the release
+   in active-release.json, including the archive size and SHA-256 digest. Only
+   then is tmp/restart.txt replaced.
+8. On first startup, cpanel.cjs verifies the archive size and SHA-256 digest,
+   checks the archive paths, extracts into a unique staging directory, validates
+   the Next manifests, then renames the complete release into releases/<id>/.
+   Existing releases are preserved. Subsequent restarts skip extraction.
+9. Live verification requires the exact release and commit, HTTP 200, the
    homepage, JavaScript, CSS and login page. A green upload alone is insufficient.
-9. If verification fails and a previous managed release exists, its pointer is
-   restored, the app is restarted, and that release is checked. The workflow
-   still fails so the bad deployment is visible.
+10. If verification fails and a previous managed release exists, its pointer is
+    restored, the app is restarted, and that release is checked. The workflow
+    still fails so the bad deployment is visible.
 
 The first migration from the old layout can briefly interrupt service while the
 startup files change. FTP rename must support replacing an existing file.
 cPanel/LiteSpeed must honor tmp/restart.txt; otherwise the health check fails and
 you must use the cPanel Restart button or ask the host to enable restart detection.
 
-Old releases are deliberately retained for rollback. Monitor disk usage and
+Old releases and their compressed archives are retained for rollback. Monitor disk usage and
 remove old, inactive release directories in cPanel periodically, keeping the
 directories referenced by active-release.json and previous-release.json. Old
 root .next files can be archived after the first managed release is verified.
+Compressed archives in archives/ for retired releases can be removed too.
 
 Checks are read-only. They do not submit inquiries, send mail, or prove that
 Supabase auth, SMTP and CAPTCHA credentials are correct. Verify an actual admin
 sign-in and a permitted tour inquiry separately after recovery.
+
+## If an older deployment is uploading thousands of files
+
+The old uploader opened a separate FTP data connection for each runtime file.
+This is why a release could spend tens of minutes at Uploaded 250/500/1000 files.
+The optimized workflow sends a single compressed archive and extracts it on
+cPanel, avoiding that per-file network overhead. It needs no SSH account or new
+secrets. Actual transfer time still depends on the archive size and connection.
+
+A running Actions job keeps using the code from its original commit. It cannot
+switch to the optimized uploader halfway through. If its log is still in the
+release-file upload phase, cancel that old run, commit and push these changes,
+and let the new workflow run. Production deployments are serialized, so the old
+run otherwise keeps the new one queued. Keep the existing application folder.
 
 ## Fix an FTPS certificate hostname mismatch
 

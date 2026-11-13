@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
+import { execFileSync } from "node:child_process";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 export function validateManifest(directory) {
@@ -63,11 +64,17 @@ export function packageRelease(root, id, commit) {
   return output;
 }
 
+export function archiveRelease(output, archive) {
+  execFileSync("tar", ["-czf", archive, "-C", output, "."], { windowsHide: true });
+  console.log(`Compressed release: ${(fs.statSync(archive).size / 1048576).toFixed(1)} MiB`);
+}
+
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const root = fileURLToPath(new URL("../", import.meta.url));
-  packageRelease(
+  const output = packageRelease(
     root,
     process.env.RELEASE_ID || "local",
     process.env.GITHUB_SHA || "0000000000000000000000000000000000000000",
   );
+  archiveRelease(output, path.join(root, "cpanel-release.tar.gz"));
 }

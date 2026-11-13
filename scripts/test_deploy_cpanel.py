@@ -1,9 +1,11 @@
 from contextlib import nullcontext
 import ftplib
+import hashlib
 import json
 import ssl
 from pathlib import Path
 import tempfile
+import tarfile
 import unittest
 from unittest.mock import Mock, patch
 from deploy_cpanel import VerifiedFTP_TLS, connect, deploy, main
@@ -23,12 +25,26 @@ class FakeFTP:
             raise ftplib.error_perm("550 Not found")
         callback(self.files[name])
 
-    def storbinary(self, command, stream):
+    def storbinary(self, command, stream, blocksize=8192, callback=None):
         name = command.removeprefix("STOR ")
         if self.fail_upload and name.endswith(self.fail_upload):
             raise ConnectionError("Upload interrupted")
-        self.files[name] = stream.read()
+        blocks = []
+        while True:
+            block = stream.read(blocksize)
+            if not block:
+                break
+            blocks.append(block)
+            if callback:
+                callback(block)
+        self.files[name] = b"".join(blocks)
         self.events.append(("upload", name))
+
+    def close(self):
+        pass
+
+    def size(self, name):
+        return len(self.files[name])
 
     def rename(self, source, destination):
         if self.fail_activation and destination == "active-release.json":
@@ -64,17 +80,27 @@ class DeploymentTests(unittest.TestCase):
         (directory / "BUILD_ID").write_text("new-build")
         for filename in ("server.js", "cpanel.cjs"):
             (self.bundle / filename).write_text("// bootstrap")
+        self.archive = self.bundle / "cpanel-release.tar.gz"
+        with tarfile.open(self.archive, "w:gz") as archive:
+            for filename in ("releases", "server.js", "cpanel.cjs", "active-release.json"):
+                archive.add(self.bundle / filename, arcname="./" + filename)
+        self.release["archiveSha256"] = hashlib.sha256(self.archive.read_bytes()).hexdigest()
+        self.release["archiveBytes"] = self.archive.stat().st_size
+        self.pointer = (json.dumps(self.release) + "\n").encode()
         self.client = FakeFTP()
         self.previous = json.dumps(self.old).encode()
         self.client.files["active-release.json"] = self.previous
         self.client.files[".env"] = b"KEEP_PRIVATE=secret"
         self.client.files[".htaccess"] = b"keep Passenger configuration"
 
+    def run_deploy(self, url, verifier, reconnector=None):
+        return deploy(self.client, self.bundle, url, verifier, reconnector, archive=self.archive)
+
     def test_upload_completes_before_activation_and_restart(self):
         verified = []
-        deploy(self.client, self.bundle, "https://example.com", lambda url, release: verified.append(release))
+        self.run_deploy("https://example.com", lambda url, release: verified.append(release))
         events = self.client.events
-        release_uploads = [i for i, event in enumerate(events) if event[1].startswith("releases/")]
+        release_uploads = [i for i, event in enumerate(events) if event[1].startswith("archives/")]
         activation = events.index(("rename", "active-release.json"))
         restart = events.index(("rename", "tmp/restart.txt"))
         self.assertLess(max(release_uploads), activation)
@@ -84,11 +110,14 @@ class DeploymentTests(unittest.TestCase):
         self.assertEqual(self.client.files[".env"], b"KEEP_PRIVATE=secret")
         self.assertEqual(self.client.files[".htaccess"], b"keep Passenger configuration")
         self.assertEqual(verified, [self.release])
+        archive_uploads = [event for event in events if event[0] == "upload" and event[1].startswith("archives/")]
+        self.assertEqual(len(archive_uploads), 1)
+        self.assertFalse(any(event[1].startswith("releases/") for event in events))
 
     def test_interrupted_upload_does_not_activate_or_restart(self):
-        self.client.fail_upload = "prerender-manifest.json"
+        self.client.fail_upload = ".tar.gz.upload"
         with self.assertRaises(ConnectionError):
-            deploy(self.client, self.bundle, "https://example.com", lambda *_: self.fail("Must not verify"))
+            self.run_deploy("https://example.com", lambda *_: self.fail("Must not verify"))
         self.assertEqual(self.client.files["active-release.json"], self.previous)
         self.assertNotIn("tmp/restart.txt", self.client.files)
 
@@ -102,7 +131,7 @@ class DeploymentTests(unittest.TestCase):
             self.assertEqual(self.client.files["active-release.json"], self.previous)
 
         with self.assertRaisesRegex(RuntimeError, "503"):
-            deploy(self.client, self.bundle, "https://example.com", verifier)
+            self.run_deploy("https://example.com", verifier)
         self.assertEqual(calls, [self.release, self.old])
         self.assertEqual(self.client.files["active-release.json"], self.previous)
         self.assertEqual(self.client.events.count(("rename", "tmp/restart.txt")), 2)
@@ -121,7 +150,7 @@ class DeploymentTests(unittest.TestCase):
             return nullcontext(self.client)
 
         with self.assertRaisesRegex(RuntimeError, "503"):
-            deploy(self.client, self.bundle, "https://example.com", verifier, reconnect)
+            self.run_deploy("https://example.com", verifier, reconnect)
         self.assertEqual(connections, ["fresh FTP connection"])
         self.assertEqual(calls, [self.release, self.old])
         self.assertEqual(self.client.files["active-release.json"], self.previous)
@@ -129,16 +158,31 @@ class DeploymentTests(unittest.TestCase):
     def test_failed_atomic_rename_keeps_previous_pointer(self):
         self.client.fail_activation = True
         with self.assertRaises(ftplib.error_perm):
-            deploy(self.client, self.bundle, "https://example.com", lambda *_: self.fail("Must not verify"))
+            self.run_deploy("https://example.com", lambda *_: self.fail("Must not verify"))
         self.assertEqual(self.client.files["active-release.json"], self.previous)
         self.assertNotIn("tmp/restart.txt", self.client.files)
 
     def test_first_release_verification_failure_is_not_reported_as_success(self):
         del self.client.files["active-release.json"]
         with self.assertRaisesRegex(RuntimeError, "503"):
-            deploy(self.client, self.bundle, "https://example.com",
+            self.run_deploy("https://example.com",
                    lambda *_: (_ for _ in ()).throw(RuntimeError("503")))
         self.assertNotIn("previous-release.json", self.client.files)
+
+
+    def test_truncated_archive_does_not_activate_or_restart(self):
+        with patch.object(self.client, "size", return_value=self.release["archiveBytes"] - 1):
+            with self.assertRaisesRegex(ValueError, "archive size differs"):
+                self.run_deploy("https://example.com", lambda *_: self.fail("Must not verify"))
+        self.assertEqual(self.client.files["active-release.json"], self.previous)
+        self.assertNotIn("tmp/restart.txt", self.client.files)
+
+    def test_missing_archive_never_changes_remote_files(self):
+        self.archive.unlink()
+        with self.assertRaisesRegex(ValueError, "Missing compressed release"):
+            self.run_deploy("https://example.com", lambda *_: self.fail("Must not verify"))
+        self.assertEqual(self.client.events, [])
+        self.assertEqual(self.client.files["active-release.json"], self.previous)
 
 
 

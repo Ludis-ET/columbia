@@ -86,21 +86,25 @@ jobs:
           pnpm test:unit
           pnpm test:deploy
 
+      - name: Restore Next.js build cache
+        uses: actions/cache@v4
+        with:
+          path: .next/cache
+          key: ${{ runner.os }}-next22-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-next22-${{ hashFiles('pnpm-lock.yaml') }}-
+
       - name: Build production application
         run: pnpm build
 
       - name: Typecheck
         run: pnpm typecheck
 
-      - name: Package unchanged standalone output
+      - name: Package and compress standalone output once
         run: pnpm deploy:package
 
-      - name: Start artifact through the LiteSpeed require path and test HTTP
+      - name: Verify archive extraction and HTTP through LiteSpeed require
         run: pnpm deploy:smoke
-
-      - name: Archive verified release
-        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
-        run: tar -czf cpanel-release.tar.gz -C deploy-dist .
 
       - name: Save verified release
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
@@ -110,6 +114,7 @@ jobs:
           path: cpanel-release.tar.gz
           retention-days: 3
           if-no-files-found: error
+          compression-level: 0
 
   deploy:
     name: Deploy and verify live site
@@ -137,10 +142,10 @@ jobs:
         with:
           name: cpanel-release
 
-      - name: Extract verified release
+      - name: Read startup files from the tested archive
         run: |
           mkdir deploy-dist
-          tar -xzf cpanel-release.tar.gz -C deploy-dist
+          tar -xzf cpanel-release.tar.gz -C deploy-dist ./server.js ./cpanel.cjs ./active-release.json
 
       - name: Upload, activate, restart and verify (rollback on failure)
         env:

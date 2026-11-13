@@ -6,6 +6,7 @@ runtime application credentials remain in cPanel, outside the release artifact.
 import argparse
 from contextlib import nullcontext
 import ftplib
+import hashlib
 import io
 import json
 import os
@@ -16,7 +17,6 @@ import subprocess
 import sys
 import time
 from urllib.parse import urlparse
-
 
 
 class VerifiedFTP_TLS(ftplib.FTP_TLS):
@@ -105,6 +105,7 @@ def connect(protocol, port):
         raise
     return client
 
+
 def read_optional(client, name):
     data = io.BytesIO()
     try:
@@ -148,42 +149,59 @@ def verify(url, release):
     )
 
 
-def deploy(client, bundle, url, verifier=verify, reconnector=None):
-    pointer = (bundle / "active-release.json").read_bytes()
-    release = json.loads(pointer)
+def deploy(client, bundle, url, verifier=verify, reconnector=None, archive=None):
+    release = json.loads((bundle / "active-release.json").read_bytes())
     release_id = release["id"]
     if not isinstance(release_id, str) or not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}", release_id):
         raise ValueError("Invalid release ID")
-    directory = bundle / "releases" / release_id
-    if not directory.is_dir():
-        raise ValueError("Release directory is missing")
+    if archive is None or not archive.is_file():
+        raise ValueError("Missing compressed release archive; run pnpm deploy:package first")
+    size = archive.stat().st_size
+    if size <= 0:
+        raise ValueError("Release archive is empty")
+    with archive.open("rb") as stream:
+        release["archiveSha256"] = hashlib.file_digest(stream, "sha256").hexdigest()
+    release["archiveBytes"] = size
+    pointer = (json.dumps(release) + "\n").encode()
     previous = read_optional(client, "active-release.json")
     if previous:
         previous_release = json.loads(previous)
         if previous_release["id"] == release_id:
             raise ValueError("Release is already active; run a new workflow attempt")
 
-    ensure_directory(client, "releases")
-    # Each workflow run/attempt gets a unique directory. Existing releases are
-    # never overwritten, so an interrupted upload cannot damage a running app.
-    remote_root = "releases/" + release_id
-    client.mkd(remote_root)
-    files = sorted(directory.rglob("*"))
+    ensure_directory(client, "archives")
+    remote_archive = "archives/" + release_id + ".tar.gz"
+    temporary_archive = remote_archive + ".upload"
+    started = time.monotonic()
+    last_report = started
     uploaded = 0
-    for local in files:
-        if local.is_symlink():
-            raise ValueError("Package must contain real files, not symlinks: " + str(local))
-        relative = local.relative_to(directory).as_posix()
-        remote = remote_root + "/" + relative
-        if local.is_dir():
-            client.mkd(remote)
-        else:
-            with local.open("rb") as stream:
-                client.storbinary("STOR " + remote, stream)
-            uploaded += 1
-            if uploaded % 250 == 0:
-                print("Uploaded", uploaded, "release files", flush=True)
-    print("Uploaded complete release:", release_id, "(" + str(uploaded) + " files)", flush=True)
+    print("Uploading one compressed release: " + format(size / 1048576, ".1f") + " MiB", flush=True)
+
+    def progress(block):
+        nonlocal uploaded, last_report
+        uploaded += len(block)
+        now = time.monotonic()
+        if now - last_report >= 5 or uploaded == size:
+            elapsed = max(now - started, 0.001)
+            rate = uploaded / elapsed
+            remaining = (size - uploaded) / max(rate, 1)
+            print(
+                "Upload " + format(100 * uploaded / size, ".0f") + "%: "
+                + format(uploaded / 1048576, ".1f") + "/" + format(size / 1048576, ".1f")
+                + " MiB, " + format(rate / 1048576, ".2f") + " MiB/s, "
+                + format(remaining, ".0f") + "s remaining",
+                flush=True,
+            )
+            last_report = now
+
+    # One data connection for the entire compressed artifact. The .upload name
+    # is never referenced by the startup pointer, even if the transfer is cut.
+    with archive.open("rb") as stream:
+        client.storbinary("STOR " + temporary_archive, stream, blocksize=256 * 1024, callback=progress)
+    if client.size(temporary_archive) != size:
+        raise ValueError("Uploaded archive size differs from the tested artifact")
+    client.rename(temporary_archive, remote_archive)
+    print("Compressed release uploaded; activating " + release_id, flush=True)
 
     # These are module-mode-neutral entry points. The root package.json,
     # node_modules symlink, .htaccess, .env files and logs are left alone.
@@ -194,8 +212,12 @@ def deploy(client, bundle, url, verifier=verify, reconnector=None):
     ensure_directory(client, "tmp")
     atomic_write(client, "active-release.json", pointer, release_id)
     try:
-        # Restart only AFTER every release file and the pointer are in place.
+        # Restart only AFTER the complete archive and pointer are in place.
         atomic_write(client, "tmp/restart.txt", (release_id + " " + str(time.time())).encode(), release_id)
+        # Extraction/readiness no longer needs FTP. Avoid idle-session
+        # timeouts turning a successful HTTP verification into a failed job.
+        if reconnector is not None:
+            client.close()
         verifier(url, release)
     except Exception:
         if previous:
@@ -218,6 +240,7 @@ def main():
     checks.add_argument("--check-config", action="store_true")
     checks.add_argument("--check-connection", action="store_true")
     parser.add_argument("--bundle", type=Path, default=Path("deploy-dist"))
+    parser.add_argument("--archive", type=Path, default=Path("cpanel-release.tar.gz"))
     args = parser.parse_args()
     protocol, port, url = settings()
     if args.check_config:
@@ -227,7 +250,7 @@ def main():
         if args.check_connection:
             print("FTP connection, login and application directory verified; no files changed.")
             return
-        deploy(client, args.bundle, url, reconnector=lambda: connect(protocol, port))
+        deploy(client, args.bundle, url, reconnector=lambda: connect(protocol, port), archive=args.archive)
 
 
 if __name__ == "__main__":
