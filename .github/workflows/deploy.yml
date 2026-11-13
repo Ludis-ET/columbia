@@ -79,12 +79,6 @@ jobs:
           find deploy-dist/.next -name "*.map" -type f -delete
           find deploy-dist/.next -name "*.nft.json" -type f -delete
 
-          # Ensure .next/server/preview-props.json exists for runtime manifest loading
-          if [ ! -f "deploy-dist/.next/server/preview-props.json" ]; then
-            mkdir -p deploy-dist/.next/server
-            echo '{"previewModeId":"","previewModeSigningKey":"","previewModeEncryptionKey":""}' > deploy-dist/.next/server/preview-props.json
-          fi
-
           # Copy public assets
           if [ -d "public" ]; then
             cp -r public deploy-dist/
