@@ -43,6 +43,28 @@ const hostname = process.env.HOSTNAME || "localhost";
 const rawPort = process.env.PORT || 3000;
 const port = typeof rawPort === "string" && !isNaN(Number(rawPort)) ? Number(rawPort) : rawPort;
 
+// Ensure .next/server/preview-props.json exists to prevent ENOENT crashes across Next.js versions
+const previewPropsPath = path.join(projectDir, ".next", "server", "preview-props.json");
+if (!fs.existsSync(previewPropsPath)) {
+  try {
+    const serverDir = path.dirname(previewPropsPath);
+    if (!fs.existsSync(serverDir)) {
+      fs.mkdirSync(serverDir, { recursive: true });
+    }
+    fs.writeFileSync(
+      previewPropsPath,
+      JSON.stringify({
+        previewModeId: "",
+        previewModeSigningKey: "",
+        previewModeEncryptionKey: "",
+      }),
+      "utf8",
+    );
+  } catch (err) {
+    console.warn("Could not create fallback preview-props.json:", err);
+  }
+}
+
 // When using middleware, hostname and port must be provided to next(...)
 const app = next({ dev, dir: projectDir, hostname, port: typeof port === "number" ? port : 3000 });
 const handle = app.getRequestHandler();
