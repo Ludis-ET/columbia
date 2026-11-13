@@ -35,9 +35,16 @@ try {
   const port = listener.address().port;
   await new Promise((resolve) => listener.close(resolve));
   // Match lsnode.js: require() the entry point even though the repo uses ESM.
+  // Also simulate hosting wrappers that do not copy custom promisify symbols.
+  const bootstrap = [
+    'const childProcess = require("node:child_process");',
+    "const execFile = childProcess.execFile;",
+    "childProcess.execFile = function (...args) { return execFile.apply(this, args); };",
+    "require(process.argv[1]);",
+  ].join("\n");
   child = spawn(
     process.execPath,
-    ["--input-type=commonjs", "-e", "require(process.argv[1])", path.join(temporary, "server.js")],
+    ["--input-type=commonjs", "-e", bootstrap, path.join(temporary, "server.js")],
     {
       cwd: temporary,
       env: { ...process.env, PORT: String(port), CPANEL_BIND_HOST: "127.0.0.1" },

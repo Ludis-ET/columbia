@@ -272,3 +272,22 @@ test("concurrent cPanel workers promote only a complete extracted release", asyn
   assert(fs.existsSync(path.join(output, "releases/test-release/.next/BUILD_ID")));
   assert.deepEqual(fs.readdirSync(path.join(output, "releases")), ["test-release"]);
 });
+
+test("archive extraction works when the host wraps execFile without its custom promisifier", (t) => {
+  const { output } = archiveFixture(t);
+  const bootstrap = [
+    'const childProcess = require("node:child_process");',
+    "const execFile = childProcess.execFile;",
+    // Hosting runtimes can wrap builtins without copying symbol properties.
+    "childProcess.execFile = function (...args) { return execFile.apply(this, args); };",
+    "require(process.argv[1]);",
+  ].join("\n");
+  const result = spawnSync(
+    process.execPath,
+    ["--input-type=commonjs", "-e", bootstrap, path.join(output, "server.js")],
+    { cwd: output, encoding: "utf8" },
+  );
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stdout, /extracted and validated/);
+  assert(fs.existsSync(path.join(output, "releases/test-release/.next/BUILD_ID")));
+});

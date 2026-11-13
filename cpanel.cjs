@@ -3,9 +3,23 @@ const path = require("node:path");
 const { pathToFileURL } = require("node:url");
 const { createHash } = require("node:crypto");
 const { execFile } = require("node:child_process");
-const { promisify } = require("node:util");
-
-const runFile = promisify(execFile);
+// Some hosting runtimes wrap execFile without Node's util.promisify.custom
+// symbol. A generic promisifier then returns stdout alone instead of the
+// { stdout, stderr } object. Use the callback contract explicitly.
+function runFile(file, args, options) {
+  return new Promise((resolve, reject) => {
+    execFile(file, args, { ...options, encoding: "utf8" }, (error, stdout, stderr) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve({
+        stdout: Buffer.isBuffer(stdout) ? stdout.toString("utf8") : (stdout ?? ""),
+        stderr: Buffer.isBuffer(stderr) ? stderr.toString("utf8") : (stderr ?? ""),
+      });
+    });
+  });
+}
 
 function validateRelease(directory, release) {
   const buildId = fs.readFileSync(path.join(directory, ".next", "BUILD_ID"), "utf8").trim();
@@ -52,6 +66,9 @@ async function ensureRelease(directory, release) {
   const options = { windowsHide: true, timeout: 120000, maxBuffer: 16 * 1024 * 1024 };
   try {
     const { stdout } = await runFile("tar", ["-tzf", archive], options);
+    if (!stdout.trim()) {
+      throw new Error("tar returned an empty archive listing; extraction refused.");
+    }
     const prefix = "./releases/" + release.id;
     const roots = new Set([
       "./",

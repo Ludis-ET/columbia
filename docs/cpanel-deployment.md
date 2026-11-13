@@ -203,6 +203,18 @@ release-file upload phase, cancel that old run, commit and push these changes,
 and let the new workflow run. Production deployments are serialized, so the old
 run otherwise keeps the new one queued. Keep the existing application folder.
 
+## Startup error reading trimEnd from undefined
+
+The archive upload succeeded, but the original loader used
+promisify(execFile) and assumed its result had a stdout property. A hosting
+wrapper that drops Node's custom promisify symbol changes that return shape,
+causing a crash before extraction at stdout.trimEnd().
+
+The loader now uses execFile's callback API with explicit UTF-8 output. The
+deployment smoke check simulates this hosting wrapper before starting the real
+archive. Commit and push the fix, then deploy from the new commit. No cPanel
+environment changes, new secrets, or directory deletion are required.
+
 ## Fix an FTPS certificate hostname mismatch
 
 If Actions reports CERTIFICATE_VERIFY_FAILED with a hostname mismatch, the FTP
