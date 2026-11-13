@@ -91,6 +91,10 @@ jobs:
           find deploy-dist/.next -name "*.map" -type f -delete
           find deploy-dist/.next -name "*.nft.json" -type f -delete
 
+          # Guarantee .next/server/preview-props.json is present in bundle with full keys
+          mkdir -p deploy-dist/.next/server
+          echo '{"previewModeId":"b34f649ac9a9f2b7a71269496c6a9900","previewModeSigningKey":"8446ebfef117a8462dee301fd6a9ceafcd6bee02a169b0905fc6d73a2da47728","previewModeEncryptionKey":"e47726d8e033161aefcb3fbb6588114d7f08ca99c13545bc21da808a0b0df43e"}' > deploy-dist/.next/server/preview-props.json
+
           # Copy public assets
           if [ -d "public" ]; then
             cp -r public deploy-dist/

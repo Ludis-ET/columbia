@@ -43,15 +43,42 @@ const hostname = process.env.HOSTNAME || "localhost";
 const rawPort = process.env.PORT || 3000;
 const port = typeof rawPort === "string" && !isNaN(Number(rawPort)) ? Number(rawPort) : rawPort;
 
-// Clean up any stale or lingering preview-props.json to prevent conflicts
-const legacyPreviewProps = path.join(projectDir, ".next", "server", "preview-props.json");
-if (fs.existsSync(legacyPreviewProps)) {
-  try {
-    fs.unlinkSync(legacyPreviewProps);
-  } catch {}
+// Prevent Phusion Passenger from crashing the entire process on transient background rejections
+process.on("unhandledRejection", (reason) => {
+  console.error("Unhandled Rejection absorbed to protect server uptime:", reason);
+});
+
+// Ensure preview credentials and manifests exist before Next.js loads
+const DEFAULT_PREVIEW_KEYS = {
+  previewModeId: "b34f649ac9a9f2b7a71269496c6a9900",
+  previewModeSigningKey: "8446ebfef117a8462dee301fd6a9ceafcd6bee02a169b0905fc6d73a2da47728",
+  previewModeEncryptionKey: "e47726d8e033161aefcb3fbb6588114d7f08ca99c13545bc21da808a0b0df43e",
+};
+
+// 1. Ensure .next/server/preview-props.json exists with valid non-empty keys to satisfy Next.js internal loader
+const serverDir = path.join(projectDir, ".next", "server");
+const previewPropsPath = path.join(serverDir, "preview-props.json");
+try {
+  if (!fs.existsSync(serverDir)) {
+    fs.mkdirSync(serverDir, { recursive: true });
+  }
+  let validProps = false;
+  if (fs.existsSync(previewPropsPath)) {
+    try {
+      const parsed = JSON.parse(fs.readFileSync(previewPropsPath, "utf8"));
+      if (parsed && typeof parsed.previewModeId === "string" && parsed.previewModeId.length > 0) {
+        validProps = true;
+      }
+    } catch {}
+  }
+  if (!validProps) {
+    fs.writeFileSync(previewPropsPath, JSON.stringify(DEFAULT_PREVIEW_KEYS, null, 2), "utf8");
+  }
+} catch (err) {
+  console.warn("Could not ensure preview-props.json:", err);
 }
 
-// Ensure .next/prerender-manifest.json exists with valid preview keys to prevent runtime crash:
+// 2. Ensure .next/prerender-manifest.json exists with valid preview keys to prevent runtime crash:
 // "TypeError: Cannot read properties of undefined (reading 'previewModeId')"
 const prerenderManifestPath = path.join(projectDir, ".next", "prerender-manifest.json");
 try {
@@ -69,17 +96,14 @@ try {
   if (
     !manifest.preview ||
     typeof manifest.preview !== "object" ||
-    !manifest.preview.previewModeId
+    !manifest.preview.previewModeId ||
+    manifest.preview.previewModeId.length === 0
   ) {
     manifest.version = manifest.version || 4;
     manifest.routes = manifest.routes || {};
     manifest.dynamicRoutes = manifest.dynamicRoutes || {};
     manifest.notFoundRoutes = manifest.notFoundRoutes || [];
-    manifest.preview = {
-      previewModeId: "columbia-care-preview-mode-id",
-      previewModeSigningKey: "8446ebfef117a8462dee301fd6a9ceafcd6bee02a169b0905fc6d73a2da47728",
-      previewModeEncryptionKey: "e47726d8e033161aefcb3fbb6588114d7f08ca99c13545bc21da808a0b0df43e",
-    };
+    manifest.preview = DEFAULT_PREVIEW_KEYS;
     const nextDir = path.dirname(prerenderManifestPath);
     if (!fs.existsSync(nextDir)) {
       fs.mkdirSync(nextDir, { recursive: true });
