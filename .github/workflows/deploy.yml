@@ -84,8 +84,14 @@ jobs:
             cp -r public deploy-dist/
           fi
 
-          # Copy package.json, server.js, and environment files for cPanel
+          # Copy package.json, lockfile, .npmrc, server.js, and environment files for cPanel
           cp package.json deploy-dist/
+          if [ -f "package-lock.json" ]; then
+            cp package-lock.json deploy-dist/
+          fi
+          if [ -f ".npmrc" ]; then
+            cp .npmrc deploy-dist/
+          fi
           cp server.js deploy-dist/
           cp .env deploy-dist/.env
           cp .env.local deploy-dist/.env.local
