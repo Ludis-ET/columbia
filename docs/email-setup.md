@@ -52,11 +52,13 @@ No additional recipient setting is required to notify those three addresses.
 To include another owner or stakeholder, add comma-separated addresses to
 OWNER_NOTIFICATION_EMAIL and/or STAKEHOLDER_EMAILS in the same Node.js app.
 The application combines both lists with the three established addresses and
-removes duplicates. The first configured owner is the reply-to contact for the
-family confirmation.
+removes duplicates. Customer-facing replies use the business sending mailbox as Reply-To, so
+private notification addresses are not exposed. Monitor that mailbox or
+configure cPanel mail forwarding if another inbox should handle replies.
 
-Tour inquiries notify this combined list. Admin replies BCC this list, and
-inquiry status changes notify it as well. If the family provides an email
+Tour inquiries notify each address separately. Admin reply copies and inquiry
+status updates are also sent as separate messages. Each To header contains
+only that message's recipient; no CC or BCC lists are added. If the family provides an email
 address, the application also sends its confirmation.
 
 ## Check the running application
@@ -105,7 +107,10 @@ reputation. See [the findings and support message](email-deliverability.md).
 The server logs [email] cPanel SMTP dispatch failed for failed attempts and
 [email] SMTP accepted message with a message ID and recipient count after SMTP
 acceptance. It does not log the password, message body or inquiry details.
-Inquiries remain saved even when their notification email fails.
+Inquiries remain saved even when their notification email fails. If a
+customer reply is accepted but a private notification copy fails, the admin
+receives a warning rather than a failed-send result that could cause a
+duplicate customer email.
 
 Official references:
 [cPanel mail settings](https://docs.cpanel.net/cpanel/email/set-up-mail-client/),

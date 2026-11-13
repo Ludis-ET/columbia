@@ -414,7 +414,10 @@ export async function replyToInquiry(
 
   return {
     ok: true,
-    message: "Email sent to customer and copies dispatched to all 3 stakeholders.",
+    message:
+      sendResult.copiesNotified === false
+        ? "Email sent. Some notification copies could not be sent; check email delivery."
+        : "Email sent. Notification copies were sent separately.",
   };
 }
 

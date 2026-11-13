@@ -70,8 +70,9 @@ confirmation to the submitted address.
 
 All four email templates now use a consistent Columbia Care layout. Automatic
 role labels, distribution lists and operator email addresses have been removed
-from the message bodies. Routing still sends notifications to the configured
-addresses, and normal From, To and Reply-To email headers remain functional.
+from the message bodies. Notifications are sent separately to each configured address. Each To header
+shows only its own recipient, and customer-facing Reply-To headers use the
+business mailbox. No CC or BCC lists are included.
 
 The application sends both HTML and plain-text alternatives. That provides a
 readable fallback; it is not a guarantee against spam filtering. The templates
