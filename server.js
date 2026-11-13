@@ -48,71 +48,83 @@ process.on("unhandledRejection", (reason) => {
   console.error("Unhandled Rejection absorbed to protect server uptime:", reason);
 });
 
-// Ensure preview credentials and manifests exist before Next.js loads
+// ─────────────────────────────────────────────────────────────────────────────
+// MANIFEST HEALING
+// Next.js caches prerender-manifest.json via loadManifest(). If the file on
+// disk is missing its `preview` object (empty keys, truncated upload, etc.),
+// every request throws:
+//   TypeError: Cannot read properties of undefined (reading 'previewModeId')
+//
+// Fix strategy:
+//   1. Write correct files to disk BEFORE next() is ever called
+//   2. Clear Next.js's internal manifest cache so a stale version can't linger
+//   3. Force-reload so the cache starts with the correct object
+// ─────────────────────────────────────────────────────────────────────────────
 const DEFAULT_PREVIEW_KEYS = {
   previewModeId: "b34f649ac9a9f2b7a71269496c6a9900",
   previewModeSigningKey: "8446ebfef117a8462dee301fd6a9ceafcd6bee02a169b0905fc6d73a2da47728",
   previewModeEncryptionKey: "e47726d8e033161aefcb3fbb6588114d7f08ca99c13545bc21da808a0b0df43e",
 };
 
-// 1. Ensure .next/server/preview-props.json exists with valid non-empty keys to satisfy Next.js internal loader
-const serverDir = path.join(projectDir, ".next", "server");
-const previewPropsPath = path.join(serverDir, "preview-props.json");
-try {
-  if (!fs.existsSync(serverDir)) {
-    fs.mkdirSync(serverDir, { recursive: true });
-  }
-  let validProps = false;
-  if (fs.existsSync(previewPropsPath)) {
+async function ensurePreviewKeys() {
+  // 1. .next/server/preview-props.json — required by Next.js internal ENOENT check
+  const serverDir = path.join(projectDir, ".next", "server");
+  const previewPropsPath = path.join(serverDir, "preview-props.json");
+  try {
+    if (!fs.existsSync(serverDir)) fs.mkdirSync(serverDir, { recursive: true });
+    let valid = false;
     try {
-      const parsed = JSON.parse(fs.readFileSync(previewPropsPath, "utf8"));
-      if (parsed && typeof parsed.previewModeId === "string" && parsed.previewModeId.length > 0) {
-        validProps = true;
-      }
+      const p = JSON.parse(fs.readFileSync(previewPropsPath, "utf8"));
+      if (p && typeof p.previewModeId === "string" && p.previewModeId.length > 4) valid = true;
     } catch {}
+    if (!valid) {
+      fs.writeFileSync(previewPropsPath, JSON.stringify(DEFAULT_PREVIEW_KEYS), "utf8");
+      console.log("[startup] Wrote missing preview-props.json");
+    }
+  } catch (e) {
+    console.warn("[startup] Could not ensure preview-props.json:", e.message);
   }
-  if (!validProps) {
-    fs.writeFileSync(previewPropsPath, JSON.stringify(DEFAULT_PREVIEW_KEYS, null, 2), "utf8");
+
+  // 2. .next/prerender-manifest.json — the manifest Next.js caches at startup
+  const manifestPath = path.join(projectDir, ".next", "prerender-manifest.json");
+  try {
+    let m = {};
+    try {
+      m = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+    } catch {}
+    const needsRepair =
+      !m.preview ||
+      typeof m.preview !== "object" ||
+      typeof m.preview.previewModeId !== "string" ||
+      m.preview.previewModeId.length < 4;
+    if (needsRepair) {
+      m.version = m.version || 4;
+      m.routes = m.routes || {};
+      m.dynamicRoutes = m.dynamicRoutes || {};
+      m.notFoundRoutes = m.notFoundRoutes || [];
+      m.preview = DEFAULT_PREVIEW_KEYS;
+      if (!fs.existsSync(path.dirname(manifestPath))) {
+        fs.mkdirSync(path.dirname(manifestPath), { recursive: true });
+      }
+      fs.writeFileSync(manifestPath, JSON.stringify(m, null, 2), "utf8");
+      console.log("[startup] Repaired prerender-manifest.json with preview keys");
+    }
+
+    // 3. Clear Next.js's internal manifest cache so it re-reads the fixed file
+    try {
+      const { clearManifestCache, loadManifest } =
+        await import("./node_modules/next/dist/server/load-manifest.external.js");
+      clearManifestCache(manifestPath);
+      // Prime the cache with the correct version immediately
+      loadManifest(manifestPath, true);
+      console.log("[startup] Cleared and reloaded Next.js manifest cache");
+    } catch {}
+  } catch (e) {
+    console.warn("[startup] Could not ensure prerender-manifest.json:", e.message);
   }
-} catch (err) {
-  console.warn("Could not ensure preview-props.json:", err);
 }
 
-// 2. Ensure .next/prerender-manifest.json exists with valid preview keys to prevent runtime crash:
-// "TypeError: Cannot read properties of undefined (reading 'previewModeId')"
-const prerenderManifestPath = path.join(projectDir, ".next", "prerender-manifest.json");
-try {
-  let manifest = null;
-  if (fs.existsSync(prerenderManifestPath)) {
-    try {
-      manifest = JSON.parse(fs.readFileSync(prerenderManifestPath, "utf8"));
-    } catch {
-      manifest = null;
-    }
-  }
-  if (!manifest || typeof manifest !== "object") {
-    manifest = {};
-  }
-  if (
-    !manifest.preview ||
-    typeof manifest.preview !== "object" ||
-    !manifest.preview.previewModeId ||
-    manifest.preview.previewModeId.length === 0
-  ) {
-    manifest.version = manifest.version || 4;
-    manifest.routes = manifest.routes || {};
-    manifest.dynamicRoutes = manifest.dynamicRoutes || {};
-    manifest.notFoundRoutes = manifest.notFoundRoutes || [];
-    manifest.preview = DEFAULT_PREVIEW_KEYS;
-    const nextDir = path.dirname(prerenderManifestPath);
-    if (!fs.existsSync(nextDir)) {
-      fs.mkdirSync(nextDir, { recursive: true });
-    }
-    fs.writeFileSync(prerenderManifestPath, JSON.stringify(manifest, null, 2), "utf8");
-  }
-} catch (err) {
-  console.warn("Could not ensure prerender-manifest.json preview keys:", err);
-}
+await ensurePreviewKeys();
 
 // When using middleware, hostname and port must be provided to next(...)
 const app = next({ dev, dir: projectDir, hostname, port: typeof port === "number" ? port : 3000 });
