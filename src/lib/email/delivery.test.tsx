@@ -99,6 +99,20 @@ describe("SMTP diagnostics and delivery", () => {
     expect(transport.sendMail).toHaveBeenCalledTimes(2);
   });
 
+  it("includes readable text and HTML without leaking notification addresses into the body", async () => {
+    const { sendEnquiryEmails } = await import("./send");
+    await sendEnquiryEmails(inquiry);
+    const mail = transport.sendMail.mock.calls[0][0];
+    expect(mail.html).toContain("<html");
+    expect(mail.text).toContain("Test Family");
+    expect(mail.text).not.toContain("<table");
+    for (const address of mail.to) {
+      expect(mail.html).not.toContain(address);
+      expect(mail.text).not.toContain(address);
+    }
+    expect(mail.text).not.toMatch(/stakeholder|owner|distribution/i);
+  });
+
   it("does not claim all owners were notified when one recipient was rejected", async () => {
     transport.sendMail.mockResolvedValueOnce({
       accepted: ["owner@example.test"],

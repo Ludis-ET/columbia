@@ -84,6 +84,13 @@ spam. SMTP acceptance means the mail server accepted the message, not that
 Gmail placed it in the inbox. Review Email Deliverability in cPanel if delivery
 reports show domain-authentication problems.
 
+## If Gmail places messages in Spam
+
+The supplied received message passes SPF, DKIM and DMARC. Public reverse-DNS
+checks found no PTR record for its actual sending IP, 37.26.105.28. Ask the
+hosting provider to review reverse DNS, the outgoing mail hostname and IP
+reputation. See [the findings and support message](email-deliverability.md).
+
 ## Error meanings
 
 | Message                              | Action                                                                               |

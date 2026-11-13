@@ -2,7 +2,7 @@ import nodemailer, { type Transporter } from "nodemailer";
 import type SMTPTransport from "nodemailer/lib/smtp-transport";
 import { readSmtpSettings, smtpErrorMessage } from "./smtp-config";
 import { Resend } from "resend";
-import { render } from "@react-email/components";
+import { render, toPlainText } from "@react-email/components";
 import type React from "react";
 import {
   AdminCustomerReplyEmail,
@@ -149,6 +149,7 @@ async function dispatchEmail(
         replyTo: options.replyTo,
         subject: options.subject,
         html,
+        text: toPlainText(html),
       });
       if (!info.accepted?.length || info.rejected?.length) {
         console.warn("[email] SMTP did not accept every recipient:", {
@@ -189,6 +190,7 @@ async function dispatchEmail(
         replyTo: options.replyTo,
         subject: options.subject,
         react: options.react,
+        text: toPlainText(await render(options.react)),
       });
       if (error) {
         console.warn("[email] Resend rejected the notification.");
@@ -235,8 +237,8 @@ export async function sendEnquiryEmails(
   if (stakeholders.length > 0) {
     const stakeholderRes = await dispatchEmail({
       to: stakeholders,
-      subject: `New Tour Request from ${props.name}${props.phone ? ` (${props.phone})` : ""}`,
-      react: <StakeholderEnquiryEmail {...props} stakeholders={stakeholders} />,
+      subject: `New visit request from ${props.name}`,
+      react: <StakeholderEnquiryEmail {...props} />,
       replyTo: props.email ?? undefined,
     });
     if (stakeholderRes.success) result.ownerNotified = true;
@@ -250,7 +252,6 @@ export async function sendEnquiryEmails(
       react: (
         <FamilyAutoReply
           name={props.name}
-          phone={props.phone}
           addressLine={props.addressLine}
           locationLine={props.locationLine}
         />
@@ -319,7 +320,7 @@ export async function sendStakeholderStatusAlert(props: StatusAlertProps): Promi
   const res = await dispatchEmail({
     to: stakeholders,
     subject: `Inquiry Pipeline Update: ${props.inquiryName} → ${props.newStatus}`,
-    react: <StakeholderStatusUpdateEmail {...props} stakeholders={stakeholders} />,
+    react: <StakeholderStatusUpdateEmail {...props} />,
   });
 
   return res.success;

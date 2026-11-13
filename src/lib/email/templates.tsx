@@ -4,198 +4,146 @@ import {
   Container,
   Head,
   Heading,
-  Hr,
   Html,
   Link,
   Preview,
   Section,
   Text,
 } from "@react-email/components";
-
-/**
- * Columbia Care Adult Family Home — Transactional Email Templates
- *
- * Designed with responsive typography, cross-client safe inline CSS, and Columbia Care's
- * serene, dignified brand aesthetic (Navy, Sage, Cream Paper, and Warm Stone).
- */
+import type { CSSProperties, ReactNode } from "react";
 
 const INK = "#10254A";
 const SAGE = "#3F5528";
-const SAGE_LIGHT = "#EAF1E4";
-const SAGE_BORDER = "#B8CEAD";
 const PAPER = "#F6F5EE";
-const CARD_BG = "#FFFFFF";
-const STONE = "#5C6152";
-const STONE_LIGHT = "#7C8274";
-const RULE = "#E4E3D8";
+const WASH = "#E7EBDC";
+const SITE_URL = "https://columbiacareafh.com";
 
 const styles = {
   body: {
     backgroundColor: PAPER,
-    fontFamily:
-      "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
+    color: INK,
+    fontFamily: "Arial, Helvetica, sans-serif",
+    fontSize: "18px",
+    lineHeight: "1.65",
     margin: 0,
-    padding: "32px 16px",
+    padding: "24px 8px",
     WebkitTextSizeAdjust: "100%",
   },
   container: {
-    maxWidth: "580px",
+    maxWidth: "600px",
     margin: "0 auto",
+    backgroundColor: "#FFFFFF",
+    border: `1px solid ${WASH}`,
+    borderRadius: "4px",
   },
-  card: {
-    backgroundColor: CARD_BG,
-    border: `1px solid ${RULE}`,
-    borderRadius: "10px",
-    padding: "36px 32px",
-    boxShadow: "0 2px 8px rgba(16, 37, 74, 0.04)",
-  },
-  brandHeader: {
-    marginBottom: "24px",
-    paddingBottom: "18px",
-    borderBottom: `1px solid ${RULE}`,
-  },
-  brandSuper: {
-    color: SAGE,
-    fontSize: "11px",
-    fontWeight: 700,
-    letterSpacing: "0.15em",
-    textTransform: "uppercase" as const,
-    margin: "0 0 4px",
-  },
-  brandTitle: {
-    color: INK,
+  header: { backgroundColor: INK, padding: "28px 32px", borderBottom: `4px solid ${SAGE}` },
+  brand: {
+    color: PAPER,
     fontFamily: "Georgia, 'Times New Roman', serif",
-    fontSize: "20px",
-    fontWeight: 700,
+    fontSize: "32px",
     lineHeight: "1.2",
-    margin: "0",
+    margin: 0,
   },
-  pillBadge: {
-    display: "inline-block",
-    backgroundColor: SAGE_LIGHT,
+  brandDetail: { color: PAPER, fontSize: "16px", lineHeight: "1.5", margin: "8px 0 0" },
+  content: { padding: "32px" },
+  eyebrow: {
     color: SAGE,
-    border: `1px solid ${SAGE_BORDER}`,
-    borderRadius: "16px",
-    padding: "4px 12px",
-    fontSize: "11px",
+    fontSize: "16px",
     fontWeight: 700,
     letterSpacing: "0.08em",
-    textTransform: "uppercase" as const,
     margin: "0 0 16px",
   },
-  h1: {
+  title: {
     color: INK,
     fontFamily: "Georgia, 'Times New Roman', serif",
-    fontSize: "24px",
-    lineHeight: "1.3",
-    fontWeight: 600,
-    margin: "0 0 16px",
+    fontSize: "30px",
+    fontWeight: 400,
+    lineHeight: "1.25",
+    margin: "0 0 24px",
   },
-  p: {
+  paragraph: { color: INK, fontSize: "18px", lineHeight: "1.65", margin: "0 0 20px" },
+  panel: { backgroundColor: WASH, borderRadius: "4px", padding: "24px", margin: "24px 0" },
+  field: { margin: "0 0 16px" },
+  label: { color: SAGE, fontSize: "16px", lineHeight: "1.5", margin: "0 0 4px" },
+  value: { color: INK, fontSize: "18px", lineHeight: "1.6", margin: 0, overflowWrap: "anywhere" },
+  note: {
     color: INK,
-    fontSize: "15px",
-    lineHeight: "1.6",
-    margin: "0 0 16px",
+    fontSize: "18px",
+    lineHeight: "1.65",
+    whiteSpace: "pre-wrap",
+    overflowWrap: "anywhere",
+    margin: "8px 0 0",
   },
-  lead: {
-    color: INK,
-    fontSize: "16px",
-    lineHeight: "1.6",
-    margin: "0 0 18px",
-  },
-  metaText: {
-    color: STONE,
-    fontSize: "13px",
-    lineHeight: "1.5",
-    margin: "0 0 12px",
-  },
-  fieldGrid: {
-    backgroundColor: "#FAF9F5",
-    border: `1px solid ${RULE}`,
-    borderRadius: "8px",
-    padding: "20px 22px",
-    margin: "20px 0",
-  },
-  fieldLabel: {
-    color: STONE_LIGHT,
-    fontSize: "11px",
-    fontWeight: 700,
-    letterSpacing: "0.1em",
-    textTransform: "uppercase" as const,
-    margin: "0 0 4px",
-  },
-  fieldValue: {
-    color: INK,
-    fontSize: "15px",
-    fontWeight: 600,
-    margin: "0 0 16px",
-  },
-  quoteBox: {
-    backgroundColor: PAPER,
-    borderLeft: `3px solid ${SAGE}`,
-    borderRadius: "0 6px 6px 0",
-    padding: "16px 18px",
-    margin: "18px 0",
-    color: INK,
-    fontSize: "15px",
-    lineHeight: "1.6",
-    fontStyle: "italic",
-  },
-  btnPrimary: {
-    backgroundColor: SAGE,
+  button: {
+    backgroundColor: INK,
     color: "#FFFFFF",
-    borderRadius: "6px",
-    fontSize: "14px",
-    fontWeight: 600,
-    textDecoration: "none",
-    textAlign: "center" as const,
-    display: "inline-block",
-    padding: "12px 22px",
-    margin: "10px 10px 10px 0",
-  },
-  btnSecondary: {
-    backgroundColor: "#F2F3EC",
-    color: INK,
-    border: `1px solid ${RULE}`,
-    borderRadius: "6px",
-    fontSize: "14px",
-    fontWeight: 600,
-    textDecoration: "none",
-    textAlign: "center" as const,
-    display: "inline-block",
-    padding: "11px 20px",
-    margin: "10px 0",
-  },
-  divider: {
-    borderColor: RULE,
-    borderStyle: "solid",
-    borderWidth: "1px 0 0",
-    margin: "24px 0",
-  },
-  footer: {
-    marginTop: "24px",
-    textAlign: "center" as const,
-  },
-  footerText: {
-    color: STONE,
-    fontSize: "12px",
-    lineHeight: "1.5",
-    margin: "0 0 6px",
-  },
-  stakeholderBadge: {
-    backgroundColor: "#EDECE4",
     borderRadius: "4px",
-    color: STONE,
-    fontSize: "11px",
-    padding: "2px 6px",
-    display: "inline-block",
-    margin: "2px 4px",
+    fontSize: "16px",
+    lineHeight: "24px",
+    fontWeight: 700,
+    textDecoration: "none",
+    padding: "14px 24px",
+    textAlign: "center",
   },
-};
+  link: { color: SAGE, textDecoration: "underline" },
+  small: { color: INK, fontSize: "16px", lineHeight: "1.6", margin: "20px 0 0" },
+  footer: { padding: "24px 32px", backgroundColor: PAPER, borderTop: `1px solid ${WASH}` },
+  footerText: { color: INK, fontSize: "16px", lineHeight: "1.6", margin: 0 },
+} satisfies Record<string, CSSProperties>;
 
-// ---------------------------------------------------------------------------
-// 1. Stakeholder Inquiry Notification (Inbound Lead)
-// ---------------------------------------------------------------------------
+function EmailFrame({
+  preview,
+  category,
+  title,
+  children,
+}: {
+  preview: string;
+  category: string;
+  title: string;
+  children: ReactNode;
+}) {
+  return (
+    <Html lang="en">
+      <Head>
+        <meta name="color-scheme" content="light" />
+        <style>{`@media only screen and (max-width:480px){.email-header,.email-content,.email-footer{padding:24px 16px!important}.email-title{font-size:28px!important}.email-panel{padding:20px 16px!important}}`}</style>
+      </Head>
+      <Preview>{preview}</Preview>
+      <Body style={styles.body}>
+        <Container style={styles.container}>
+          <Section className="email-header" style={styles.header}>
+            <Text style={styles.brand}>Columbia Care</Text>
+            <Text style={styles.brandDetail}>Adult Family Home</Text>
+          </Section>
+          <Section className="email-content" style={styles.content}>
+            <Text style={styles.eyebrow}>{category}</Text>
+            <Heading as="h1" className="email-title" style={styles.title}>
+              {title}
+            </Heading>
+            {children}
+          </Section>
+          <Section className="email-footer" style={styles.footer}>
+            <Text style={styles.footerText}>Columbia Care Adult Family Home</Text>
+            <Text style={styles.footerText}>
+              <Link href={SITE_URL} style={styles.link}>
+                columbiacareafh.com
+              </Link>
+            </Text>
+          </Section>
+        </Container>
+      </Body>
+    </Html>
+  );
+}
+
+function Field({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <Section style={styles.field}>
+      <Text style={styles.label}>{label}</Text>
+      <Text style={styles.value}>{children}</Text>
+    </Section>
+  );
+}
 
 export interface EnquiryEmailProps {
   name: string;
@@ -205,7 +153,6 @@ export interface EnquiryEmailProps {
   message: string | null;
   preferredTimes: string[];
   adminUrl: string;
-  stakeholders?: string[];
 }
 
 export function StakeholderEnquiryEmail({
@@ -216,216 +163,86 @@ export function StakeholderEnquiryEmail({
   message,
   preferredTimes,
   adminUrl,
-  stakeholders = [
-    "Wondimubelete4@gmail.com",
-    "Zgenet19@gmail.com",
-    "leulsegedmelaku1020@gmail.com",
-  ],
 }: EnquiryEmailProps) {
-  const cleanPhone = phone ? phone.replace(/\D/g, "") : null;
-
+  const cleanPhone = phone?.replace(/\D/g, "");
   return (
-    <Html>
-      <Head />
-      <Preview>{`New Tour Request from ${name}${phone ? ` (${phone})` : ""}`}</Preview>
-      <Body style={styles.body}>
-        <Container style={styles.container}>
-          <Section style={styles.card}>
-            {/* Header */}
-            <div style={styles.brandHeader}>
-              <Text style={styles.brandSuper}>Columbia Care Adult Family Home</Text>
-              <Heading style={styles.brandTitle}>Stakeholder Notification</Heading>
-            </div>
-
-            {/* Status Pill */}
-            <div style={styles.pillBadge}>New House Tour Request</div>
-
-            <Heading style={styles.h1}>Inquiry from {name}</Heading>
-
-            <Text style={styles.lead}>
-              A family member has requested a house tour via the website. Families typically reach
-              out to 2–3 homes at a time; early contact makes the biggest impression.
-            </Text>
-
-            {/* Details Card */}
-            <div style={styles.fieldGrid}>
-              <Text style={styles.fieldLabel}>Family Contact</Text>
-              <Text style={styles.fieldValue}>{name}</Text>
-
-              {phone ? (
-                <>
-                  <Text style={styles.fieldLabel}>Phone Number</Text>
-                  <Text style={styles.fieldValue}>
-                    <Link
-                      href={`tel:${cleanPhone}`}
-                      style={{ color: SAGE, textDecoration: "none" }}
-                    >
-                      {phone}
-                    </Link>
-                  </Text>
-                </>
-              ) : null}
-
-              {email ? (
-                <>
-                  <Text style={styles.fieldLabel}>Email Address</Text>
-                  <Text style={styles.fieldValue}>
-                    <Link href={`mailto:${email}`} style={{ color: SAGE, textDecoration: "none" }}>
-                      {email}
-                    </Link>
-                  </Text>
-                </>
-              ) : null}
-
-              {relationship ? (
-                <>
-                  <Text style={styles.fieldLabel}>Who they are inquiring for</Text>
-                  <Text style={styles.fieldValue}>{relationship}</Text>
-                </>
-              ) : null}
-
-              {preferredTimes && preferredTimes.length > 0 ? (
-                <>
-                  <Text style={styles.fieldLabel}>Preferred Tour Times</Text>
-                  <Text style={{ ...styles.fieldValue, marginBottom: message ? "16px" : "0" }}>
-                    {preferredTimes.join(" • ")}
-                  </Text>
-                </>
-              ) : null}
-
-              {message ? (
-                <>
-                  <Text style={styles.fieldLabel}>Their Personal Message</Text>
-                  <div style={styles.quoteBox}>&ldquo;{message}&rdquo;</div>
-                </>
-              ) : null}
-            </div>
-
-            {/* Action Buttons */}
-            <div>
-              <Button href={adminUrl} style={styles.btnPrimary}>
-                Open in Admin Console →
-              </Button>
-              {cleanPhone ? (
-                <Button href={`tel:${cleanPhone}`} style={styles.btnSecondary}>
-                  Call {phone}
-                </Button>
-              ) : null}
-            </div>
-
-            <Hr style={styles.divider} />
-
-            {/* Footer with Stakeholder Distribution Notice */}
-            <div style={{ textAlign: "left" }}>
-              <Text style={styles.metaText}>
-                <strong>Stakeholder Distribution:</strong> Delivered to Columbia Care leadership:
-              </Text>
-              <div style={{ margin: "6px 0 14px" }}>
-                {stakeholders.map((sh) => (
-                  <span key={sh} style={styles.stakeholderBadge}>
-                    {sh}
-                  </span>
-                ))}
-              </div>
-              <Text style={{ ...styles.metaText, fontSize: "12px", color: STONE_LIGHT }}>
-                This is an automated dispatch from the Columbia Care Adult Family Home website
-                system.
-              </Text>
-            </div>
+    <EmailFrame
+      preview={`A new house tour request from ${name}.`}
+      category="New tour request"
+      title={`${name} would like to visit`}
+    >
+      <Text style={styles.paragraph}>
+        A new house tour request has arrived through the Columbia Care website.
+      </Text>
+      <Section className="email-panel" style={styles.panel}>
+        <Field label="Contact name">{name}</Field>
+        {phone ? (
+          <Field label="Phone">
+            <Link href={`tel:${cleanPhone}`} style={styles.link}>
+              {phone}
+            </Link>
+          </Field>
+        ) : null}
+        {relationship ? <Field label="Relationship">{relationship}</Field> : null}
+        {preferredTimes.length ? (
+          <Field label="Preferred times">{preferredTimes.join(" · ")}</Field>
+        ) : null}
+        {message ? (
+          <Section>
+            <Text style={styles.label}>Message</Text>
+            <Text style={styles.note}>{message}</Text>
           </Section>
-        </Container>
-      </Body>
-    </Html>
+        ) : null}
+      </Section>
+      <Button href={adminUrl} style={styles.button}>
+        View visit request
+      </Button>
+      {email ? (
+        <Text style={styles.small}>You can also reply to this email to contact {name}.</Text>
+      ) : null}
+    </EmailFrame>
   );
 }
 
-// Backward-compatible alias
+// Existing server imports can keep their internal names; role labels and
+// distribution addresses are never passed into the rendered templates.
 export const OwnerNotification = StakeholderEnquiryEmail;
-
-// ---------------------------------------------------------------------------
-// 2. Customer Auto-Reply (Family Confirmation)
-// ---------------------------------------------------------------------------
 
 export interface AutoReplyProps {
   name: string;
-  phone: string | null;
+  phone?: string | null;
   addressLine: string | null;
   locationLine: string | null;
 }
 
-export function FamilyAutoReply({ name, phone, addressLine, locationLine }: AutoReplyProps) {
+export function FamilyAutoReply({ name, addressLine, locationLine }: AutoReplyProps) {
   const firstName = name.trim().split(/\s+/)[0] || name;
-
   return (
-    <Html>
-      <Head />
-      <Preview>Thank you for reaching out to Columbia Care Adult Family Home</Preview>
-      <Body style={styles.body}>
-        <Container style={styles.container}>
-          <Section style={styles.card}>
-            {/* Header */}
-            <div style={styles.brandHeader}>
-              <Text style={styles.brandSuper}>Columbia Care Adult Family Home</Text>
-              <Heading style={styles.brandTitle}>A place to feel at home</Heading>
-            </div>
-
-            <Heading style={styles.h1}>Thank you, {firstName}</Heading>
-
-            <Text style={styles.lead}>
-              We have received your tour request. Someone from our leadership team will be in touch
-              with you shortly to confirm a visit time and answer any questions you have.
-            </Text>
-
-            <Text style={styles.p}>
-              We know looking for care for someone you love is one of the most important decisions a
-              family makes. There is no rush and no pressure—we encourage you to ask every question,
-              big or small.
-            </Text>
-
-            <div style={styles.fieldGrid}>
-              <Text style={styles.brandSuper}>Visiting Columbia Care</Text>
-              {addressLine ? (
-                <Text style={{ ...styles.fieldValue, margin: "6px 0 2px" }}>{addressLine}</Text>
-              ) : null}
-              {locationLine ? <Text style={styles.metaText}>{locationLine}</Text> : null}
-
-              {phone ? (
-                <div style={{ marginTop: "14px" }}>
-                  <Text style={styles.fieldLabel}>Direct Phone</Text>
-                  <Text style={{ ...styles.fieldValue, margin: 0 }}>
-                    <Link
-                      href={`tel:${phone.replace(/\D/g, "")}`}
-                      style={{ color: SAGE, textDecoration: "none" }}
-                    >
-                      {phone}
-                    </Link>
-                  </Text>
-                </div>
-              ) : null}
-            </div>
-
-            <Text style={{ ...styles.p, fontSize: "14px", color: STONE }}>
-              If you need immediate assistance or would rather speak directly with us now, please
-              feel free to call us anytime.
-            </Text>
-
-            <Hr style={styles.divider} />
-
-            <div style={styles.footer}>
-              <Text style={{ ...styles.footerText, fontStyle: "italic" }}>
-                Columbia Care Adult Family Home · A place to feel at home, a place to be cared for.
-              </Text>
-            </div>
-          </Section>
-        </Container>
-      </Body>
-    </Html>
+    <EmailFrame
+      preview="Your house tour request has been received."
+      category="Your visit request"
+      title={`Thank you, ${firstName}.`}
+    >
+      <Text style={styles.paragraph}>
+        We’ve received your request for a house tour at Columbia Care Adult Family Home.
+      </Text>
+      <Text style={styles.paragraph}>
+        We’ll be in touch to discuss a visit time and answer your questions.
+      </Text>
+      {addressLine || locationLine ? (
+        <Section className="email-panel" style={styles.panel}>
+          <Text style={styles.label}>Visiting Columbia Care</Text>
+          {addressLine ? <Text style={styles.value}>{addressLine}</Text> : null}
+          {locationLine ? <Text style={styles.small}>{locationLine}</Text> : null}
+        </Section>
+      ) : null}
+      <Button href={SITE_URL} style={styles.button}>
+        Visit our website
+      </Button>
+      <Text style={styles.small}>If you have another question, you can reply to this email.</Text>
+    </EmailFrame>
   );
 }
-
-// ---------------------------------------------------------------------------
-// 3. Admin Direct Reply (Sent from Admin Console to Family)
-// ---------------------------------------------------------------------------
 
 export interface AdminCustomerReplyProps {
   customerName: string;
@@ -440,81 +257,35 @@ export function AdminCustomerReplyEmail({
   message,
   phone,
   addressLine,
-  senderName = "Columbia Care Team",
 }: AdminCustomerReplyProps) {
   const firstName = customerName.trim().split(/\s+/)[0] || customerName;
-
   return (
-    <Html>
-      <Head />
-      <Preview>{`A message from Columbia Care regarding your tour enquiry`}</Preview>
-      <Body style={styles.body}>
-        <Container style={styles.container}>
-          <Section style={styles.card}>
-            {/* Header */}
-            <div style={styles.brandHeader}>
-              <Text style={styles.brandSuper}>Columbia Care Adult Family Home</Text>
-              <Heading style={styles.brandTitle}>Personal Follow-Up</Heading>
-            </div>
-
-            <Heading style={styles.h1}>Hello {firstName},</Heading>
-
-            {/* Body Message */}
-            <div
-              style={{
-                ...styles.p,
-                whiteSpace: "pre-wrap",
-                backgroundColor: "#FAF9F5",
-                border: `1px solid ${RULE}`,
-                borderRadius: "8px",
-                padding: "20px 22px",
-                margin: "18px 0",
-              }}
-            >
-              {message}
-            </div>
-
-            <Text style={styles.p}>
-              Warm regards,
-              <br />
-              <strong>{senderName}</strong>
-              <br />
-              <span style={{ color: STONE, fontSize: "14px" }}>
-                Columbia Care Adult Family Home
-              </span>
-            </Text>
-
-            <Hr style={styles.divider} />
-
-            {/* Quick Contact Info */}
-            <div style={{ textAlign: "left" }}>
-              {addressLine ? (
-                <Text style={{ ...styles.metaText, margin: "0 0 4px" }}>
-                  <strong>Address:</strong> {addressLine}
-                </Text>
-              ) : null}
-              {phone ? (
-                <Text style={styles.metaText}>
-                  <strong>Phone:</strong>{" "}
-                  <Link
-                    href={`tel:${phone.replace(/\D/g, "")}`}
-                    style={{ color: SAGE, textDecoration: "none" }}
-                  >
-                    {phone}
-                  </Link>
-                </Text>
-              ) : null}
-            </div>
-          </Section>
-        </Container>
-      </Body>
-    </Html>
+    <EmailFrame
+      preview="A message from Columbia Care about your visit request."
+      category="A message from Columbia Care"
+      title={`Hello ${firstName},`}
+    >
+      <Text style={styles.note}>{message}</Text>
+      <Text style={{ ...styles.paragraph, marginTop: "28px" }}>
+        Warm regards,
+        <br />
+        <strong>Columbia Care Team</strong>
+      </Text>
+      {addressLine || phone ? (
+        <Section className="email-panel" style={styles.panel}>
+          {addressLine ? <Field label="Columbia Care">{addressLine}</Field> : null}
+          {phone ? (
+            <Field label="Phone">
+              <Link href={`tel:${phone.replace(/\D/g, "")}`} style={styles.link}>
+                {phone}
+              </Link>
+            </Field>
+          ) : null}
+        </Section>
+      ) : null}
+    </EmailFrame>
   );
 }
-
-// ---------------------------------------------------------------------------
-// 4. Stakeholder Status / Notes Update Alert
-// ---------------------------------------------------------------------------
 
 export interface StakeholderStatusUpdateProps {
   inquiryName: string;
@@ -523,7 +294,10 @@ export interface StakeholderStatusUpdateProps {
   notes: string | null;
   updatedBy: string;
   adminUrl: string;
-  stakeholders?: string[];
+}
+
+function statusLabel(value: string) {
+  return value.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
 export function StakeholderStatusUpdateEmail({
@@ -531,68 +305,30 @@ export function StakeholderStatusUpdateEmail({
   previousStatus,
   newStatus,
   notes,
-  updatedBy,
   adminUrl,
-  stakeholders = [
-    "Wondimubelete4@gmail.com",
-    "Zgenet19@gmail.com",
-    "leulsegedmelaku1020@gmail.com",
-  ],
 }: StakeholderStatusUpdateProps) {
   return (
-    <Html>
-      <Head />
-      <Preview>{`Enquiry Updated: ${inquiryName} → ${newStatus}`}</Preview>
-      <Body style={styles.body}>
-        <Container style={styles.container}>
-          <Section style={styles.card}>
-            <div style={styles.brandHeader}>
-              <Text style={styles.brandSuper}>Columbia Care Adult Family Home</Text>
-              <Heading style={styles.brandTitle}>Pipeline Update</Heading>
-            </div>
-
-            <div style={styles.pillBadge}>Status Update</div>
-
-            <Heading style={styles.h1}>Update on {inquiryName}</Heading>
-
-            <Text style={styles.p}>
-              An update was made to an active family inquiry by <strong>{updatedBy}</strong>:
-            </Text>
-
-            <div style={styles.fieldGrid}>
-              <Text style={styles.fieldLabel}>Previous Status</Text>
-              <Text style={{ ...styles.fieldValue, color: STONE }}>{previousStatus}</Text>
-
-              <Text style={styles.fieldLabel}>New Status</Text>
-              <Text style={{ ...styles.fieldValue, color: SAGE }}>{newStatus}</Text>
-
-              {notes ? (
-                <>
-                  <Text style={styles.fieldLabel}>Latest Notes</Text>
-                  <div style={styles.quoteBox}>&ldquo;{notes}&rdquo;</div>
-                </>
-              ) : null}
-            </div>
-
-            <Button href={adminUrl} style={styles.btnPrimary}>
-              View in Admin Console →
-            </Button>
-
-            <Hr style={styles.divider} />
-
-            <Text style={styles.metaText}>
-              <strong>Stakeholders notified:</strong>
-            </Text>
-            <div style={{ margin: "4px 0 10px" }}>
-              {stakeholders.map((sh) => (
-                <span key={sh} style={styles.stakeholderBadge}>
-                  {sh}
-                </span>
-              ))}
-            </div>
+    <EmailFrame
+      preview={`The visit request for ${inquiryName} has been updated.`}
+      category="Request update"
+      title={`An update for ${inquiryName}`}
+    >
+      <Text style={styles.paragraph}>
+        The visit request has been updated. Open the request to see the latest details.
+      </Text>
+      <Section className="email-panel" style={styles.panel}>
+        <Field label="Previous status">{statusLabel(previousStatus)}</Field>
+        <Field label="Current status">{statusLabel(newStatus)}</Field>
+        {notes ? (
+          <Section>
+            <Text style={styles.label}>Latest note</Text>
+            <Text style={styles.note}>{notes}</Text>
           </Section>
-        </Container>
-      </Body>
-    </Html>
+        ) : null}
+      </Section>
+      <Button href={adminUrl} style={styles.button}>
+        View visit request
+      </Button>
+    </EmailFrame>
   );
 }
