@@ -16,6 +16,8 @@ concurrency:
 
 env:
   NEXT_TELEMETRY_DISABLED: "1"
+  # Provider certificate identity. HOST still selects the actual FTP server.
+  FTP_TLS_SERVER_NAME: ${{ vars.FTP_TLS_SERVER_NAME || 'vesper.hostns.io' }}
   RELEASE_ID: ${{ github.sha }}-${{ github.run_id }}-${{ github.run_attempt }}
 
 jobs:
@@ -60,9 +62,10 @@ jobs:
           PASS: ${{ secrets.PASS }}
           FTP_PROTOCOL: ${{ vars.FTP_PROTOCOL || 'ftps' }}
           FTP_PORT: ${{ vars.FTP_PORT || '21' }}
+          FTP_SERVER_DIR: ${{ vars.FTP_SERVER_DIR || '.' }}
           SITE_URL: ${{ vars.SITE_URL || 'https://columbiacareafh.com' }}
         run: |
-          python scripts/deploy_cpanel.py --check-config
+          python scripts/deploy_cpanel.py --check-connection
           node --input-type=module <<'NODE'
           import assert from 'node:assert/strict';
           for (const name of ['NEXT_PUBLIC_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY']) {

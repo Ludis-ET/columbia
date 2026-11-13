@@ -1,10 +1,12 @@
 from contextlib import nullcontext
 import ftplib
 import json
+import ssl
 from pathlib import Path
 import tempfile
 import unittest
-from deploy_cpanel import deploy
+from unittest.mock import Mock, patch
+from deploy_cpanel import VerifiedFTP_TLS, connect, deploy, main
 
 
 class FakeFTP:
@@ -137,6 +139,98 @@ class DeploymentTests(unittest.TestCase):
             deploy(self.client, self.bundle, "https://example.com",
                    lambda *_: (_ for _ in ()).throw(RuntimeError("503")))
         self.assertNotIn("previous-release.json", self.client.files)
+
+
+
+class TLSConnectionTests(unittest.TestCase):
+    def client(self, name="provider.example"):
+        client = VerifiedFTP_TLS(
+            tls_server_name=name, context=ssl.create_default_context(), timeout=10,
+        )
+        self.addCleanup(client.close)
+        client.host = "ftp.customer.example"
+        return client
+
+    def test_control_tls_checks_provider_identity_and_preserves_target_host(self):
+        client = self.client()
+        raw_socket = Mock()
+        secured_socket = Mock()
+        client.sock = raw_socket
+        client.voidcmd = Mock(return_value="234 TLS accepted")
+        with patch.object(client.context, "wrap_socket", return_value=secured_socket) as wrap:
+            self.assertEqual(client.auth(), "234 TLS accepted")
+        wrap.assert_called_once_with(raw_socket, server_hostname="provider.example")
+        self.assertEqual(client.host, "ftp.customer.example")
+        self.assertTrue(client.context.check_hostname)
+        self.assertEqual(client.context.verify_mode, ssl.CERT_REQUIRED)
+
+    def test_data_tls_uses_the_same_verified_identity(self):
+        client = self.client()
+        client._prot_p = True
+        connection, secured = Mock(), Mock()
+        with patch("ftplib.FTP.ntransfercmd", return_value=(connection, 123)) as transfer:
+            with patch.object(client.context, "wrap_socket", return_value=secured) as wrap:
+                self.assertEqual(client.ntransfercmd("STOR releases/file.js"), (secured, 123))
+        transfer.assert_called_once_with(client, "STOR releases/file.js", None)
+        wrap.assert_called_once_with(connection, server_hostname="provider.example")
+        self.assertEqual(client.host, "ftp.customer.example")
+
+    def test_unset_certificate_identity_defaults_to_connection_host(self):
+        client = self.client(name=None)
+        raw_socket = Mock()
+        client.sock = raw_socket
+        client.voidcmd = Mock(return_value="234 TLS accepted")
+        with patch.object(client.context, "wrap_socket", return_value=Mock()) as wrap:
+            client.auth()
+        wrap.assert_called_once_with(raw_socket, server_hostname="ftp.customer.example")
+
+    def test_failed_data_tls_closes_connection_without_sending_plain_data(self):
+        client = self.client()
+        client._prot_p = True
+        connection = Mock()
+        with patch("ftplib.FTP.ntransfercmd", return_value=(connection, 123)):
+            with patch.object(client.context, "wrap_socket", side_effect=ssl.SSLError("TLS failed")):
+                with self.assertRaises(ssl.SSLError):
+                    client.ntransfercmd("STOR releases/file.js")
+        connection.close.assert_called_once()
+
+    def test_connect_keeps_certificate_validation_enabled(self):
+        environment = {
+            "HOST": "ftp.customer.example", "FTP": "test-user", "PASS": "test-pass",
+            "FTP_TLS_SERVER_NAME": "provider.example",
+        }
+        with patch.dict("os.environ", environment, clear=True):
+            with patch("deploy_cpanel.VerifiedFTP_TLS") as constructor:
+                result = connect("ftps", 21)
+        context = constructor.call_args.kwargs["context"]
+        self.assertTrue(context.check_hostname)
+        self.assertEqual(context.verify_mode, ssl.CERT_REQUIRED)
+        self.assertEqual(constructor.call_args.kwargs["tls_server_name"], "provider.example")
+        result.connect.assert_called_once_with("ftp.customer.example", 21)
+        result.login.assert_called_once_with("test-user", "test-pass")
+        result.prot_p.assert_called_once()
+        result.cwd.assert_called_once_with(".")
+
+    def test_hostname_mismatch_has_actionable_error_and_never_retries_plain_ftp(self):
+        error = ssl.SSLCertVerificationError(1, "Hostname mismatch")
+        environment = {"HOST": "ftp.customer.example", "FTP": "test-user", "PASS": "test-pass"}
+        with patch.dict("os.environ", environment, clear=True):
+            with patch("deploy_cpanel.VerifiedFTP_TLS") as constructor:
+                with patch("deploy_cpanel.ftplib.FTP") as plaintext:
+                    constructor.return_value.login.side_effect = error
+                    with self.assertRaisesRegex(RuntimeError, "FTP_TLS_SERVER_NAME"):
+                        connect("ftps", 21)
+                    plaintext.assert_not_called()
+        constructor.return_value.close.assert_called_once()
+
+    def test_connection_preflight_does_not_deploy_or_change_files(self):
+        with patch("deploy_cpanel.sys.argv", ["deploy_cpanel.py", "--check-connection"]):
+            with patch("deploy_cpanel.settings", return_value=("ftps", 21, "https://example.com")):
+                with patch("deploy_cpanel.connect") as connection:
+                    with patch("deploy_cpanel.deploy") as deployment:
+                        main()
+                    connection.assert_called_once_with("ftps", 21)
+                    deployment.assert_not_called()
 
 
 if __name__ == "__main__":

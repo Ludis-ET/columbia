@@ -18,6 +18,39 @@ import time
 from urllib.parse import urlparse
 
 
+
+class VerifiedFTP_TLS(ftplib.FTP_TLS):
+    """Keep the FTP network address separate from the verified TLS identity."""
+
+    def __init__(self, *, tls_server_name=None, **kwargs):
+        super().__init__(**kwargs)
+        self.tls_server_name = tls_server_name
+
+    def auth(self):
+        if isinstance(self.sock, ssl.SSLSocket):
+            raise ValueError("Already using TLS")
+        response = self.voidcmd("AUTH TLS")
+        self.sock = self.context.wrap_socket(
+            self.sock, server_hostname=self.tls_server_name or self.host,
+        )
+        self.file = self.sock.makefile(mode="r", encoding=self.encoding)
+        return response
+
+    def ntransfercmd(self, command, rest=None):
+        # FTP chooses the data endpoint from the existing control connection.
+        # Only SNI and certificate identity change; HOST is never rewritten.
+        connection, size = ftplib.FTP.ntransfercmd(self, command, rest)
+        if self._prot_p:
+            try:
+                connection = self.context.wrap_socket(
+                    connection, server_hostname=self.tls_server_name or self.host,
+                )
+            except BaseException:
+                connection.close()
+                raise
+        return connection, size
+
+
 def settings():
     missing = [name for name in ("HOST", "FTP", "PASS") if not os.environ.get(name)]
     if missing:
@@ -32,21 +65,45 @@ def settings():
     port = int(os.environ.get("FTP_PORT", "21"))
     if not 1 <= port <= 65535:
         raise ValueError("FTP_PORT must be between 1 and 65535")
+    tls_name = os.environ.get("FTP_TLS_SERVER_NAME", "")
+    if tls_name and not re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9.-]*", tls_name):
+        raise ValueError("FTP_TLS_SERVER_NAME must be a hostname, without a URL, port or wildcard")
     return protocol, port, url.rstrip("/")
 
 
 def connect(protocol, port):
     if protocol == "ftps":
-        client = ftplib.FTP_TLS(context=ssl.create_default_context(), timeout=60)
+        client = VerifiedFTP_TLS(
+            tls_server_name=os.environ.get("FTP_TLS_SERVER_NAME") or None,
+            context=ssl.create_default_context(),
+            timeout=60,
+        )
     else:
         client = ftplib.FTP(timeout=60)
-    client.connect(os.environ["HOST"], port)
-    client.login(os.environ["FTP"], os.environ["PASS"])
-    if protocol == "ftps":
-        client.prot_p()
-    client.cwd(os.environ.get("FTP_SERVER_DIR", "."))
+    try:
+        client.connect(os.environ["HOST"], port)
+        client.login(os.environ["FTP"], os.environ["PASS"])
+        if protocol == "ftps":
+            client.prot_p()
+        client.cwd(os.environ.get("FTP_SERVER_DIR", "."))
+    except ssl.SSLCertVerificationError as error:
+        client.close()
+        if getattr(error, "verify_code", None) in (62, 64) or "mismatch" in str(error).lower():
+            raise RuntimeError(
+                "FTPS certificate hostname mismatch. Keep HOST pointing at the correct FTP "
+                "server and set the public FTP_TLS_SERVER_NAME repository variable to the "
+                "certificate hostname confirmed by your hosting provider. The workflow "
+                "defaults to vesper.hostns.io for this host. No new secret is needed. "
+                "Certificate verification remains enabled."
+            ) from error
+        raise RuntimeError(
+            "FTPS certificate verification failed. Ask the hosting provider to renew or "
+            "repair its FTP certificate and certificate chain. Verification remains enabled."
+        ) from error
+    except BaseException:
+        client.close()
+        raise
     return client
-
 
 def read_optional(client, name):
     data = io.BytesIO()
@@ -157,7 +214,9 @@ def deploy(client, bundle, url, verifier=verify, reconnector=None):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--check-config", action="store_true")
+    checks = parser.add_mutually_exclusive_group()
+    checks.add_argument("--check-config", action="store_true")
+    checks.add_argument("--check-connection", action="store_true")
     parser.add_argument("--bundle", type=Path, default=Path("deploy-dist"))
     args = parser.parse_args()
     protocol, port, url = settings()
@@ -165,6 +224,9 @@ def main():
         print("Deployment configuration is present.")
         return
     with connect(protocol, port) as client:
+        if args.check_connection:
+            print("FTP connection, login and application directory verified; no files changed.")
+            return
         deploy(client, args.bundle, url, reconnector=lambda: connect(protocol, port))
 
 

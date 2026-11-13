@@ -110,8 +110,17 @@ Only change these if your hosting configuration requires it:
 | FTP_SERVER_DIR      | .                           | If your FTP login opens outside the application directory |
 | SITE_URL            | https://columbiacareafh.com | If the public domain changes                              |
 
-FTPS checks the server certificate. HOST must match that certificate. This
-deployer does not support SFTP or implicit FTPS.
+FTPS checks the certificate chain and hostname on both the control and data
+connections. HOST selects the network address. The workflow already sets the
+public certificate identity FTP_TLS_SERVER_NAME to vesper.hostns.io, matching
+the FTP certificate observed at this site's server. No new secret is needed.
+
+If your provider changes the certificate name, override FTP_TLS_SERVER_NAME as
+a repository variable with the hostname confirmed by the provider. When using
+the deployer outside Actions, it verifies against HOST unless
+FTP_TLS_SERVER_NAME is explicitly set.
+
+This deployer does not support SFTP or implicit FTPS.
 
 Turnstile is optional. Only if you enable it, configure its public
 NEXT_PUBLIC_TURNSTILE_SITE_KEY in GitHub and private TURNSTILE_SECRET_KEY in
@@ -121,20 +130,22 @@ Runtime credentials are not copied into build artifacts.
 
 ## Deployment and verification
 
-1. Lint, unit tests and deployment regression tests must pass.
-2. Actions builds with locked pnpm dependencies on Node 22, then typechecks.
-3. Packaging copies standalone output, public files and .next/static. It
+1. Before building a production deployment, Actions checks the FTP TLS
+   handshake, login and application directory without changing files.
+2. Lint, unit tests and deployment regression tests must pass.
+3. Actions builds with locked pnpm dependencies on Node 22, then typechecks.
+4. Packaging copies standalone output, public files and .next/static. It
    preserves generated manifests and removes traced environment files.
-4. A smoke check starts the isolated artifact through require(), matching
+5. A smoke check starts the isolated artifact through require(), matching
    LiteSpeed's loading method. It checks readiness, the homepage, a JavaScript
    asset, a CSS asset and the admin login page.
-5. Actions uploads the artifact into releases/<commit>-<run>-<attempt>/.
+6. Actions uploads the artifact into releases/<commit>-<run>-<attempt>/.
    The running release is never overwritten.
-6. After all files arrive, FTP rename replaces active-release.json. Only then
+7. After all files arrive, FTP rename replaces active-release.json. Only then
    is tmp/restart.txt replaced to request a restart.
-7. Live verification requires the exact release and commit, HTTP 200, the
+8. Live verification requires the exact release and commit, HTTP 200, the
    homepage, JavaScript, CSS and login page. A green upload alone is insufficient.
-8. If verification fails and a previous managed release exists, its pointer is
+9. If verification fails and a previous managed release exists, its pointer is
    restored, the app is restarted, and that release is checked. The workflow
    still fails so the bad deployment is visible.
 
@@ -151,6 +162,22 @@ root .next files can be archived after the first managed release is verified.
 Checks are read-only. They do not submit inquiries, send mail, or prove that
 Supabase auth, SMTP and CAPTCHA credentials are correct. Verify an actual admin
 sign-in and a permitted tour inquiry separately after recovery.
+
+## Fix an FTPS certificate hostname mismatch
+
+If Actions reports CERTIFICATE_VERIFY_FAILED with a hostname mismatch, the FTP
+server is presenting a certificate for a different DNS name than HOST.
+
+For this site's FTP endpoint, the certificate name is vesper.hostns.io.
+The updated workflow already configures that name for TLS verification while
+keeping the existing HOST connection address. Commit and push the updated
+workflow and deployer, then run the workflow from the new commit.
+
+Do not change HOST to vesper.hostns.io solely because it appears in the
+certificate: the two names resolved to different IP addresses during diagnosis.
+Use HOST for the application server's address and FTP_TLS_SERVER_NAME for its
+provider-confirmed certificate name. Credentials and certificate verification
+remain protected; the deployer does not fall back to unverified TLS or plain FTP.
 
 ## Recover the current 503
 
