@@ -1,4 +1,6 @@
 import nodemailer, { type Transporter } from "nodemailer";
+import type SMTPTransport from "nodemailer/lib/smtp-transport";
+import { readSmtpSettings, smtpErrorMessage } from "./smtp-config";
 import { Resend } from "resend";
 import { render } from "@react-email/components";
 import type React from "react";
@@ -15,7 +17,7 @@ import {
  *
  * Supports dual engines:
  * 1. cPanel SMTP (Primary when configured) — Direct hosting email server (e.g. mail.columbiacareafh.com)
- * 2. Resend API (Secondary / Fallback)
+ * 2. Resend API (Used when SMTP is not configured)
  *
  * ---------------------------------------------------------------------------
  * EMAIL FAILURE MUST NEVER LOSE A LEAD OR BLOCK AN ACTION.
@@ -44,19 +46,17 @@ export const DEFAULT_STAKEHOLDERS: readonly string[] = [
  * addresses specified in environment variables.
  */
 export function getStakeholderEmails(): string[] {
-  const envRaw = process.env.STAKEHOLDER_EMAILS || process.env.OWNER_NOTIFICATION_EMAIL || "";
-  const list = envRaw
-    .split(",")
-    .map((e) => e.trim())
-    .filter((e) => Boolean(e) && e.includes("@"));
-
-  const normalized = new Set(list.map((e) => e.toLowerCase()));
-  const result = [...list];
-
-  for (const fallback of DEFAULT_STAKEHOLDERS) {
-    if (!normalized.has(fallback.toLowerCase())) {
-      result.push(fallback);
-      normalized.add(fallback.toLowerCase());
+  const configured = [
+    process.env.OWNER_NOTIFICATION_EMAIL ?? "",
+    process.env.STAKEHOLDER_EMAILS ?? "",
+  ].flatMap((raw) => raw.split(","));
+  const normalized = new Set<string>();
+  const result: string[] = [];
+  for (const address of [...configured, ...DEFAULT_STAKEHOLDERS]) {
+    const email = address.trim();
+    if (email && email.includes("@") && !normalized.has(email.toLowerCase())) {
+      result.push(email);
+      normalized.add(email.toLowerCase());
     }
   }
 
@@ -67,44 +67,59 @@ export function getStakeholderEmails(): string[] {
 // Provider Configuration
 // ---------------------------------------------------------------------------
 
-const SMTP_HOST = process.env.SMTP_HOST;
-const SMTP_PORT = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 465;
-const SMTP_SECURE = process.env.SMTP_SECURE === "false" ? false : SMTP_PORT === 465;
-const SMTP_USER = process.env.SMTP_USER;
-const SMTP_PASS = process.env.SMTP_PASS;
-
-export const isSmtpConfigured = Boolean(SMTP_HOST && SMTP_USER && SMTP_PASS);
-
-const resendApiKey = process.env.RESEND_API_KEY;
-export const isResendConfigured = Boolean(resendApiKey);
-
-export const isEmailConfigured = isSmtpConfigured || isResendConfigured;
-
-const DEFAULT_FROM =
-  process.env.SMTP_FROM ||
-  process.env.RESEND_FROM ||
-  (SMTP_USER ? `Columbia Care <${SMTP_USER}>` : "Columbia Care <onboarding@resend.dev>");
-
-let cachedTransporter: Transporter | null = null;
-function getSmtpTransporter() {
-  if (!cachedTransporter && isSmtpConfigured) {
-    cachedTransporter = nodemailer.createTransport({
-      host: SMTP_HOST,
-      port: SMTP_PORT,
-      secure: SMTP_SECURE,
-      auth: {
-        user: SMTP_USER,
-        pass: SMTP_PASS,
-      },
-      tls: {
-        rejectUnauthorized: false, // Prevents self-signed cert blocks on cPanel
-      },
-    });
-  }
-  return cachedTransporter;
+export function getEmailConfiguration() {
+  const smtp = readSmtpSettings();
+  const resendConfigured = Boolean(process.env.RESEND_API_KEY);
+  return {
+    smtpConfigured: smtp.options !== null,
+    resendConfigured,
+    sender: smtp.options ? smtp.from : process.env.RESEND_FROM || null,
+    recipients: getStakeholderEmails(),
+    missing: smtp.missing,
+    errors: smtp.errors,
+  };
 }
 
-const resend = isResendConfigured ? new Resend(resendApiKey) : null;
+let cachedTransporter: {
+  key: string;
+  transporter: Transporter<SMTPTransport.SentMessageInfo>;
+} | null = null;
+
+function getSmtpTransporter(options: SMTPTransport.Options) {
+  // Credentials stay in server memory. Nothing in this cache is returned to UI.
+  const key = JSON.stringify(options);
+  if (!cachedTransporter || cachedTransporter.key !== key) {
+    cachedTransporter = { key, transporter: nodemailer.createTransport(options) };
+  }
+  return cachedTransporter.transporter;
+}
+
+export async function verifyEmailConnection(): Promise<{ ok: boolean; message: string }> {
+  const smtp = readSmtpSettings();
+  if (!smtp.options) {
+    return {
+      ok: false,
+      message: smtp.errors.length
+        ? smtp.errors.join(" ")
+        : "Add " +
+          smtp.missing.join(", ") +
+          " in cPanel Setup Node.js App, then restart the application.",
+    };
+  }
+  try {
+    // verify authenticates without MAIL FROM, RCPT TO or DATA: no email is sent.
+    await getSmtpTransporter(smtp.options).verify();
+    return {
+      ok: true,
+      message:
+        "The mail server accepted the connection and mailbox login. No email was sent. Inbox delivery still needs a test inquiry.",
+    };
+  } catch (error) {
+    const message = smtpErrorMessage(error);
+    console.warn("[email] SMTP connection check failed:", message);
+    return { ok: false, message };
+  }
+}
 
 interface DispatchMailOptions {
   from?: string;
@@ -121,64 +136,79 @@ interface DispatchMailOptions {
 async function dispatchEmail(
   options: DispatchMailOptions,
 ): Promise<{ success: boolean; error?: string }> {
-  const from = options.from || DEFAULT_FROM;
+  const smtp = readSmtpSettings();
 
-  // 1. Prefer cPanel SMTP if configured
-  if (isSmtpConfigured) {
+  if (smtp.options) {
     try {
-      const transporter = getSmtpTransporter();
-      if (!transporter) throw new Error("Could not initialize cPanel SMTP transporter.");
-
+      const transporter = getSmtpTransporter(smtp.options);
       const html = await render(options.react);
-      await transporter.sendMail({
-        from,
-        to: Array.isArray(options.to) ? options.to.join(", ") : options.to,
-        bcc: options.bcc
-          ? Array.isArray(options.bcc)
-            ? options.bcc.join(", ")
-            : options.bcc
-          : undefined,
+      const info = await transporter.sendMail({
+        from: options.from || smtp.from || undefined,
+        to: options.to,
+        bcc: options.bcc,
         replyTo: options.replyTo,
         subject: options.subject,
         html,
       });
-
+      if (!info.accepted?.length || info.rejected?.length) {
+        console.warn("[email] SMTP did not accept every recipient:", {
+          accepted: info.accepted?.length ?? 0,
+          rejected: info.rejected?.length ?? 0,
+          messageId: info.messageId,
+        });
+        return {
+          success: false,
+          error: "The mail server did not accept every recipient. Check cPanel Track Delivery.",
+        };
+      }
+      console.info("[email] SMTP accepted message:", {
+        messageId: info.messageId,
+        recipients: info.accepted.length,
+      });
       return { success: true };
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
+    } catch (error) {
+      const message = smtpErrorMessage(error);
       console.warn("[email] cPanel SMTP dispatch failed:", message);
       return { success: false, error: message };
     }
   }
 
-  // 2. Fall back to Resend API
-  if (resend) {
+  // Resend is used only when SMTP is not configured, avoiding duplicate
+  // deliveries if SMTP accepted DATA but its final response was lost.
+  if (process.env.RESEND_API_KEY) {
     try {
+      const resend = new Resend(process.env.RESEND_API_KEY);
       const { error } = await resend.emails.send({
-        from,
+        from:
+          options.from ||
+          process.env.RESEND_FROM ||
+          smtp.from ||
+          "Columbia Care <onboarding@resend.dev>",
         to: options.to,
         bcc: options.bcc,
         replyTo: options.replyTo,
         subject: options.subject,
         react: options.react,
       });
-
       if (error) {
-        console.warn("[email] Resend dispatch failed:", error.message);
-        return { success: false, error: error.message };
+        console.warn("[email] Resend rejected the notification.");
+        return {
+          success: false,
+          error: "The email provider rejected the notification. Check its delivery log.",
+        };
       }
       return { success: true };
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      console.warn("[email] Resend dispatch threw:", message);
-      return { success: false, error: message };
+    } catch {
+      console.warn("[email] Resend dispatch failed.");
+      return { success: false, error: "The email provider could not send the notification." };
     }
   }
 
-  console.warn(
-    "[email] No email service configured. Please set SMTP credentials (SMTP_HOST, SMTP_USER, SMTP_PASS) or RESEND_API_KEY in .env.local",
-  );
-  return { success: false, error: "No email service configured." };
+  const message = smtp.errors.length
+    ? smtp.errors.join(" ")
+    : "Missing cPanel email settings: " + smtp.missing.join(", ");
+  console.warn("[email]", message);
+  return { success: false, error: message };
 }
 
 // ---------------------------------------------------------------------------
@@ -198,11 +228,6 @@ export async function sendEnquiryEmails(
   props: EnquiryEmailProps & { addressLine: string | null; locationLine: string | null },
 ): Promise<SendResult> {
   const result: SendResult = { ownerNotified: false, familyNotified: false };
-
-  if (!isEmailConfigured) {
-    console.warn("[email] Email is not configured. Enquiry saved in DB; email delivery skipped.");
-    return result;
-  }
 
   const stakeholders = getStakeholderEmails();
 
@@ -255,13 +280,6 @@ export interface AdminReplyEmailProps {
 export async function sendAdminReplyEmail(
   props: AdminReplyEmailProps,
 ): Promise<{ success: boolean; error?: string }> {
-  if (!isEmailConfigured) {
-    return {
-      success: false,
-      error: "No email service configured (missing SMTP or Resend credentials in .env.local).",
-    };
-  }
-
   const stakeholders = getStakeholderEmails();
 
   return dispatchEmail({
@@ -295,8 +313,6 @@ export interface StatusAlertProps {
  * whenever an enquiry is moved to a new pipeline stage or notes are saved.
  */
 export async function sendStakeholderStatusAlert(props: StatusAlertProps): Promise<boolean> {
-  if (!isEmailConfigured) return false;
-
   const stakeholders = getStakeholderEmails();
   if (stakeholders.length === 0) return false;
 

@@ -39,6 +39,15 @@ describe("Stakeholder email routing", () => {
     expect(emails).toContain("leulsegedmelaku1020@gmail.com");
   });
 
+  it("combines owner and stakeholder settings rather than dropping the owner", () => {
+    process.env.OWNER_NOTIFICATION_EMAIL = "owner@example.test";
+    process.env.STAKEHOLDER_EMAILS = "manager@example.test, OWNER@example.test";
+    const emails = getStakeholderEmails();
+    expect(emails[0]).toBe("owner@example.test");
+    expect(emails).toContain("manager@example.test");
+    expect(emails.filter((email) => email.toLowerCase() === "owner@example.test")).toHaveLength(1);
+  });
+
   it("deduplicates case-insensitively", () => {
     process.env.STAKEHOLDER_EMAILS = "wondimubelete4@gmail.com, Extra@example.com";
     const emails = getStakeholderEmails();

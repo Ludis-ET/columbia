@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { createClient, getAdminProfile } from "@/lib/db/server";
 import { PageHeader } from "@/components/admin/cards";
 import { SettingsForm } from "@/components/admin/settings-form";
+import { EmailStatus } from "@/components/admin/email-status";
+import { getEmailConfiguration } from "@/lib/email/send";
 import type { SiteSettingsRow } from "@/lib/db/database.types";
 
 export const metadata = { title: "Settings" };
@@ -24,6 +26,7 @@ export default async function SettingsPage() {
         title="Settings"
         lead="Your contact details and licence information. Changing something here updates every page of the website at once."
       />
+      <EmailStatus configuration={getEmailConfiguration()} />
       <SettingsForm settings={data as SiteSettingsRow | null} />
     </>
   );

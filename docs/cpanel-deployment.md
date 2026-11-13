@@ -75,6 +75,16 @@ Remove obsolete duplicate .env files after migrating their needed settings into
 cPanel, so they cannot silently supply stale credentials. The deployment leaves
 existing env files, the root node_modules symlink, logs and .htaccess untouched.
 
+## Configure email notifications
+
+Use the confirmed cPanel mailbox noreply@columbiacareafh.com at
+mail.columbiacareafh.com:465. Set SMTP_HOST, SMTP_USER and the actual mailbox
+password in SMTP_PASS on the Node.js application page, then restart. No
+additional GitHub secrets are needed.
+
+See [cPanel email notifications](email-setup.md) for the exact values, owner
+and stakeholder routing, and the owner-only SMTP check in Admin > Settings.
+
 ## GitHub configuration: no new secrets needed
 
 The existing repository secrets already cover the deployment. Keep these six:
