@@ -10,6 +10,8 @@ import {
   MEDIA_MIME_TYPES,
   syncLegacyCategory,
 } from "@/lib/media";
+import { getSiteSettings } from "@/lib/db/queries";
+import { sendAdminReplyEmail, sendStakeholderStatusAlert } from "@/lib/email/send";
 
 /**
  * Admin server actions.
@@ -305,13 +307,20 @@ export async function updateInquiry(
   _prev: ActionResult | null,
   formData: FormData,
 ): Promise<ActionResult> {
-  await requireAdmin();
+  const profile = await requireAdmin();
   const supabase = await createClient();
   if (!supabase) return { ok: false, message: GENERIC_ERROR };
 
   const id = String(formData.get("id") ?? "");
   const status = String(formData.get("status") ?? "new");
   const notes = String(formData.get("owner_notes") ?? "").trim() || null;
+
+  // Retrieve previous status for audit / stakeholder alert
+  const { data: existing } = await supabase
+    .from("inquiries")
+    .select("name, status, owner_notes")
+    .eq("id", id)
+    .single();
 
   const { error } = await supabase
     .from("inquiries")
@@ -322,7 +331,91 @@ export async function updateInquiry(
 
   await recordAudit("update", "inquiries", id, { status });
   revalidateInquiries();
+
+  // If status changed or notes added, alert all stakeholders
+  if (existing && (existing.status !== status || (notes && notes !== existing.owner_notes))) {
+    const host = process.env.NEXT_PUBLIC_SITE_URL ?? "https://columbiacareafh.com";
+    sendStakeholderStatusAlert({
+      inquiryName: existing.name,
+      previousStatus: existing.status,
+      newStatus: status,
+      notes,
+      updatedBy: profile.email ?? "Admin",
+      adminUrl: `${host}/admin/inquiries`,
+    }).catch((err) => console.warn("[admin] failed to alert stakeholders on status change:", err));
+  }
+
   return { ok: true, message: "Enquiry updated." };
+}
+
+export async function replyToInquiry(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  const profile = await requireAdmin();
+  const supabase = await createClient();
+  if (!supabase) return { ok: false, message: GENERIC_ERROR };
+
+  const id = String(formData.get("id") ?? "");
+  const subject = String(formData.get("subject") ?? "").trim();
+  const message = String(formData.get("message") ?? "").trim();
+
+  if (!id || !subject || !message) {
+    return { ok: false, message: "Please provide both a subject and a message." };
+  }
+
+  const { data: inquiry, error: fetchError } = await supabase
+    .from("inquiries")
+    .select("id, name, email, phone, status, owner_notes")
+    .eq("id", id)
+    .single();
+
+  if (fetchError || !inquiry || !inquiry.email) {
+    return { ok: false, message: "Could not find a valid email address for this inquiry." };
+  }
+
+  const settings = await getSiteSettings();
+
+  const sendResult = await sendAdminReplyEmail({
+    customerEmail: inquiry.email,
+    customerName: inquiry.name,
+    subject,
+    message,
+    senderName: profile.email ? profile.email.split("@")[0] : "Columbia Care Team",
+    phone: settings.phone,
+    addressLine: settings.addressLine,
+  });
+
+  if (!sendResult.success) {
+    return {
+      ok: false,
+      message: `Failed to send email: ${sendResult.error ?? "Email provider error"}`,
+    };
+  }
+
+  // Update status to contacted if it was new, and append audit note
+  const newStatus = inquiry.status === "new" ? "contacted" : inquiry.status;
+  const timestamp = new Date().toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+  const replyNote = `[Email sent on ${timestamp}]: "${subject}"`;
+  const updatedNotes = inquiry.owner_notes ? `${inquiry.owner_notes}\n\n${replyNote}` : replyNote;
+
+  await supabase
+    .from("inquiries")
+    .update({ status: newStatus, owner_notes: updatedNotes, updated_at: new Date().toISOString() })
+    .eq("id", id);
+
+  await recordAudit("reply", "inquiries", id, { subject });
+  revalidateInquiries();
+
+  return {
+    ok: true,
+    message: "Email sent to customer and copies dispatched to all 3 stakeholders.",
+  };
 }
 
 export async function deleteInquiry(id: string): Promise<ActionResult> {

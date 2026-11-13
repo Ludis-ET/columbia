@@ -21,12 +21,15 @@ import {
   MessageSquare,
   Phone,
   Search,
+  Send,
   Star,
   Trash2,
   User,
+  Users,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { AdminCard } from "@/components/admin/cards";
@@ -35,6 +38,7 @@ import {
   clearAllInquiries,
   deleteInquiry,
   exportInquiriesCSV,
+  replyToInquiry,
   starInquiry,
   updateInquiry,
   type ActionResult,
@@ -170,6 +174,195 @@ function ConfirmDialog({
             {confirmLabel}
           </Button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Reply dialog with stakeholder distribution notice
+// ---------------------------------------------------------------------------
+
+function ReplyDialog({
+  inquiry,
+  onClose,
+  onSuccess,
+}: {
+  inquiry: InquiryRow;
+  onClose: () => void;
+  onSuccess: (result: ActionResult) => void;
+}) {
+  const [state, formAction, pending] = useActionState<ActionResult | null, FormData>(
+    replyToInquiry,
+    null,
+  );
+
+  const defaultTemplates = useMemo(
+    () => [
+      {
+        label: "Confirm House Tour",
+        subject: `Re: Your house tour enquiry — Columbia Care`,
+        body: `Dear ${inquiry.name},\n\nThank you for reaching out to Columbia Care Adult Family Home. We would love to welcome you for a house tour.\n\nWe have availability this week and would be delighted to show you our home and answer all your questions. Does morning or afternoon work best for you?\n\nWarm regards,\nColumbia Care Team`,
+      },
+      {
+        label: "Care & Availability",
+        subject: `Re: Care enquiry — Columbia Care Adult Family Home`,
+        body: `Dear ${inquiry.name},\n\nThank you for inquiring about Columbia Care. We received your note${inquiry.relationship ? ` regarding care for ${inquiry.relationship}` : ""}.\n\nOur adult family home provides 24-hour attentive, compassionate care in a peaceful, family-centered environment. We would love to discuss your specific care needs in detail.\n\nWarm regards,\nColumbia Care Team`,
+      },
+      {
+        label: "Custom Follow-Up",
+        subject: `Re: Your message to Columbia Care`,
+        body: `Dear ${inquiry.name},\n\nThank you for reaching out to Columbia Care Adult Family Home.\n\n`,
+      },
+    ],
+    [inquiry.name, inquiry.relationship],
+  );
+
+  const [subject, setSubject] = useState(defaultTemplates[0].subject);
+  const [message, setMessage] = useState(defaultTemplates[0].body);
+
+  useEffect(() => {
+    if (state?.ok) {
+      onSuccess(state);
+      onClose();
+    }
+  }, [state, onSuccess, onClose]);
+
+  return (
+    <div
+      className="admin-scrim fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="reply-dialog-title"
+    >
+      <div className="bg-paper-raise border-rule my-8 w-full max-w-xl rounded-xl border p-6 shadow-2xl">
+        <div className="mb-4 flex items-start justify-between gap-4">
+          <div>
+            <h2
+              id="reply-dialog-title"
+              className="text-h3 flex items-center gap-2 font-sans font-bold"
+            >
+              <Mail className="text-sage-deep size-5" aria-hidden="true" />
+              Reply to {inquiry.name}
+            </h2>
+            <p className="text-stone mt-0.5 text-[0.875rem]">
+              To: <strong className="text-ink">{inquiry.email}</strong>
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="text-stone hover:text-ink rounded-md p-1"
+            aria-label="Close dialog"
+          >
+            <X className="size-5" />
+          </button>
+        </div>
+
+        {/* Stakeholder notification banner */}
+        <div className="bg-sage-wash/60 border-sage/20 text-stone mb-5 rounded-lg border p-3 text-[0.8125rem]">
+          <div className="text-sage-deep mb-1 flex items-center gap-1.5 font-semibold">
+            <Users className="size-4" />
+            <span>Stakeholder Distribution Active</span>
+          </div>
+          <p className="text-[0.75rem] leading-relaxed">
+            Delivered with branded styling to the family. Automatic BCC copies are dispatched to all
+            3 stakeholders:
+            <span className="text-stone-deep mt-1 block font-mono text-[0.7rem] font-semibold">
+              Wondimubelete4@gmail.com · Zgenet19@gmail.com · leulsegedmelaku1020@gmail.com
+            </span>
+          </p>
+        </div>
+
+        {state && !state.ok ? (
+          <div className="mb-4 rounded border border-[#A93659]/30 bg-[#A93659]/10 p-3 text-[0.875rem] text-[#8B2D49]">
+            {state.message}
+          </div>
+        ) : null}
+
+        {/* Quick Template Chips */}
+        <div className="mb-4">
+          <span className="text-stone mb-1.5 block text-[0.75rem] font-semibold tracking-wider uppercase">
+            Quick Templates
+          </span>
+          <div className="flex flex-wrap gap-1.5">
+            {defaultTemplates.map((tmpl) => (
+              <button
+                key={tmpl.label}
+                type="button"
+                onClick={() => {
+                  setSubject(tmpl.subject);
+                  setMessage(tmpl.body);
+                }}
+                className="bg-paper border-rule hover:border-sage rounded border px-3 py-1 text-[0.8125rem] transition-colors"
+              >
+                {tmpl.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <form action={formAction} className="grid gap-4">
+          <input type="hidden" name="id" value={inquiry.id} />
+
+          <div>
+            <Label
+              htmlFor="reply-subject"
+              className="text-stone text-[0.8125rem] font-semibold tracking-wide uppercase"
+            >
+              Subject
+            </Label>
+            <Input
+              id="reply-subject"
+              name="subject"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              required
+              className="mt-1"
+            />
+          </div>
+
+          <div>
+            <Label
+              htmlFor="reply-message"
+              className="text-stone text-[0.8125rem] font-semibold tracking-wide uppercase"
+            >
+              Message to Family
+            </Label>
+            <Textarea
+              id="reply-message"
+              name="message"
+              rows={7}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              required
+              className="mt-1 text-[0.9375rem] leading-relaxed"
+            />
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+            <Button type="button" variant="outline" onClick={onClose} disabled={pending}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={pending}
+              className="bg-sage hover:bg-sage-deep text-paper inline-flex items-center gap-2"
+            >
+              {pending ? (
+                <>
+                  <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                  Sending email…
+                </>
+              ) : (
+                <>
+                  <Send className="size-4" aria-hidden="true" />
+                  Send Email to Family
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
       </div>
     </div>
   );
@@ -561,6 +754,8 @@ function DetailPanel({
   );
   const [deletePending, startDelete] = useTransition();
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [replyOpen, setReplyOpen] = useState(false);
+  const [replyToast, setReplyToast] = useState<ActionResult | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
@@ -574,10 +769,6 @@ function DetailPanel({
   const meta = statusMeta(inquiry.status);
   const phoneDisplay = formatPhone(inquiry.phone);
   const phoneHref = inquiry.phone?.replace(/\D/g, "") ?? "";
-
-  const mailto = inquiry.email
-    ? `mailto:${inquiry.email}?subject=${encodeURIComponent("Re: Your house tour enquiry — Columbia Care")}&body=${encodeURIComponent(`Dear ${inquiry.name},\n\nThank you for reaching out to Columbia Care. We would love to tell you more about our home and book a house tour at a time that works for you.\n\nWarm regards,\nColumbia Care Adult Family Home`)}`
-    : null;
 
   return (
     <AdminCard className="overflow-hidden">
@@ -636,14 +827,15 @@ function DetailPanel({
               Call {phoneDisplay || inquiry.phone}
             </a>
           ) : null}
-          {mailto ? (
-            <a
-              href={mailto}
-              className="border-rule hover:border-sage inline-flex min-h-11 items-center gap-2 rounded border px-4 text-[0.875rem] font-semibold"
+          {inquiry.email ? (
+            <button
+              type="button"
+              onClick={() => setReplyOpen(true)}
+              className="border-rule hover:border-sage bg-paper-raise text-ink inline-flex min-h-11 items-center gap-2 rounded border px-4 text-[0.875rem] font-semibold transition-colors"
             >
-              <Mail className="size-4" aria-hidden="true" />
+              <Mail className="text-sage-deep size-4" aria-hidden="true" />
               Reply by email
-            </a>
+            </button>
           ) : null}
         </div>
       </div>
@@ -748,6 +940,20 @@ function DetailPanel({
           </form>
         </FieldSection>
       </div>
+
+      {replyToast ? <Toast result={replyToast} /> : null}
+
+      {replyOpen ? (
+        <ReplyDialog
+          inquiry={inquiry}
+          onClose={() => setReplyOpen(false)}
+          onSuccess={(res) => {
+            setReplyToast(res);
+            setTimeout(() => setReplyToast(null), 5000);
+            onUpdated(inquiry.id, "contacted", inquiry.owner_notes);
+          }}
+        />
+      ) : null}
 
       {confirmDelete ? (
         <ConfirmDialog
