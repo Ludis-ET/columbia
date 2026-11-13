@@ -1,4 +1,7 @@
+import nodemailer, { type Transporter } from "nodemailer";
 import { Resend } from "resend";
+import { render } from "@react-email/components";
+import type React from "react";
 import {
   AdminCustomerReplyEmail,
   FamilyAutoReply,
@@ -10,13 +13,16 @@ import {
 /**
  * Columbia Care Email Delivery System.
  *
+ * Supports dual engines:
+ * 1. cPanel SMTP (Primary when configured) — Direct hosting email server (e.g. mail.columbiacareafh.com)
+ * 2. Resend API (Secondary / Fallback)
+ *
  * ---------------------------------------------------------------------------
  * EMAIL FAILURE MUST NEVER LOSE A LEAD OR BLOCK AN ACTION.
  *
- * The enquiry or action is written to the database FIRST. If Resend is
- * unconfigured, rate-limited, or down, the user/admin still receives
- * confirmation and records are fully preserved in the database.
- * Every error here is logged with structured warnings.
+ * The enquiry or action is written to the database FIRST. If email delivery is
+ * unconfigured or encounters a network issue, the lead is safely recorded in
+ * Supabase and available in the admin console. Every error is logged.
  * ---------------------------------------------------------------------------
  */
 
@@ -57,17 +63,127 @@ export function getStakeholderEmails(): string[] {
   return result;
 }
 
-const apiKey = process.env.RESEND_API_KEY;
+// ---------------------------------------------------------------------------
+// Provider Configuration
+// ---------------------------------------------------------------------------
+
+const SMTP_HOST = process.env.SMTP_HOST;
+const SMTP_PORT = process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 465;
+const SMTP_SECURE = process.env.SMTP_SECURE === "false" ? false : SMTP_PORT === 465;
+const SMTP_USER = process.env.SMTP_USER;
+const SMTP_PASS = process.env.SMTP_PASS;
+
+export const isSmtpConfigured = Boolean(SMTP_HOST && SMTP_USER && SMTP_PASS);
+
+const resendApiKey = process.env.RESEND_API_KEY;
+export const isResendConfigured = Boolean(resendApiKey);
+
+export const isEmailConfigured = isSmtpConfigured || isResendConfigured;
+
+const DEFAULT_FROM =
+  process.env.SMTP_FROM ||
+  process.env.RESEND_FROM ||
+  (SMTP_USER ? `Columbia Care <${SMTP_USER}>` : "Columbia Care <onboarding@resend.dev>");
+
+let cachedTransporter: Transporter | null = null;
+function getSmtpTransporter() {
+  if (!cachedTransporter && isSmtpConfigured) {
+    cachedTransporter = nodemailer.createTransport({
+      host: SMTP_HOST,
+      port: SMTP_PORT,
+      secure: SMTP_SECURE,
+      auth: {
+        user: SMTP_USER,
+        pass: SMTP_PASS,
+      },
+      tls: {
+        rejectUnauthorized: false, // Prevents self-signed cert blocks on cPanel
+      },
+    });
+  }
+  return cachedTransporter;
+}
+
+const resend = isResendConfigured ? new Resend(resendApiKey) : null;
+
+interface DispatchMailOptions {
+  from?: string;
+  to: string | string[];
+  bcc?: string | string[];
+  replyTo?: string;
+  subject: string;
+  react: React.ReactElement;
+}
 
 /**
- * Senders must use a domain verified in Resend. When unverified, Resend's
- * shared onboarding sender is used for local development.
+ * Unified mail dispatcher that handles either cPanel SMTP or Resend.
  */
-const FROM = process.env.RESEND_FROM ?? "Columbia Care <onboarding@resend.dev>";
+async function dispatchEmail(
+  options: DispatchMailOptions,
+): Promise<{ success: boolean; error?: string }> {
+  const from = options.from || DEFAULT_FROM;
 
-export const isEmailConfigured = Boolean(apiKey);
+  // 1. Prefer cPanel SMTP if configured
+  if (isSmtpConfigured) {
+    try {
+      const transporter = getSmtpTransporter();
+      if (!transporter) throw new Error("Could not initialize cPanel SMTP transporter.");
 
-const resend = apiKey ? new Resend(apiKey) : null;
+      const html = await render(options.react);
+      await transporter.sendMail({
+        from,
+        to: Array.isArray(options.to) ? options.to.join(", ") : options.to,
+        bcc: options.bcc
+          ? Array.isArray(options.bcc)
+            ? options.bcc.join(", ")
+            : options.bcc
+          : undefined,
+        replyTo: options.replyTo,
+        subject: options.subject,
+        html,
+      });
+
+      return { success: true };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.warn("[email] cPanel SMTP dispatch failed:", message);
+      return { success: false, error: message };
+    }
+  }
+
+  // 2. Fall back to Resend API
+  if (resend) {
+    try {
+      const { error } = await resend.emails.send({
+        from,
+        to: options.to,
+        bcc: options.bcc,
+        replyTo: options.replyTo,
+        subject: options.subject,
+        react: options.react,
+      });
+
+      if (error) {
+        console.warn("[email] Resend dispatch failed:", error.message);
+        return { success: false, error: error.message };
+      }
+      return { success: true };
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.warn("[email] Resend dispatch threw:", message);
+      return { success: false, error: message };
+    }
+  }
+
+  console.warn(
+    "[email] No email service configured. Please set SMTP credentials (SMTP_HOST, SMTP_USER, SMTP_PASS) or RESEND_API_KEY in .env.local",
+  );
+  return { success: false, error: "No email service configured." };
+}
+
+// ---------------------------------------------------------------------------
+// Public Operations
+// ---------------------------------------------------------------------------
 
 export interface SendResult {
   ownerNotified: boolean;
@@ -83,61 +199,40 @@ export async function sendEnquiryEmails(
 ): Promise<SendResult> {
   const result: SendResult = { ownerNotified: false, familyNotified: false };
 
-  if (!resend) {
-    console.warn("[email] RESEND_API_KEY is not set. Enquiry saved in DB; email delivery skipped.");
+  if (!isEmailConfigured) {
+    console.warn("[email] Email is not configured. Enquiry saved in DB; email delivery skipped.");
     return result;
   }
 
   const stakeholders = getStakeholderEmails();
 
-  // 1. Deliver to all stakeholders
+  // 1. Deliver to all 3 stakeholders
   if (stakeholders.length > 0) {
-    try {
-      const { error } = await resend.emails.send({
-        from: FROM,
-        to: stakeholders,
-        subject: `New Tour Request from ${props.name}${props.phone ? ` (${props.phone})` : ""}`,
-        react: <StakeholderEnquiryEmail {...props} stakeholders={stakeholders} />,
-        // Direct reply hits the customer so stakeholders can answer immediately with one click
-        replyTo: props.email ?? undefined,
-      });
-
-      if (error) {
-        console.warn("[email] Stakeholder notification failed:", error.message);
-      } else {
-        result.ownerNotified = true;
-      }
-    } catch (error) {
-      console.warn("[email] Stakeholder notification threw:", error);
-    }
+    const stakeholderRes = await dispatchEmail({
+      to: stakeholders,
+      subject: `New Tour Request from ${props.name}${props.phone ? ` (${props.phone})` : ""}`,
+      react: <StakeholderEnquiryEmail {...props} stakeholders={stakeholders} />,
+      replyTo: props.email ?? undefined,
+    });
+    if (stakeholderRes.success) result.ownerNotified = true;
   }
 
   // 2. Deliver confirmation to family if they provided an email address
   if (props.email) {
-    try {
-      const { error } = await resend.emails.send({
-        from: FROM,
-        to: props.email,
-        subject: "We received your visit request — Columbia Care Adult Family Home",
-        react: (
-          <FamilyAutoReply
-            name={props.name}
-            phone={props.phone}
-            addressLine={props.addressLine}
-            locationLine={props.locationLine}
-          />
-        ),
-        replyTo: stakeholders[0],
-      });
-
-      if (error) {
-        console.warn("[email] Family auto-reply failed:", error.message);
-      } else {
-        result.familyNotified = true;
-      }
-    } catch (error) {
-      console.warn("[email] Family auto-reply threw:", error);
-    }
+    const familyRes = await dispatchEmail({
+      to: props.email,
+      subject: "We received your visit request — Columbia Care Adult Family Home",
+      react: (
+        <FamilyAutoReply
+          name={props.name}
+          phone={props.phone}
+          addressLine={props.addressLine}
+          locationLine={props.locationLine}
+        />
+      ),
+      replyTo: stakeholders[0],
+    });
+    if (familyRes.success) result.familyNotified = true;
   }
 
   return result;
@@ -160,47 +255,30 @@ export interface AdminReplyEmailProps {
 export async function sendAdminReplyEmail(
   props: AdminReplyEmailProps,
 ): Promise<{ success: boolean; error?: string }> {
-  if (!resend) {
+  if (!isEmailConfigured) {
     return {
       success: false,
-      error: "RESEND_API_KEY is not configured on the server. Email could not be sent.",
+      error: "No email service configured (missing SMTP or Resend credentials in .env.local).",
     };
   }
 
   const stakeholders = getStakeholderEmails();
 
-  try {
-    const { error } = await resend.emails.send({
-      from: FROM,
-      to: props.customerEmail,
-      // BCC all 3 stakeholders so they receive the exact reply sent to the family
-      bcc: stakeholders,
-      subject: props.subject,
-      react: (
-        <AdminCustomerReplyEmail
-          customerName={props.customerName}
-          message={props.message}
-          phone={props.phone}
-          addressLine={props.addressLine}
-          senderName={props.senderName}
-        />
-      ),
-      replyTo: stakeholders[0],
-    });
-
-    if (error) {
-      console.warn("[email] Admin reply to customer failed:", error.message);
-      return { success: false, error: error.message };
-    }
-
-    return { success: true };
-  } catch (error) {
-    console.warn("[email] Admin reply threw:", error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Unexpected email delivery error",
-    };
-  }
+  return dispatchEmail({
+    to: props.customerEmail,
+    bcc: stakeholders,
+    subject: props.subject,
+    react: (
+      <AdminCustomerReplyEmail
+        customerName={props.customerName}
+        message={props.message}
+        phone={props.phone}
+        addressLine={props.addressLine}
+        senderName={props.senderName}
+      />
+    ),
+    replyTo: stakeholders[0],
+  });
 }
 
 export interface StatusAlertProps {
@@ -217,26 +295,16 @@ export interface StatusAlertProps {
  * whenever an enquiry is moved to a new pipeline stage or notes are saved.
  */
 export async function sendStakeholderStatusAlert(props: StatusAlertProps): Promise<boolean> {
-  if (!resend) return false;
+  if (!isEmailConfigured) return false;
 
   const stakeholders = getStakeholderEmails();
   if (stakeholders.length === 0) return false;
 
-  try {
-    const { error } = await resend.emails.send({
-      from: FROM,
-      to: stakeholders,
-      subject: `Inquiry Pipeline Update: ${props.inquiryName} → ${props.newStatus}`,
-      react: <StakeholderStatusUpdateEmail {...props} stakeholders={stakeholders} />,
-    });
+  const res = await dispatchEmail({
+    to: stakeholders,
+    subject: `Inquiry Pipeline Update: ${props.inquiryName} → ${props.newStatus}`,
+    react: <StakeholderStatusUpdateEmail {...props} stakeholders={stakeholders} />,
+  });
 
-    if (error) {
-      console.warn("[email] Stakeholder status alert failed:", error.message);
-      return false;
-    }
-    return true;
-  } catch (error) {
-    console.warn("[email] Stakeholder status alert threw:", error);
-    return false;
-  }
+  return res.success;
 }
